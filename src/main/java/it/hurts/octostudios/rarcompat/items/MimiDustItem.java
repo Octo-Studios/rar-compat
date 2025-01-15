@@ -6,12 +6,15 @@ import it.hurts.sskirillss.relics.init.CreativeTabRegistry;
 import it.hurts.sskirillss.relics.items.misc.CreativeContentConstructor;
 import it.hurts.sskirillss.relics.items.misc.ICreativeTabContent;
 import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Blocks;
@@ -61,6 +64,9 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
         mimic.setTarget(context.getPlayer());
 
         level.addFreshEntity(mimic);
+
+        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.ATTACK_DAMAGE, 4F * count, AttributeModifier.Operation.ADD_VALUE);
+        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.MAX_HEALTH, 5F * count, AttributeModifier.Operation.ADD_VALUE);
 
         var center = pos.getCenter();
         var random = mimic.getRandom();
