@@ -9,6 +9,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -42,6 +43,10 @@ public class RunningShoesItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffd53828)
                                 .borderBottom(0xffb2120d)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFFff0000)
+                                .endColor(0x00f73e3e)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

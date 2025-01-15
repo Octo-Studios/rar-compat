@@ -13,6 +13,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
@@ -79,6 +80,10 @@ public class UmbrellaItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffb63a2b)
                                 .borderBottom(0xff600f15)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFFb63a2b)
+                                .endColor(0x00600f15)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

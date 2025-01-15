@@ -10,6 +10,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -53,6 +54,10 @@ public class DiggingClawsItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xff0c71e0)
                                 .borderBottom(0xff151989)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF151989)
+                                .endColor(0x00c71e0)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

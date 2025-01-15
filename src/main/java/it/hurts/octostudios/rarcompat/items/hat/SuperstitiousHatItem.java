@@ -9,6 +9,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -42,6 +43,10 @@ public class SuperstitiousHatItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xff55b014)
                                 .borderBottom(0xff206a2a)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF55b014)
+                                .endColor(0x00206a2a)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

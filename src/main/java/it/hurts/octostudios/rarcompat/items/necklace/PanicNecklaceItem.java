@@ -11,6 +11,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -52,6 +53,10 @@ public class PanicNecklaceItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffdc291b)
                                 .borderBottom(0xff57000d)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFFdc291b)
+                                .endColor(0x0057000d)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

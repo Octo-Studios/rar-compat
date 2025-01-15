@@ -10,6 +10,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -50,6 +51,10 @@ public class FlamePendantItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffe15200)
                                 .borderBottom(0xff740000)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFFe15200)
+                                .endColor(0x00740000)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

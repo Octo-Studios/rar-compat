@@ -12,6 +12,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -49,6 +50,10 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xff51a4df)
                                 .borderBottom(0xff2c3b70)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF51a4df)
+                                .endColor(0x002c3b70)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

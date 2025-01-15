@@ -11,6 +11,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -49,6 +50,10 @@ public class PowerGloveItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffd8b200)
                                 .borderBottom(0xffb57e00)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFFd8b200)
+                                .endColor(0x00b57e00)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

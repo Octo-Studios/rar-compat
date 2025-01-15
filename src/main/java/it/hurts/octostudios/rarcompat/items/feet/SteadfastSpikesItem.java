@@ -10,6 +10,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -38,6 +39,10 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xff542d20)
                                 .borderBottom(0xff555b64)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF4C2F27)
+                                .endColor(0x007B3F00)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

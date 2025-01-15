@@ -12,6 +12,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
@@ -52,6 +53,10 @@ public class BunnyHoppersItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xffa89075)
                                 .borderBottom(0xff473a2f)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF4d2317)
+                                .endColor(0x0063372b)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

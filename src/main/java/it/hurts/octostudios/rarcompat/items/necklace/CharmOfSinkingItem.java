@@ -11,6 +11,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOp
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -49,6 +50,10 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                         .tooltip(TooltipData.builder()
                                 .borderTop(0xff3c7090)
                                 .borderBottom(0xff1c212d)
+                                .build())
+                        .beams(BeamsData.builder()
+                                .startColor(0xFF3c7090)
+                                .endColor(0x001c212d)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()
