@@ -31,7 +31,7 @@ public class VampiricGloveItem extends WearableRelicItem {
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("vampire")
                                 .stat(StatData.builder("amount")
-                                        .initialValue(0.1D, 0.3D)
+                                        .initialValue(0.1D, 0.2D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.1D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
