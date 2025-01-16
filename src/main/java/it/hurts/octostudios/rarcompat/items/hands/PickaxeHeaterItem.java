@@ -19,7 +19,6 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -46,6 +45,11 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                                         .initialValue(7D, 10D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
+                                .stat(StatData.builder("duration")
+                                        .initialValue(140D, 120D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, -0.05D)
+                                        .formatValue(value -> MathUtils.round(value / 20, 1))
                                         .build())
                                 .research(ResearchData.builder()
                                         .star(0, 11, 28).star(1, 11, 18).star(2, 19, 24)
@@ -83,7 +87,7 @@ public class PickaxeHeaterItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || player.tickCount % 100 != 0
+        if (!(slotContext.entity() instanceof Player player) || player.tickCount % Math.round(this.getStatValue(stack, "heater", "duration")) != 0
                 || getCharges(stack) >= Math.round(getStatValue(stack, "heater", "capacity")))
             return;
 
@@ -96,6 +100,19 @@ public class PickaxeHeaterItem extends WearableRelicItem {
 
     public static int getCharges(ItemStack stack) {
         return stack.getOrDefault(DataComponentRegistry.CHARGE, 0);
+    }
+
+    public static ItemStack getSmeltingResult(ItemStack stack, ServerLevel level) {
+        var entry = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level);
+
+        if (entry.isPresent()) {
+            var result = entry.get().value().getResultItem(level.registryAccess());
+
+            if (!result.isEmpty())
+                return result.copyWithCount(stack.getCount() * result.getCount());
+        }
+
+        return stack;
     }
 
     @EventBusSubscriber
@@ -127,33 +144,16 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             }
 
             if (smelted) {
-                spawnBurstParticles(serverLevel, event.getPos());
+                var center = event.getPos().getCenter();
+                var random = level.getRandom();
+
+                serverLevel.sendParticles(ParticleUtils.constructSimpleSpark(new Color(150 + random.nextInt(106), random.nextInt(50), 50 + random.nextInt(51), 255),
+                        0.6F, 20, 0.85F), center.x(), center.y(), center.z(), 25, 0.3, 0.3, 0.3, 0.01);
 
                 addCharges(stack, -1);
 
                 relic.spreadRelicExperience(player, stack, 1);
             }
         }
-
-        public static void spawnBurstParticles(ServerLevel level, BlockPos centerPos) {
-            var center = centerPos.getCenter();
-            var random = level.getRandom();
-
-            level.sendParticles(ParticleUtils.constructSimpleSpark(new Color(150 + random.nextInt(106), random.nextInt(50), 50 + random.nextInt(51), 255),
-                    0.6F, 20, 0.85F), center.x(), center.y(), center.z(), 25, 0.3, 0.3, 0.3, 0.01);
-        }
-    }
-
-    public static ItemStack getSmeltingResult(ItemStack stack, ServerLevel level) {
-        var entry = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level);
-
-        if (entry.isPresent()) {
-            var result = entry.get().value().getResultItem(level.registryAccess());
-
-            if (!result.isEmpty())
-                return result.copyWithCount(stack.getCount() * result.getCount());
-        }
-
-        return stack;
     }
 }

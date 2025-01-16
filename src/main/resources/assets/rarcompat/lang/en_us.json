@@ -290,7 +290,7 @@
 
   "tooltip.relics.pickaxe_heater.description": "Concentrates surrounding heat precisely onto the relic bearer's tools.",
   "tooltip.relics.pickaxe_heater.ability.heater": "Heat Concentration",
-  "tooltip.relics.pickaxe_heater.ability.heater.description": "Smelts any mined block if possible, consuming one charge from a buffer with a capacity of %1$s units. The buffer regenerates 1 charge every 5 seconds.",
+  "tooltip.relics.pickaxe_heater.ability.heater.description": "Smelts any mined block if possible, consuming one charge from a buffer with a capacity of %1$s units. The buffer regenerates 1 charge every %2$s seconds.",
   "tooltip.relics.pickaxe_heater.leveling_source.heater.title": "Heat Concentration",
   "tooltip.relics.pickaxe_heater.leveling_source.heater.description": "+%1$s experience points for each block smelted by the %2$s ability.",
 
