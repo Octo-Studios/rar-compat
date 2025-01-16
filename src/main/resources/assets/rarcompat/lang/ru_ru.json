@@ -149,6 +149,10 @@
   "tooltip.relics.onion_ring.description": "Увеличивает эффективность добычи блоков носителем реликвии при достаточном уровне сытости.",
   "tooltip.relics.onion_ring.ability.onion": "Голод шахтёра",
   "tooltip.relics.onion_ring.ability.onion.description": "Увеличивает скорость добычи блоков на %1$s%% за единицу сытости игрока.",
+  "tooltip.relics.onion_ring.ability.saturation": "",
+  "tooltip.relics.onion_ring.ability.saturation.description": "",
+  "tooltip.relics.onion_ring.leveling_source.saturation.title": "",
+  "tooltip.relics.onion_ring.leveling_source.saturation.description": "",
   "tooltip.relics.onion_ring.leveling_source.onion.title": "Голод шахтёра",
   "tooltip.relics.onion_ring.leveling_source.onion.description": "+%1$s единиц опыта за каждый добытый блок. Вероятность получения опыта прямо пропорциональна текущей сытости. Не работает на блоки с моментальным разрушением.",
 
@@ -185,6 +189,8 @@
   "tooltip.relics.withered_bracelet.description": "Наполняет оружие носителя реликвии иссушающей энергией, воздействующую на всех, кого оно коснётся.",
   "tooltip.relics.withered_bracelet.ability.withered": "Иссушающее касание",
   "tooltip.relics.withered_bracelet.ability.withered.description": "С шансом в %1$s%% накладывает на атакуемую цель эффект иссушения на %2$s секунд.",
+  "tooltip.relics.withered_bracelet.ability.passive": "",
+  "tooltip.relics.withered_bracelet.ability.passive.description": "",
   "tooltip.relics.withered_bracelet.leveling_source.withered.title": "Иссушающее касание",
   "tooltip.relics.withered_bracelet.leveling_source.withered.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
 

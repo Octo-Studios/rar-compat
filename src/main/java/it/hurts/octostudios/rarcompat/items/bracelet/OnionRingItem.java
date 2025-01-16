@@ -23,7 +23,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 public class OnionRingItem extends WearableRelicItem {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
@@ -40,6 +39,13 @@ public class OnionRingItem extends WearableRelicItem {
                                         .star(8, 6, 11).star(9, 11, 10).star(10, 16, 11)
                                         .link(0, 1).link(1, 2).link(2, 3).link(3, 4).link(4, 5).link(5, 6).link(6, 7).link(7, 0)
                                         .link(0, 9).link(8, 9).link(9, 10).link(2, 8).link(10, 6)
+                                        .build())
+                                .build())
+                        .ability(AbilityData.builder("saturation")
+                                .stat(StatData.builder("chance")
+                                        .initialValue(0.05D, 0.25D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.1D)
+                                        .formatValue(value -> MathUtils.round(value * 100, 1))
                                         .build())
                                 .build())
                         .build())
@@ -62,6 +68,10 @@ public class OnionRingItem extends WearableRelicItem {
                                         .initialValue(1)
                                         .gem(GemShape.SQUARE, GemColor.YELLOW)
                                         .build())
+                                .source(LevelingSourceData.abilityBuilder("saturation")
+                                        .initialValue(1)
+                                        .gem(GemShape.SQUARE, GemColor.YELLOW)
+                                        .build())
                                 .build())
                         .build())
                 .loot(LootData.builder()
@@ -71,8 +81,7 @@ public class OnionRingItem extends WearableRelicItem {
     }
 
     @EventBusSubscriber
-    public static class Event {
-
+    public static class OnionRingEvent {
         @SubscribeEvent
         public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
             Player player = event.getEntity();
@@ -92,14 +101,22 @@ public class OnionRingItem extends WearableRelicItem {
             Player player = event.getPlayer();
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.ONION_RING.value());
 
-            if (!(stack.getItem() instanceof OnionRingItem relic) || !relic.isAbilityUnlocked(stack, "onion"))
+            if (!(stack.getItem() instanceof OnionRingItem relic))
                 return;
 
-            float hardness = event.getState().getDestroySpeed(player.level(), player.blockPosition());
-            float currentHunger = player.getFoodData().getFoodLevel();
+            var random = player.getRandom();
 
-            if (hardness >= 0.5 && currentHunger / 20 >= player.getRandom().nextFloat())
+            if (relic.isAbilityUnlocked(stack, "onion") && event.getState().getDestroySpeed(player.level(), player.blockPosition()) >= 0.5
+                    && player.getFoodData().getFoodLevel() / 20D >= random.nextDouble())
                 relic.spreadRelicExperience(player, stack, 1);
+
+            if (relic.isAbilityUnlocked(stack, "saturation") && random.nextDouble() <= relic.getStatValue(stack, "saturation", "chance")) {
+                var footData = player.getFoodData();
+
+                footData.setFoodLevel(footData.getFoodLevel() + 1);
+
+                relic.spreadRelicExperience(player, stack, 1);
+            }
         }
     }
 }

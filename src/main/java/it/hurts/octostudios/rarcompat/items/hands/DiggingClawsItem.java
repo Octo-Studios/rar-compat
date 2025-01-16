@@ -27,8 +27,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
-import java.util.Random;
-
 public class DiggingClawsItem extends WearableRelicItem {
     @Override
     public RelicData constructDefaultRelicData() {
@@ -122,7 +120,7 @@ public class DiggingClawsItem extends WearableRelicItem {
 
             float hardness = (event.getState().getDestroySpeed(player.level(), player.blockPosition()) / 20);
 
-            if (new Random().nextFloat(1) <= hardness)
+            if (player.getRandom().nextDouble() <= hardness)
                 relic.spreadRelicExperience(player, stack, 1);
         }
 
@@ -140,12 +138,9 @@ public class DiggingClawsItem extends WearableRelicItem {
             if (!state.requiresCorrectToolForDrops())
                 return 0;
 
-            if (state.is(BlockTags.NEEDS_DIAMOND_TOOL))
-                return 5;
-            else if (state.is(BlockTags.NEEDS_IRON_TOOL))
-                return 3;
-            else if (state.is(BlockTags.NEEDS_STONE_TOOL))
-                return 2;
+            if (state.is(BlockTags.NEEDS_DIAMOND_TOOL)) return 5;
+            else if (state.is(BlockTags.NEEDS_IRON_TOOL)) return 3;
+            else if (state.is(BlockTags.NEEDS_STONE_TOOL)) return 2;
 
             return 1;
         }

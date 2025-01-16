@@ -149,6 +149,10 @@
   "tooltip.relics.onion_ring.description": "Improves the efficiency of block mining for the relic bearer when satiated.",
   "tooltip.relics.onion_ring.ability.onion": "Miner's Hunger",
   "tooltip.relics.onion_ring.ability.onion.description": "Increases block mining speed by %1$s%% per hunger point of the player.",
+  "tooltip.relics.onion_ring.ability.saturation": "",
+  "tooltip.relics.onion_ring.ability.saturation.description": "",
+  "tooltip.relics.onion_ring.leveling_source.saturation.title": "",
+  "tooltip.relics.onion_ring.leveling_source.saturation.description": "",
   "tooltip.relics.onion_ring.leveling_source.onion.title": "Miner's Hunger",
   "tooltip.relics.onion_ring.leveling_source.onion.description": "+%1$s experience points for each mined block. The probability of gaining experience is directly proportional to current hunger. Does not work on blocks with instant destruction.",
 
@@ -185,6 +189,8 @@
   "tooltip.relics.withered_bracelet.description": "Fills the relic bearer's weapon with withering energy, affecting all it touches.",
   "tooltip.relics.withered_bracelet.ability.withered": "Withering Touch",
   "tooltip.relics.withered_bracelet.ability.withered.description": "Has a %1$s%% chance to apply the Wither effect to the attacked target for %2$s seconds.",
+  "tooltip.relics.withered_bracelet.ability.passive": "",
+  "tooltip.relics.withered_bracelet.ability.passive.description": "",
   "tooltip.relics.withered_bracelet.leveling_source.withered.title": "Withering Touch",
   "tooltip.relics.withered_bracelet.leveling_source.withered.description": "+%1$s experience points for each activation of the %2$s ability.",
 

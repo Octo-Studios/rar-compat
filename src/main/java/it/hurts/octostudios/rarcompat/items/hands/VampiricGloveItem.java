@@ -19,12 +19,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-
-import java.util.Random;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 
 public class VampiricGloveItem extends WearableRelicItem {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
@@ -70,10 +67,9 @@ public class VampiricGloveItem extends WearableRelicItem {
     }
 
     @EventBusSubscriber
-    public static class Event {
-
+    public static class VampiricGloveEvent {
         @SubscribeEvent
-        public static void onAttack(LivingIncomingDamageEvent event) {
+        public static void onAttack(LivingDamageEvent.Post event) {
             if (!(event.getSource().getEntity() instanceof Player player))
                 return;
 
@@ -82,9 +78,9 @@ public class VampiricGloveItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof VampiricGloveItem relic) || !relic.canPlayerUseAbility(player, stack, "vampire"))
                 return;
 
-            double damageToHeal = event.getAmount() * relic.getStatValue(stack, "vampire", "amount");
+            double damageToHeal = event.getNewDamage() * relic.getStatValue(stack, "vampire", "amount");
 
-            if ((damageToHeal * 5 / player.getMaxHealth()) >= new Random().nextFloat(1))
+            if ((damageToHeal * 5 / player.getMaxHealth()) >= player.getRandom().nextDouble())
                 relic.spreadRelicExperience(player, stack, 1);
 
             player.heal((float) Math.min(event.getEntity().getMaxHealth(), damageToHeal));
