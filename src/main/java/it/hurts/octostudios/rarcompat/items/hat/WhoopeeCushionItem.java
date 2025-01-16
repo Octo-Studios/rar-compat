@@ -17,6 +17,8 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Mob;
@@ -27,6 +29,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
+
+import java.awt.*;
 
 public class WhoopeeCushionItem extends WearableRelicItem {
     @Override
@@ -80,14 +84,15 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || !isAbilityUnlocked(stack, "push"))
+        if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || !isAbilityUnlocked(stack, "push")
+                || player.getRandom().nextDouble() > getStatValue(stack, "push", "chance") || !player.onGround())
             return;
 
         var isSneaking = player.isShiftKeyDown();
 
-        if (isSneaking && !stack.getOrDefault(DataComponentRegistry.TOGGLED, false)
-                && player.getRandom().nextDouble() <= getStatValue(stack, "push", "chance"))
+        if (isSneaking && !stack.getOrDefault(DataComponentRegistry.TOGGLED, false)) {
             createWhoopee(player.level(), player, stack);
+        }
 
         stack.set(DataComponentRegistry.TOGGLED, isSneaking);
     }
@@ -98,10 +103,16 @@ public class WhoopeeCushionItem extends WearableRelicItem {
         spreadRelicExperience(player, stack, 1);
 
         for (Mob mob : level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(getStatValue(stack, "push", "radius")))) {
-            mob.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
+            var vec3 = mob.position().subtract(player.position()).normalize();
 
-            mob.setDeltaMovement(mob.position().subtract(player.position()).normalize());
+            mob.setDeltaMovement(vec3.x, vec3.y + 0.2, vec3.z);
+            mob.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
         }
+
+        var random = player.getRandom();
+
+        ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(0, 100 + random.nextInt(50), 0), 0.5F, 50, 0.9F),
+                player.getX(), player.getY() + 0.5, player.getZ(), 30, 0.25, 0.3, 0.25, 0.1);
     }
 
     @EventBusSubscriber
