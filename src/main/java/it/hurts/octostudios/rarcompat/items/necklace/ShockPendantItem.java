@@ -35,6 +35,16 @@ public class ShockPendantItem extends WearableRelicItem {
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
+                        .ability(AbilityData.builder("passive")
+                                .maxLevel(0)
+                                .research(ResearchData.builder()
+                                        .star(0, 6, 29).star(1, 10, 25).star(2, 12, 29).star(3, 15, 20)
+                                        .star(4, 18, 27).star(5, 8, 17).star(7, 5, 9).star(8, 13, 2)
+                                        .star(9, 16, 5).star(10, 20, 12).star(11, 13, 9)
+                                        .link(1, 0).link(1, 2).link(1, 3).link(3, 4).link(5, 7).link(7, 8).link(9, 10).link(3, 5).link(8, 9).link(10, 3)
+                                        .link(1, 3).link(9, 11)
+                                        .build())
+                                .build())
                         .ability(AbilityData.builder("lightning")
                                 .stat(StatData.builder("damage")
                                         .initialValue(1D, 3D)
@@ -50,16 +60,6 @@ public class ShockPendantItem extends WearableRelicItem {
                                         .star(0, 10, 18).star(1, 4, 14).star(2, 11, 13)
                                         .star(3, 16, 16).star(4, 12, 29)
                                         .link(1, 0).link(2, 0).link(3, 0).link(4, 0)
-                                        .build())
-                                .build())
-                        .ability(AbilityData.builder("passive")
-                                .maxLevel(0)
-                                .research(ResearchData.builder()
-                                        .star(0, 6, 29).star(1, 10, 25).star(2, 12, 29).star(3, 15, 20)
-                                        .star(4, 18, 27).star(5, 8, 17).star(7, 5, 9).star(8, 13, 2)
-                                        .star(9, 16, 5).star(10, 20, 12).star(11, 13, 9)
-                                        .link(1, 0).link(1, 2).link(1, 3).link(3, 4).link(5, 7).link(7, 8).link(9, 10).link(3, 5).link(8, 9).link(10, 3)
-                                        .link(1, 3).link(9, 11)
                                         .build())
                                 .build())
                         .build())
@@ -99,8 +99,7 @@ public class ShockPendantItem extends WearableRelicItem {
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.SHOCK_PENDANT.value());
 
-            if (!(EntityUtils.findEquippedCurio(player, ModItems.SHOCK_PENDANT.value()).getItem() instanceof ShockPendantItem relic)
-                    || !relic.canPlayerUseAbility(player, stack, "passive"))
+            if (!(stack.getItem() instanceof ShockPendantItem relic) || !relic.canPlayerUseAbility(player, stack, "passive"))
                 return;
 
             event.setCanceled(true);

@@ -17,11 +17,14 @@ import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 
 import java.awt.*;
@@ -31,6 +34,9 @@ public class WitheredBraceletItem extends WearableRelicItem {
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
+                        .ability(AbilityData.builder("passive")
+                                .maxLevel(0)
+                                .build())
                         .ability(AbilityData.builder("withered")
                                 .stat(StatData.builder("chance")
                                         .initialValue(0.2D, 0.4D)
@@ -81,11 +87,24 @@ public class WitheredBraceletItem extends WearableRelicItem {
     @EventBusSubscriber
     public static class WitheredBraceletEvent {
         @SubscribeEvent
+        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+            if (!(event.getEntity() instanceof Player player) || !event.getSource().is(DamageTypes.WITHER))
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.WITHERED_BRACELET.value());
+
+            if (!(stack.getItem() instanceof WitheredBraceletItem relic) || !relic.canPlayerUseAbility(player, stack, "passive"))
+                return;
+
+            event.setCanceled(true);
+        }
+
+        @SubscribeEvent
         public static void onReceivingDamage(AttackEntityEvent event) {
             var player = event.getEntity();
             var level = player.getCommandSenderWorld();
 
-            if (!(event.getTarget() instanceof LivingEntity attacker) || level.isClientSide() || attacker == player)
+            if (!(event.getTarget() instanceof LivingEntity attacker) || level.isClientSide() || attacker.getStringUUID().equals(player.getStringUUID()))
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.WITHERED_BRACELET.value());
