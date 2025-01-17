@@ -15,18 +15,24 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import top.theillusivec4.curios.api.SlotContext;
+
+import java.awt.*;
 
 public class SteadfastSpikesItem extends WearableRelicItem {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
+                        .ability(AbilityData.builder("passive")
+                                .maxLevel(0)
+                                .build())
                         .ability(AbilityData.builder("resistance")
                                 .stat(StatData.builder("modifier")
                                         .initialValue(0.2, 0.3D)
@@ -64,6 +70,18 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                         .entry(LootEntries.WILDCARD, LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.MOUNTAIN)
                         .build())
                 .build();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        if (!(slotContext.entity() instanceof Player player) || !player.getCommandSenderWorld().isClientSide() || !isAbilityUnlocked(stack, "passive")
+                || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1)
+            return;
+
+        player.setDeltaMovement(player.getDeltaMovement().x, -0.05, player.getDeltaMovement().z);
+
+        player.getCommandSenderWorld().addParticle(ParticleUtils.constructSimpleSpark(new Color(50, 20 + player.getRandom().nextInt(50), 0), 0.5F, 50, 0.9F),
+                player.getX(), player.getY(), player.getZ(), 0, 0, 0);
     }
 
     @EventBusSubscriber
