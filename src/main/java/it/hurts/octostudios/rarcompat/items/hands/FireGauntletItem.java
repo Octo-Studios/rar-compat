@@ -1,6 +1,8 @@
 package it.hurts.octostudios.rarcompat.items.hands;
 
 import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.entities.SparkEntity;
+import it.hurts.octostudios.rarcompat.init.EntityRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
@@ -13,41 +15,40 @@ import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.packets.sync.S2CEntityTargetPacket;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 
-import java.awt.*;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 public class FireGauntletItem extends WearableRelicItem {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("arson")
-                                .stat(StatData.builder("sector")
-                                        .initialValue(0.7D, 0.9D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.35D)
-                                        .formatValue(value -> MathUtils.round(value, 1))
-                                        .build())
-                                .stat(StatData.builder("time")
-                                        .initialValue(2D, 3D)
+                        .ability(AbilityData.builder("caster")
+                                .stat(StatData.builder("chance")
+                                        .initialValue(0.2D, 0.3D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
-                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
+                                        .build())
+                                .stat(StatData.builder("damage")
+                                        .initialValue(0.1D, 0.3D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
+                                        .build())
+                                .stat(StatData.builder("duration")
+                                        .initialValue(30D, 50D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.3D)
+                                        .formatValue(value -> MathUtils.round(value / 20, 1))
                                         .build())
                                 .research(ResearchData.builder()
                                         .star(0, 13, 29).star(1, 11, 22).star(2, 5, 22).star(3, 6, 17)
@@ -71,7 +72,7 @@ public class FireGauntletItem extends WearableRelicItem {
                         .maxLevel(10)
                         .step(100)
                         .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("arson")
+                                .source(LevelingSourceData.abilityBuilder("caster")
                                         .initialValue(1)
                                         .gem(GemShape.SQUARE, GemColor.ORANGE)
                                         .build())
@@ -79,79 +80,50 @@ public class FireGauntletItem extends WearableRelicItem {
                         .build())
                 .loot(LootData.builder()
                         .entry(LootEntries.WILDCARD, LootEntries.NETHER_LIKE, LootEntries.THE_NETHER)
+
                         .build())
                 .build();
     }
 
     @EventBusSubscriber
     public static class FireGauntletEvent {
-
         @SubscribeEvent
         public static void onAttack(AttackEntityEvent event) {
-            Player player = event.getEntity();
+            var player = event.getEntity();
+            var level = player.getCommandSenderWorld();
 
-            if (!(event.getTarget() instanceof LivingEntity) || player.getCommandSenderWorld().isClientSide())
+            if (level.isClientSide() || !(event.getTarget() instanceof LivingEntity))
                 return;
 
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.FIRE_GAUNTLET.value());
 
-            if (!(stack.getItem() instanceof FireGauntletItem relic) || !relic.canPlayerUseAbility(player, stack, "arson"))
+            if (!(stack.getItem() instanceof FireGauntletItem relic) || !relic.canPlayerUseAbility(player, stack, "caster"))
                 return;
 
-            double attackRange = Objects.requireNonNull(player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE)).getValue();
-            double sector = relic.getStatValue(stack, "arson", "sector") * 10;
-            int flameTime = (int) relic.getStatValue(stack, "arson", "time");
+            List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue()),
+                    entity -> player.hasLineOfSight(entity) && !entity.getUUID().equals(player.getUUID()) && !entity.isInvisible());
+            targets.sort(Comparator.comparingDouble(targetEntity -> targetEntity.distanceTo(player)));
 
-            for (LivingEntity entity : findMobsInCone(player, attackRange, sector * 10)) {
-                entity.setRemainingFireTicks(flameTime * 20);
+            var targetIndex = 0;
+            var random = player.getRandom();
+            var sparksCount = Math.min(MathUtils.multicast(random, relic.getStatValue(stack, "caster", "chance")), targets.size());
 
-                relic.spreadRelicExperience(player, stack, 1);
+            for (int i = 0; i < sparksCount; i++) {
+                var spark = new SparkEntity(EntityRegistry.SPARK.value(), level);
+
+                spark.setOwner(player);
+                spark.setRelicStack(stack);
+                spark.setTarget(targets.get(targetIndex));
+                spark.setDamage((float) (player.getAttributes().getValue(Attributes.ATTACK_DAMAGE) * relic.getStatValue(stack, "caster", "damage")));
+                spark.setPos(player.position().add(0F, player.getBbHeight() / 2F, 0F));
+                spark.setDeltaMovement(targets.get(targetIndex).position().subtract(spark.position()).normalize().add(0.2, 0.35F, -0.6));
+
+                level.addFreshEntity(spark);
+
+                ((ServerLevel) level).getChunkSource().broadcastAndSend(player, new S2CEntityTargetPacket(player.getId(), spark.getId()));
+
+                targetIndex = (targetIndex + 1) % targets.size();
             }
-
-            spawnDirectionalArc(player, sector, attackRange);
-        }
-
-        private static void spawnDirectionalArc(LivingEntity player, double arcAngle, double rangeAttack) {
-            double centerAngle = Math.toRadians(player.getYRot()) + 20.4;
-
-            double startAngle = centerAngle - Math.toRadians(arcAngle);
-            double endAngle = centerAngle + Math.toRadians(arcAngle);
-
-            Random random = new Random();
-
-            for (double d = 0; d <= rangeAttack; d += 0.4) {
-                int particleCount = (int) (arcAngle / 4 + d);
-
-                for (int i = 0; i <= particleCount; i++) {
-                    double angleStep = (endAngle - startAngle) / particleCount;
-
-                    double angle = startAngle + angleStep * i;
-                    double x = player.getX() + d * Math.cos(angle);
-                    double z = player.getZ() + d * Math.sin(angle);
-
-
-                    ((ServerLevel) player.level()).sendParticles(ParticleUtils.constructSimpleSpark(
-                                    new Color(200 + random.nextInt(56), random.nextInt(100), random.nextInt(20)),
-                                    0.8F, 20, 0.9F),
-                            x, player.getY() + 1, z,
-                            0, 0, 0, 0, 0);
-                }
-            }
-        }
-
-        public static List<LivingEntity> findMobsInCone(Player player, double attackRange, double angle) {
-            double playerY = player.getY();
-
-            return player.level().getEntities(player, new AABB(player.blockPosition()).inflate(attackRange), entity -> entity instanceof LivingEntity).stream()
-                    .map(entity -> (LivingEntity) entity)
-                    .filter(livingEntity -> {
-                        double entityY = livingEntity.getY();
-                        if (entityY < playerY - 2 || entityY > playerY + 2) return false;
-
-                        return player.getLookAngle().normalize()
-                                .dot(livingEntity.position().subtract(player.position()).normalize()) > Math.cos(Math.toRadians(angle) * 0.2);
-                    })
-                    .collect(Collectors.toList());
         }
     }
 }

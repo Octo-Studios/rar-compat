@@ -46,7 +46,7 @@ public class KittySlippersItem extends WearableRelicItem {
                         .ability(AbilityData.builder("fall")
                                 .stat(StatData.builder("modifier")
                                         .initialValue(2D, 4D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.4)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .research(ResearchData.builder()

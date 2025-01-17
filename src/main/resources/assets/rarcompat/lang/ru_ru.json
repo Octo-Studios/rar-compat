@@ -289,10 +289,10 @@
   "tooltip.relics.obsidian_skull.leveling_source.hell.description": "+%1$s единиц опыта за каждую секунду поглощения огненного урона способностью %2$s.",
 
   "tooltip.relics.fire_gauntlet.description": "Наделяет оружие носителя реликвии силами стихии огня.",
-  "tooltip.relics.fire_gauntlet.ability.arson": "Волна огня",
-  "tooltip.relics.fire_gauntlet.ability.arson.description": "Атаки в ближнем бою выпускают огненную волну шириной в %1$s блоков, поджигающую мобов на %2$s секунд.",
-  "tooltip.relics.fire_gauntlet.leveling_source.arson.title": "Волна огня",
-  "tooltip.relics.fire_gauntlet.leveling_source.arson.description": "+%1$s единиц опыта за каждую цель, поглощённую огненной волной от способности %2$s.",
+  "tooltip.relics.fire_gauntlet.ability.caster": "Волна огня",
+  "tooltip.relics.fire_gauntlet.ability.caster.description": "Шанс мультикаста %1$s Урон %2$s Длительно горения %3$s",
+  "tooltip.relics.fire_gauntlet.leveling_source.caster.title": "Волна огня",
+  "tooltip.relics.fire_gauntlet.leveling_source.caster.description": "+%1$s единиц опыта за каждую цель, поглощённую огненной волной от способности %2$s.",
 
   "tooltip.relics.pickaxe_heater.description": "Точно концентрирует всё окружающее тепло на инструментах носителя реликвии.",
   "tooltip.relics.pickaxe_heater.ability.heater": "Концентрация жара",

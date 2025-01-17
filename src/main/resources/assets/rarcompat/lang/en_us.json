@@ -289,10 +289,10 @@
   "tooltip.relics.obsidian_skull.leveling_source.hell.description": "+%1$s experience points for each second of fire damage absorption using the %2$s ability.",
 
   "tooltip.relics.fire_gauntlet.description": "Imbues the relic bearer's weapon with the power of fire.",
-  "tooltip.relics.fire_gauntlet.ability.arson": "Fire Wave",
-  "tooltip.relics.fire_gauntlet.ability.arson.description": "Melee attacks release a fire wave %1$s blocks wide, igniting mobs for %2$s seconds.",
-  "tooltip.relics.fire_gauntlet.leveling_source.arson.title": "Fire Wave",
-  "tooltip.relics.fire_gauntlet.leveling_source.arson.description": "+%1$s experience points for each target hit by the fire wave from the %2$s ability.",
+  "tooltip.relics.fire_gauntlet.ability.caster": "Fire Wave",
+  "tooltip.relics.fire_gauntlet.ability.caster.description": "Melee attacks release a fire wave %1$s blocks wide, igniting mobs for %2$s seconds.",
+  "tooltip.relics.fire_gauntlet.leveling_source.caster.title": "Fire Wave",
+  "tooltip.relics.fire_gauntlet.leveling_source.caster.description": "+%1$s experience points for each target hit by the fire wave from the %2$s ability.",
 
   "tooltip.relics.pickaxe_heater.description": "Concentrates surrounding heat precisely onto the relic bearer's tools.",
   "tooltip.relics.pickaxe_heater.ability.heater": "Heat Concentration",
