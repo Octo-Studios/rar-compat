@@ -44,11 +44,10 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         var level = getCommandSenderWorld();
         var particleCenter = this.getPosition(1).add(0, 0.5, 0);
 
-        level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0), 0.3F + random.nextFloat() * Math.min(tickCount * 0.01F, 0.1F), 5 + random.nextInt(3), 0.9F),
+        level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0), 0.01F + random.nextFloat() * 0.1F, 5 + random.nextInt(3), 0.9F),
                 particleCenter.x() + MathUtils.randomFloat(random) * 0.05F, particleCenter.y() + MathUtils.randomFloat(random) * 0.05F, particleCenter.z() + MathUtils.randomFloat(random) * 0.05F, 0F, 0F, 0F);
 
-        if (level.isClientSide() || target == null)
-            return;
+        if (level.isClientSide() || target == null) return;
 
         if (target.isDeadOrDying())
             this.discard();
@@ -60,9 +59,9 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         var factor = Math.clamp(tickCount * 0.05F, 0F, 1F);
 
         var deltaX = motion.x + (direction.x * factor - motion.x) * factor;
-        var deltaY = motion.z + (direction.z * factor - motion.z) * factor;
+        var deltaZ = motion.z + (direction.z * factor - motion.z) * factor;
 
-        this.setDeltaMovement(new Vec3(deltaX, direction.scale(this.position().distanceTo(targetPos) * (this.tickCount * 0.01F)).y, deltaY));
+        this.setDeltaMovement(new Vec3(deltaX, direction.scale(this.position().distanceTo(targetPos) * (this.tickCount * 0.01F)).y, deltaZ));
     }
 
     @Override
@@ -72,8 +71,10 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         if (this.getOwner() instanceof Player player && result instanceof EntityHitResult entityResult && entityResult.getEntity() instanceof LivingEntity entity && !entity.getStringUUID().equals(player.getStringUUID())) {
             entity.invulnerableTime = 0;
 
-            if (entity.hurt(getCommandSenderWorld().damageSources().thrown(this, player), getDamage()))
-                entity.setRemainingFireTicks((int) ((IRelicItem) getRelicStack().getItem()).getStatValue(getRelicStack(), "caster", "duration"));
+            if (entity.hurt(getCommandSenderWorld().damageSources().thrown(this, player), getDamage()) && getRelicStack().getItem() instanceof IRelicItem relic) {
+                entity.setRemainingFireTicks((int) relic.getStatValue(getRelicStack(), "caster", "duration"));
+                relic.spreadRelicExperience(player, getRelicStack(), 1);
+            }
         }
 
         this.discard();
@@ -171,6 +172,6 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
 
     @Override
     public double getTrailScale() {
-        return 0.15F;
+        return 0.05F;
     }
 }

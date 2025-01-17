@@ -1,6 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.feet;
 
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.init.DataComponentRegistry;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
@@ -14,14 +15,11 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import it.hurts.sskirillss.relics.utils.WorldUtils;
-import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class SnowshoesItem extends WearableRelicItem {
@@ -75,31 +73,36 @@ public class SnowshoesItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || !canPlayerUseAbility(player, stack, "speed") || player.getCommandSenderWorld().isClientSide())
+        if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || !canPlayerUseAbility(player, stack, "speed"))
             return;
 
-        if (isStandingOnSnow(player)) {
-            if (player.tickCount % 60 == 0 && (player.getKnownMovement().x != 0 || player.getKnownMovement().z != 0))
-                spreadRelicExperience(player, stack, 1);
+        double step = 0.01D;
+        double modifier = isStandingOnSnow(player) ? step : -step;
 
-            EntityUtils.applyAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) getStatValue(stack, "speed", "amount"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-        } else {
-            EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-        }
+        if (modifier != 0D)
+            addSpeed(stack, modifier);
+
+        EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) getSpeed(stack), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+
+        if (isStandingOnSnow(player) && player.tickCount % 60 == 0 && (player.getKnownMovement().x != 0 || player.getKnownMovement().z != 0))
+            spreadRelicExperience(player, stack, 1);
+    }
+
+    public void addSpeed(ItemStack stack, double val) {
+        if (getSpeed(stack) <= getStatValue(stack, "speed", "amount") || val < 0)
+            setSpeed(stack, getSpeed(stack) + val);
+    }
+
+    public double getSpeed(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.SPEED, 0D);
+    }
+
+    public void setSpeed(ItemStack stack, double val) {
+        stack.set(DataComponentRegistry.SPEED, Math.max(val, 0D));
     }
 
     private boolean isStandingOnSnow(Player player) {
-        BlockPos startPos = player.blockPosition().atY((int) Math.floor(WorldUtils.getGroundHeight(player, player.position().add(0, 0.1, 0), 8)));
-
-        for (int i = 0; i < 8; i++) {
-            BlockState blockBelow = player.level().getBlockState(startPos.below(i));
-
-            if (blockBelow.is(BlockTags.SNOW))
-                return true;
-
-        }
-
-        return false;
+        return player.getCommandSenderWorld().getBlockState(player.blockPosition().below()).is(BlockTags.SNOW);
     }
 
     @Override

@@ -15,10 +15,10 @@ import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.network.packets.sync.S2CEntityTargetPacket;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
@@ -41,8 +41,8 @@ public class FireGauntletItem extends WearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
                                 .stat(StatData.builder("damage")
-                                        .initialValue(0.1D, 0.3D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
+                                        .initialValue(0.05D, 0.15D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.235D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
                                 .stat(StatData.builder("duration")
@@ -120,8 +120,7 @@ public class FireGauntletItem extends WearableRelicItem {
 
                 level.addFreshEntity(spark);
 
-                ((ServerLevel) level).getChunkSource().broadcastAndSend(player, new S2CEntityTargetPacket(player.getId(), spark.getId()));
-
+                NetworkHandler.sendToClientsTrackingEntityAndSelf(new S2CEntityTargetPacket(player.getId(), spark.getId()), spark);
                 targetIndex = (targetIndex + 1) % targets.size();
             }
         }
