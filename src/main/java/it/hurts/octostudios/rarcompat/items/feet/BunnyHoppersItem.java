@@ -71,7 +71,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.PLAINS, LootEntries.FOREST)
+                        .entry(LootEntries.PLAINS, LootEntries.FOREST)
                         .build())
                 .build();
     }

@@ -73,7 +73,7 @@ public class NightVisionGogglesItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.SCULK)
+                        .entry(LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.SCULK)
                         .build())
                 .build();
     }

@@ -82,7 +82,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.AQUATIC)
+                        .entry(LootEntries.AQUATIC, LootEntries.THE_END, LootEntries.END_LIKE)
                         .build())
                 .build();
     }

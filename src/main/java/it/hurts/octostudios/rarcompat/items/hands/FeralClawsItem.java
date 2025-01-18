@@ -65,7 +65,7 @@ public class FeralClawsItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.CAVE, LootEntries.MINESHAFT)
+                        .entry(LootEntries.OVERWORLD)
                         .build())
                 .build();
     }

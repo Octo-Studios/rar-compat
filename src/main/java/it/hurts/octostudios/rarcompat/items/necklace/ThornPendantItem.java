@@ -77,7 +77,7 @@ public class ThornPendantItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.TROPIC)
+                        .entry(LootEntries.TROPIC)
                         .build())
                 .build();
     }

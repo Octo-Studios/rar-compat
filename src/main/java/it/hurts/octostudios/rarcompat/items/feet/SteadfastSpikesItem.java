@@ -67,7 +67,7 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.MOUNTAIN)
+                        .entry(LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.MOUNTAIN)
                         .build())
                 .build();
     }

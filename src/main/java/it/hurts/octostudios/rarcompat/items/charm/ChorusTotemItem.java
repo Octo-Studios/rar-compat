@@ -67,7 +67,7 @@ public class ChorusTotemItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.END_LIKE, LootEntries.THE_END)
+                        .entry(LootEntries.END_LIKE, LootEntries.THE_END)
                         .build())
                 .build();
     }

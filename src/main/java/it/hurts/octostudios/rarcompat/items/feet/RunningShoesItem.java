@@ -61,7 +61,7 @@ public class RunningShoesItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE, LootEntries.PLAINS)
+                        .entry(LootEntries.VILLAGE, LootEntries.PLAINS)
                         .build())
                 .build();
     }

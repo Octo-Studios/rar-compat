@@ -101,7 +101,7 @@ public class KittySlippersItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.TROPIC, LootEntries.VILLAGE)
+                        .entry(LootEntries.TROPIC, LootEntries.VILLAGE)
                         .build())
                 .build();
     }

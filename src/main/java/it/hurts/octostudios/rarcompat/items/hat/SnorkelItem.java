@@ -73,7 +73,7 @@ public class SnorkelItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.AQUATIC, LootEntries.VILLAGE)
+                        .entry(LootEntries.AQUATIC)
                         .build())
                 .build();
     }

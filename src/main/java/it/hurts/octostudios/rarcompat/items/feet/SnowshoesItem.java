@@ -66,7 +66,7 @@ public class SnowshoesItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.FROST, LootEntries.TAIGA, LootEntries.MOUNTAIN)
+                        .entry(LootEntries.FROST, LootEntries.TAIGA, LootEntries.MOUNTAIN)
                         .build())
                 .build();
     }
