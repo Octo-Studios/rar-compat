@@ -302,7 +302,7 @@
 
   "tooltip.relics.chorus_totem.description": "Позволяет носителю реликвии обернуть время вспять при совершении необдуманных действий.",
   "tooltip.relics.chorus_totem.ability.past": "Временная петля",
-  "tooltip.relics.chorus_totem.ability.past.description": "При использовании позволяет игроку вернуться на предыдущую точку после последней совершённой телепортации, затем уходит на перезарядку на %1$s секунд.",
+  "tooltip.relics.chorus_totem.ability.past.description": "Шанс %1$s Радиус %2$s.",
   "tooltip.relics.chorus_totem.ability.past.predicate.past": "Совершённая телепортация",
   "tooltip.relics.chorus_totem.leveling_source.past.title": "Временная петля",
   "tooltip.relics.chorus_totem.leveling_source.past.description": "+%1$s единиц опыта за каждое использование способности %2$s.",

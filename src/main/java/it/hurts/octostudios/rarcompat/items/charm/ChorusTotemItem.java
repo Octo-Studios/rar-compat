@@ -2,12 +2,7 @@ package it.hurts.octostudios.rarcompat.items.charm;
 
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.init.DataComponentRegistry;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.CastData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastStage;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastType;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.PredicateType;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
@@ -20,29 +15,28 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import it.hurts.sskirillss.relics.utils.data.WorldPosition;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import top.theillusivec4.curios.api.SlotContext;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 
 public class ChorusTotemItem extends WearableRelicItem {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("past")
-                                .active(CastData.builder().type(CastType.INSTANTANEOUS)
-                                        .predicate("past", PredicateType.CAST, (player, stack) -> teleportedPlayer(player, player.position(), getWorldPos(stack, player).getPos()))
+                                .stat(StatData.builder("chance")
+                                        .initialValue(0.02D, 0.035D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.1D)
+                                        .formatValue(value -> MathUtils.round(value * 100, 0))
                                         .build())
-                                .stat(StatData.builder("capacity")
-                                        .initialValue(14D, 12D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, -0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                .stat(StatData.builder("radius")
+                                        .initialValue(5D, 7D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.1D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 1))
                                         .build())
                                 .research(ResearchData.builder()
                                         .star(0, 11, 19).star(1, 11, 27).star(2, 3, 12).star(3, 19, 12)
@@ -78,96 +72,51 @@ public class ChorusTotemItem extends WearableRelicItem {
                 .build();
     }
 
-    @Override
-    public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
-        Vec3 pos = getWorldPos(stack, player).getPos();
-
-        player.teleportTo(pos.x, pos.y, pos.z);
-
-        spreadRelicExperience(player, stack, 1);
-
-        setAbilityCooldown(stack, "past", (int) getStatValue(stack, "past", "capacity") * 20);
-
-        if (stage == CastStage.END)
-            setToggled(stack, true);
-    }
-
-    @Override
-    public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player))
-            return;
-
-        int tickCount = player.tickCount;
-
-        if (canPlayerUseAbility(player, stack, "past"))
-            setToggled(stack, false);
-
-        if (tickCount % 2 == 0 && getToggled(stack))
-            setWorldPos(stack, new WorldPosition(player));
-        else {
-            if (tickCount % 20 == 0) {
-                addTime(stack, 1);
-            }
-
-            if (getTime(stack) >= 5) {
-                setWorldPos(stack, new WorldPosition(player));
-                addTime(stack, -getTime(stack));
-
-                setToggled(stack, true);
-            }
-        }
-    }
-
-    public boolean teleportedPlayer(Player player, Vec3 startPosition, Vec3 endPosition) {
-        return !(startPosition.distanceTo(endPosition) <= player.getKnownMovement().length() * 10);
-    }
-
-    @Override
-    public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
-        if (prevStack.getItem() == stack.getItem())
-            return;
-
-        setWorldPos(stack, null);
-        setToggled(stack, true);
-        addTime(stack, -getTime(stack));
-    }
-
-    public void setWorldPos(ItemStack stack, WorldPosition worldPosition) {
-        stack.set(DataComponentRegistry.WORLD_POSITION, worldPosition);
-    }
-
-    public WorldPosition getWorldPos(ItemStack stack, Player player) {
-        return stack.getOrDefault(DataComponentRegistry.WORLD_POSITION, new WorldPosition(player));
-    }
-
-    public void addTime(ItemStack stack, int val) {
-        stack.set(DataComponentRegistry.TIME, getTime(stack) + val);
-    }
-
-    public int getTime(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.TIME, 0);
-    }
-
-    public void setToggled(ItemStack stack, boolean val) {
-        stack.set(DataComponentRegistry.TOGGLED, val);
-    }
-
-    public boolean getToggled(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.TOGGLED, true);
-    }
-
     @EventBusSubscriber
     public static class ChorusTotemEvent {
         @SubscribeEvent
-        public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
-            Player player = event.getEntity();
+        public static void onDimensionChange(LivingDamageEvent.Post event) {
+            var attacker = event.getSource().getEntity();
 
-            ItemStack itemStack = EntityUtils.findEquippedCurio(player, ModItems.CHORUS_TOTEM.value());
-
-            if (!(itemStack.getItem() instanceof ChorusTotemItem relic))
+            if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || attacker == null
+                    || attacker.getStringUUID().equals(player.getStringUUID()))
                 return;
 
-            relic.setWorldPos(itemStack, null);
+            var level = player.getCommandSenderWorld();
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.CHORUS_TOTEM.value());
+            var random = level.getRandom();
+
+            if (!(stack.getItem() instanceof ChorusTotemItem relic) || !relic.canPlayerUseAbility(player, stack, "past") || player.getHealth() < 1
+                    || (player.getMaxHealth() - player.getHealth()) * relic.getStatValue(stack, "past", "chance") < random.nextFloat())
+                return;
+
+            var radius = (int) relic.getStatValue(stack, "past", "radius");
+            Vec3 pose = null;
+
+            for (int i = 0; i < 50; i++) {
+                int x = (int) (player.getX() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
+                int y = (int) (player.getY() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
+                int z = (int) (player.getZ() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
+
+                var targetPos = new BlockPos(x, y, z);
+
+                if (!level.getBlockState(targetPos.below()).blocksMotion() || level.isEmptyBlock(targetPos) || !level.getBlockState(targetPos).liquid())
+                    continue;
+
+                pose = new Vec3(x, y, z);
+                break;
+            }
+
+            if (pose == null)
+                return;
+
+            if (attacker instanceof Player attacketPlayer)
+                level.broadcastEntityEvent(attacketPlayer, (byte) 35);
+
+            attacker.teleportTo(pose.x, pose.y, pose.z);
+            attacker.setDeltaMovement(0, 0, 0);
+
+            relic.spreadRelicExperience(player, stack, 1);
         }
     }
 }
