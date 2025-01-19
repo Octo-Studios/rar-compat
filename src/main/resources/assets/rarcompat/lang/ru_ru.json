@@ -149,10 +149,10 @@
   "tooltip.relics.onion_ring.description": "Увеличивает эффективность добычи блоков носителем реликвии при достаточном уровне сытости.",
   "tooltip.relics.onion_ring.ability.onion": "Голод шахтёра",
   "tooltip.relics.onion_ring.ability.onion.description": "Увеличивает скорость добычи блоков на %1$s%% за единицу сытости игрока.",
-  "tooltip.relics.onion_ring.ability.saturation": "",
-  "tooltip.relics.onion_ring.ability.saturation.description": "%2$s",
-  "tooltip.relics.onion_ring.leveling_source.saturation.title": "",
-  "tooltip.relics.onion_ring.leveling_source.saturation.description": "",
+  "tooltip.relics.onion_ring.ability.saturation": "Сыроедение",
+  "tooltip.relics.onion_ring.ability.saturation.description": "При добыче блоков с вероятностью в %1$s%% восполняет игроку 1 единицу сытости.",
+  "tooltip.relics.onion_ring.leveling_source.saturation.title": "Сыроедения",
+  "tooltip.relics.onion_ring.leveling_source.saturation.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
   "tooltip.relics.onion_ring.leveling_source.onion.title": "Голод шахтёра",
   "tooltip.relics.onion_ring.leveling_source.onion.description": "+%1$s единиц опыта за каждый добытый блок. Вероятность получения опыта прямо пропорциональна текущей сытости. Не работает на блоки с моментальным разрушением.",
 
@@ -205,6 +205,8 @@
   "tooltip.relics.steadfast_spikes.description": "Крепко сцепляет ноги носителя реликвии с любой поверхностью.",
   "tooltip.relics.steadfast_spikes.ability.resistance": "Сцепление",
   "tooltip.relics.steadfast_spikes.ability.resistance.description": "Увеличивает сопротивление отдаче и скользким блокам на %1$s%%.",
+  "tooltip.relics.steadfast_spikes.ability.passive": "Цепкие когти",
+  "tooltip.relics.steadfast_spikes.ability.passive.description": "Позволяет медленно сползать по стенам, нивелируя урон от падения.",
   "tooltip.relics.steadfast_spikes.leveling_source.resistance_1.title": "Сцепление с поверхностью",
   "tooltip.relics.steadfast_spikes.leveling_source.resistance_1.description": "+%1$s единиц опыта за каждую ослабленную отдачу способностью %2$s.",
   "tooltip.relics.steadfast_spikes.leveling_source.resistance_2.title": "Сопротивление скольжению",
@@ -225,9 +227,7 @@
 
   "tooltip.relics.charm_of_shrinking.description": "Позволяет владельцу реликвии сжать собственное тело, чтобы проникнуть в ранее недосягаемые места.",
   "tooltip.relics.charm_of_shrinking.ability.shrinking": "Компрессия",
-  "tooltip.relics.charm_of_shrinking.ability.shrinking.description": "При зажатии ПКМ плавно уменьшает игрока на время до %1$s секунд. По истечении времени или при ручной деактивации способности уходит на перезарядку на 10 секунд.",
-  "tooltip.relics.charm_of_shrinking.leveling_source.shrinking.title": "Компрессия",
-  "tooltip.relics.charm_of_shrinking.leveling_source.shrinking.description": "+%1$s единиц опыта за каждую секунду, проведённую в уменьшенном состоянии от способности %2$s.",
+  "tooltip.relics.charm_of_shrinking.ability.shrinking.description": "Уменьшает размер игрока на %1$s%%.",
 
   "tooltip.relics.whoopee_cushion.description": "Таинственным образом увеличивает метеоризм носителя реликвии, приводя к совершенно непредсказуемым последствиям.",
   "tooltip.relics.whoopee_cushion.ability.push": "Метеоризм",
@@ -290,9 +290,9 @@
 
   "tooltip.relics.fire_gauntlet.description": "Наделяет оружие носителя реликвии силами стихии огня.",
   "tooltip.relics.fire_gauntlet.ability.caster": "Волна огня",
-  "tooltip.relics.fire_gauntlet.ability.caster.description": "Шанс мультикаста %1$s Урон %2$s Длительно горения %3$s",
+  "tooltip.relics.fire_gauntlet.ability.caster.description": "При атаке выпускает несколько искр, наводящихся на ближайшие цели, поджигающих на %3$s секунд и наносящих %2$s%% от урона совершённой атаки. Количество искр высчитывается посредством многократной проверки срабатывания шанса в %1$s%%. За каждое успешное срабатывание выпускается одна дополнительная искра, но как только вероятность не срабатывает хотя бы раз - процесс прекращается.",
   "tooltip.relics.fire_gauntlet.leveling_source.caster.title": "Волна огня",
-  "tooltip.relics.fire_gauntlet.leveling_source.caster.description": "+%1$s единиц опыта за каждую цель, поглощённую огненной волной от способности %2$s.",
+  "tooltip.relics.fire_gauntlet.leveling_source.caster.description": "+%1$s единиц опыта за каждую пораженную цель искрой от способности %2$s.",
 
   "tooltip.relics.pickaxe_heater.description": "Точно концентрирует всё окружающее тепло на инструментах носителя реликвии.",
   "tooltip.relics.pickaxe_heater.ability.heater": "Концентрация жара",
@@ -302,10 +302,9 @@
 
   "tooltip.relics.chorus_totem.description": "Позволяет носителю реликвии обернуть время вспять при совершении необдуманных действий.",
   "tooltip.relics.chorus_totem.ability.past": "Временная петля",
-  "tooltip.relics.chorus_totem.ability.past.description": "Шанс %1$s Радиус %2$s.",
-  "tooltip.relics.chorus_totem.ability.past.predicate.past": "Совершённая телепортация",
+  "tooltip.relics.chorus_totem.ability.past.description": "Каждая атака, совершённая по носителю реликвии, с шансом в %1$s%% за каждый процент отсутствующего у него здоровья телепортирует атакующего в случайную локацию в радиусе %2$s блоков.",
   "tooltip.relics.chorus_totem.leveling_source.past.title": "Временная петля",
-  "tooltip.relics.chorus_totem.leveling_source.past.description": "+%1$s единиц опыта за каждое использование способности %2$s.",
+  "tooltip.relics.chorus_totem.leveling_source.past.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
 
   "tooltip.relics.running_shoes.description": "Укрепляет ноги носителя реликвии, позволяя двигаться быстрее.",
   "tooltip.relics.running_shoes.ability.runner": "Широкий шаг",
