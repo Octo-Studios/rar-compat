@@ -1,7 +1,6 @@
 package it.hurts.octostudios.rarcompat.init;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
-import it.hurts.sskirillss.relics.utils.Reference;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;

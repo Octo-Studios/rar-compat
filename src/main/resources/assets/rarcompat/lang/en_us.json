@@ -189,8 +189,8 @@
   "tooltip.relics.withered_bracelet.description": "Fills the relic bearer's weapon with withering energy, affecting all it touches.",
   "tooltip.relics.withered_bracelet.ability.withered": "Withering Touch",
   "tooltip.relics.withered_bracelet.ability.withered.description": "Has a %1$s%% chance to apply the Wither effect to the attacked target for %2$s seconds.",
-  "tooltip.relics.withered_bracelet.ability.passive": "",
-  "tooltip.relics.withered_bracelet.ability.passive.description": "",
+  "tooltip.relics.withered_bracelet.ability.passive": "Wither Resistance",
+  "tooltip.relics.withered_bracelet.ability.passive.description": "Grants complete resistance to wither damage.",
   "tooltip.relics.withered_bracelet.leveling_source.withered.title": "Withering Touch",
   "tooltip.relics.withered_bracelet.leveling_source.withered.description": "+%1$s experience points for each activation of the %2$s ability.",
 
@@ -249,7 +249,7 @@
 
   "tooltip.relics.bunny_hoppers.description": "Strengthens the relic bearer's legs, allowing them to push off the ground more powerfully.",
   "tooltip.relics.bunny_hoppers.ability.hold": "Jumper",
-  "tooltip.relics.bunny_hoppers.ability.hold.description": "Allows jumps up to %1$s blocks high by holding the jump key.",
+  "tooltip.relics.bunny_hoppers.ability.hold.description": "Allows high jumps by continuously holding the jump key for up to %1$s seconds.",
   "tooltip.relics.bunny_hoppers.leveling_source.hold.title": "Jumper",
   "tooltip.relics.bunny_hoppers.leveling_source.hold.description": "+%1$s experience points for each high jump performed using the %2$s ability.",
 

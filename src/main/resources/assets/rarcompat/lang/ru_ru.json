@@ -189,8 +189,8 @@
   "tooltip.relics.withered_bracelet.description": "Наполняет оружие носителя реликвии иссушающей энергией, воздействующую на всех, кого оно коснётся.",
   "tooltip.relics.withered_bracelet.ability.withered": "Иссушающее касание",
   "tooltip.relics.withered_bracelet.ability.withered.description": "С шансом в %1$s%% накладывает на атакуемую цель эффект иссушения на %2$s секунд.",
-  "tooltip.relics.withered_bracelet.ability.passive": "",
-  "tooltip.relics.withered_bracelet.ability.passive.description": "",
+  "tooltip.relics.withered_bracelet.ability.passive": "Сопротивление иссушению",
+  "tooltip.relics.withered_bracelet.ability.passive.description": "Наделяет полным сопротивлением к урону от иссушения.",
   "tooltip.relics.withered_bracelet.leveling_source.withered.title": "Иссушающее касание",
   "tooltip.relics.withered_bracelet.leveling_source.withered.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
 
@@ -249,7 +249,7 @@
 
   "tooltip.relics.bunny_hoppers.description": "Укрепляет ноги носителя реликвии, позволяя ему сильнее отталкиваться от земли.",
   "tooltip.relics.bunny_hoppers.ability.hold": "Прыгун",
-  "tooltip.relics.bunny_hoppers.ability.hold.description": "Позволяет совершать прыжки до %1$s блоков в высоту за счёт длительного удерживания клавиши прыжка.",
+  "tooltip.relics.bunny_hoppers.ability.hold.description": "Позволяет совершать высокие прыжки посредством непрерывного удержания клавиши прыжка на время до %1$s секунд.",
   "tooltip.relics.bunny_hoppers.leveling_source.hold.title": "Прыгун",
   "tooltip.relics.bunny_hoppers.leveling_source.hold.description": "+%1$s единиц опыта за каждый совершённый высокий прыжок от способности %2$s.",
 
