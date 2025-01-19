@@ -66,7 +66,7 @@ public class CrystalHeartItem extends WearableRelicItem {
                         .build())
 
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.CAVE, LootEntries.MINESHAFT)
+                        .entry(LootEntries.CAVE, LootEntries.MINESHAFT)
                         .build())
                 .build();
     }

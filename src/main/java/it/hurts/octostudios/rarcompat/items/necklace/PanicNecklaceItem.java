@@ -71,7 +71,7 @@ public class PanicNecklaceItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.FOREST, LootEntries.TROPIC)
+                        .entry(LootEntries.CAVE, LootEntries.MINESHAFT)
                         .build())
                 .build();
     }

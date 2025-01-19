@@ -63,7 +63,7 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE, LootEntries.DESERT)
+                        .entry(LootEntries.DESERT)
                         .build())
                 .build();
     }

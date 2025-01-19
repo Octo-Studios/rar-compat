@@ -68,7 +68,7 @@ public class PowerGloveItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE)
+                        .entry(LootEntries.VILLAGE)
                         .build())
                 .build();
     }

@@ -106,7 +106,7 @@ public class CowboyHatItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE, LootEntries.SAVANNA)
+                        .entry(LootEntries.VILLAGE, LootEntries.SAVANNA)
                         .build())
                 .build();
     }

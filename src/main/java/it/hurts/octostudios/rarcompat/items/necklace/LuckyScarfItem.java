@@ -57,7 +57,7 @@ public class LuckyScarfItem extends WearableRelicItem {
                                         .build())
                                 .build())
                         .build()).loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE, LootEntries.MINESHAFT, LootEntries.CAVE)
+                        .entry(LootEntries.MINESHAFT, LootEntries.CAVE)
                         .build())
                 .build();
     }

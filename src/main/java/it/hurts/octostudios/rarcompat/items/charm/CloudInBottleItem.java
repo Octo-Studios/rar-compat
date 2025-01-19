@@ -73,7 +73,7 @@ public class CloudInBottleItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.MOUNTAIN, LootEntries.CAVE)
+                        .entry(LootEntries.MOUNTAIN, LootEntries.THE_END, LootEntries.END_LIKE)
                         .build())
                 .build();
     }

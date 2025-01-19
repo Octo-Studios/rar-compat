@@ -106,7 +106,7 @@ public class UmbrellaItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.VILLAGE, LootEntries.MOUNTAIN)
+                        .entry(LootEntries.VILLAGE, LootEntries.MOUNTAIN)
                         .build())
                 .build();
     }

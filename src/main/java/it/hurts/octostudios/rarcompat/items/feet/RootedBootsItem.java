@@ -68,7 +68,7 @@ public class RootedBootsItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.FOREST, LootEntries.TROPIC, LootEntries.PLAINS)
+                        .entry(LootEntries.OVERWORLD)
                         .build())
                 .build();
     }

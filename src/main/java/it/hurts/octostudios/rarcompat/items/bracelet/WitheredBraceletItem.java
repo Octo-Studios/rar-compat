@@ -79,7 +79,7 @@ public class WitheredBraceletItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.NETHER_LIKE, LootEntries.THE_NETHER)
+                        .entry(LootEntries.NETHER_LIKE, LootEntries.THE_NETHER)
                         .build())
                 .build();
     }

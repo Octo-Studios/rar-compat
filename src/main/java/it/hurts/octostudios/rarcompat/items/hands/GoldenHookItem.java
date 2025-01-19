@@ -62,7 +62,7 @@ public class GoldenHookItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.BASTION)
+                        .entry(LootEntries.BASTION)
                         .build())
                 .build();
     }

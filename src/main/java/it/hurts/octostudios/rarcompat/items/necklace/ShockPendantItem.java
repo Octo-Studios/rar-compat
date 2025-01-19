@@ -85,7 +85,7 @@ public class ShockPendantItem extends WearableRelicItem {
                                 .build())
                         .build())
                 .loot(LootData.builder()
-                        .entry(LootEntries.WILDCARD, LootEntries.MOUNTAIN, LootEntries.PLAINS)
+                        .entry(LootEntries.MOUNTAIN)
                         .build())
                 .build();
     }
