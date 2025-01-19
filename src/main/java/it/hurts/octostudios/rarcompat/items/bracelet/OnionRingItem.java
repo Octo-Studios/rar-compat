@@ -15,6 +15,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -29,8 +30,8 @@ public class OnionRingItem extends WearableRelicItem {
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("onion")
                                 .stat(StatData.builder("amount")
-                                        .initialValue(0.01D, 0.025D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.25D)
+                                        .initialValue(0.01D, 0.015D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2D)
                                         .formatValue(value -> MathUtils.round(value * 100, 1))
                                         .build())
                                 .research(ResearchData.builder()
@@ -42,8 +43,9 @@ public class OnionRingItem extends WearableRelicItem {
                                         .build())
                                 .build())
                         .ability(AbilityData.builder("saturation")
+                                .requiredLevel(5)
                                 .stat(StatData.builder("chance")
-                                        .initialValue(0.05D, 0.25D)
+                                        .initialValue(0.05D, 0.15D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.1D)
                                         .formatValue(value -> MathUtils.round(value * 100, 1))
                                         .build())
@@ -61,7 +63,7 @@ public class OnionRingItem extends WearableRelicItem {
                         .build())
                 .leveling(LevelingData.builder()
                         .initialCost(100)
-                        .maxLevel(10)
+                        .maxLevel(15)
                         .step(100)
                         .sources(LevelingSourcesData.builder()
                                 .source(LevelingSourceData.abilityBuilder("onion")

@@ -105,7 +105,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
         for (Mob mob : level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(getStatValue(stack, "push", "radius")))) {
             var vec3 = mob.position().subtract(player.position()).normalize();
 
-            mob.setDeltaMovement(vec3.x, vec3.y + 0.2, vec3.z);
+            mob.setDeltaMovement(vec3.x, 0.4, vec3.z);
             mob.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
         }
 

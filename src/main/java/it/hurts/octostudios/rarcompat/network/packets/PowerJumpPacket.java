@@ -43,7 +43,7 @@ public class PowerJumpPacket implements CustomPacketPayload {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic))
                 return;
 
-            if (relic.getTime(stack) >= relic.getStatValue(stack, "hold", "distance") - 1)
+            if (relic.getTime(stack) >= relic.getStatValue(stack, "hold", "duration") - 1)
                 relic.spreadRelicExperience(player, stack, 1);
 
             relic.addTime(stack, 1);

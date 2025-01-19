@@ -29,8 +29,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
-import java.util.Random;
-
 public class UniversalAttractorItem extends WearableRelicItem {
     @Override
     public RelicData constructDefaultRelicData() {
@@ -100,7 +98,7 @@ public class UniversalAttractorItem extends WearableRelicItem {
 
         Vec3 pos = player.position();
 
-        for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, new AABB(pos.x - range, pos.y - range, pos.z - range,
+        for (ItemEntity item : player.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, new AABB(pos.x - range, pos.y - range, pos.z - range,
                 pos.x + range, pos.y + range, pos.z + range))) {
             if (item.position().y > pos.y)
                 continue;
@@ -145,7 +143,7 @@ public class UniversalAttractorItem extends WearableRelicItem {
 
             ItemEntity item = event.getItemEntity();
 
-            if (item.getRandom().nextFloat() >= new Random().nextFloat() && item.getOwner() != player)
+            if (item.getRandom().nextFloat() >= player.getRandom().nextFloat() && item.getOwner() != player)
                 relic.spreadRelicExperience(player, stack, 1);
         }
     }

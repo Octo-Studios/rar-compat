@@ -15,11 +15,13 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.WorldUtils;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class SnowshoesItem extends WearableRelicItem {
@@ -102,7 +104,11 @@ public class SnowshoesItem extends WearableRelicItem {
     }
 
     private boolean isStandingOnSnow(Player player) {
-        return player.getCommandSenderWorld().getBlockState(player.blockPosition().below()).is(BlockTags.SNOW);
+        for (int i = 0; i < 8; i++)
+            if (player.getCommandSenderWorld().getBlockState(player.blockPosition().atY((int) Math.floor(WorldUtils.getGroundHeight(player, player.position().add(0, 0.1, 0), 8))).below(i)).is(BlockTags.SNOW))
+                return true;
+
+        return false;
     }
 
     @Override

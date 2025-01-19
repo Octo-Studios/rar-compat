@@ -13,14 +13,27 @@ import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
+import it.hurts.sskirillss.relics.network.packets.PacketItemActivation;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+
+import java.awt.*;
 
 public class ChorusTotemItem extends WearableRelicItem {
     @Override
@@ -76,10 +89,8 @@ public class ChorusTotemItem extends WearableRelicItem {
     public static class ChorusTotemEvent {
         @SubscribeEvent
         public static void onDimensionChange(LivingDamageEvent.Post event) {
-            var attacker = event.getSource().getEntity();
-
-            if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || attacker == null
-                    || attacker.getStringUUID().equals(player.getStringUUID()))
+            if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide()
+                    || !(event.getSource().getEntity() instanceof LivingEntity attacker) || attacker.getStringUUID().equals(player.getStringUUID()))
                 return;
 
             var level = player.getCommandSenderWorld();
@@ -90,33 +101,59 @@ public class ChorusTotemItem extends WearableRelicItem {
                     || (player.getMaxHealth() - player.getHealth()) * relic.getStatValue(stack, "past", "chance") < random.nextFloat())
                 return;
 
-            var radius = (int) relic.getStatValue(stack, "past", "radius");
-            Vec3 pose = null;
-
-            for (int i = 0; i < 50; i++) {
-                int x = (int) (player.getX() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
-                int y = (int) (player.getY() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
-                int z = (int) (player.getZ() + (random.nextInt(radius) * (random.nextBoolean() ? 1 : -1)));
-
-                var targetPos = new BlockPos(x, y, z);
-
-                if (!level.getBlockState(targetPos.below()).blocksMotion() || level.isEmptyBlock(targetPos) || !level.getBlockState(targetPos).liquid())
-                    continue;
-
-                pose = new Vec3(x, y, z);
-                break;
-            }
-
-            if (pose == null)
-                return;
-
-            if (attacker instanceof Player attacketPlayer)
-                level.broadcastEntityEvent(attacketPlayer, (byte) 35);
-
-            attacker.teleportTo(pose.x, pose.y, pose.z);
+            attacker.randomTeleport(attacker.getX(), attacker.getY(), attacker.getZ(), false);
             attacker.setDeltaMovement(0, 0, 0);
+
+            teleportPlayerToSafeSpot(attacker, level, (int) relic.getStatValue(stack, "past", "radius"));
+
+            if (attacker instanceof ServerPlayer attackerPLayer) {
+                NetworkHandler.sendToClient(new PacketItemActivation(stack), attackerPLayer);
+
+                level.playSound(null, player, SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0F, 0.9F + random.nextFloat() * 0.2F);
+            }
 
             relic.spreadRelicExperience(player, stack, 1);
         }
+
+        public static void teleportPlayerToSafeSpot(LivingEntity attacker, Level level, int maxRadius) {
+            var random = attacker.getRandom();
+            var oldPos = attacker.position();
+
+            for (int radius = maxRadius; radius > 0; radius--) {
+                double x = attacker.getX() + (random.nextInt(radius * 2 + 1) - radius);
+                double y = attacker.getY() + (random.nextInt(radius * 2 + 1) - radius / 2.0);
+                double z = attacker.getZ() + (random.nextInt(radius * 2 + 1) - radius);
+
+                var targetPos = new BlockPos((int) x, (int) y, (int) z);
+
+                while (targetPos.getY() > level.getMinBuildHeight() && !level.getBlockState(targetPos.below()).blocksMotion())
+                    targetPos = targetPos.below();
+
+                if (level.isEmptyBlock(targetPos.above())) {
+                    ((ServerLevel) level).sendParticles(ParticleTypes.PORTAL, oldPos.x, oldPos.y + 1, oldPos.z, 40, -0.1F, 0, 0, 0.1);
+
+                    attacker.teleportTo(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5);
+
+                    ((ServerLevel) level).sendParticles(ParticleTypes.PORTAL, targetPos.getX() + 0.5, targetPos.getY() + 1, targetPos.getZ() + 0.5, 40, 0.5, 0.5, 0.5, 0.1);
+
+                    createLine(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)), 0.8F, 80, 0.9F), level, Vec3.atLowerCornerOf(targetPos), oldPos);
+
+                    break;
+                }
+            }
+        }
+
+        public static void createLine(ParticleOptions particle, Level level, Vec3 start, Vec3 end) {
+            var delta = end.subtract(start);
+            var dir = delta.normalize();
+            var amount = delta.length() * 10;
+
+            for (double i = 0; i < amount; ++i) {
+                var progress = i * delta.length() / amount;
+
+                ((ServerLevel) level).sendParticles(particle, start.x + dir.x * progress, start.y + dir.y * progress + 1, start.z + dir.z * progress, 0, 0, -0.1, 0, 0.1);
+            }
+        }
     }
 }
+

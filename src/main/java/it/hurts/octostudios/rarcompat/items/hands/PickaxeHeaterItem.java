@@ -48,7 +48,7 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                                         .build())
                                 .stat(StatData.builder("duration")
                                         .initialValue(140D, 120D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, -0.05D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, -0.083D)
                                         .formatValue(value -> MathUtils.round(value / 20, 1))
                                         .build())
                                 .research(ResearchData.builder()

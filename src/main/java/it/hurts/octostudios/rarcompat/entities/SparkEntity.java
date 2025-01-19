@@ -47,10 +47,14 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0), 0.01F + random.nextFloat() * 0.1F, 5 + random.nextInt(3), 0.9F),
                 particleCenter.x() + MathUtils.randomFloat(random) * 0.05F, particleCenter.y() + MathUtils.randomFloat(random) * 0.05F, particleCenter.z() + MathUtils.randomFloat(random) * 0.05F, 0F, 0F, 0F);
 
-        if (level.isClientSide() || target == null) return;
+        if (level.isClientSide() || target == null)
+            return;
 
         if (target.isDeadOrDying())
             this.discard();
+
+        if (this.distanceTo(target) < 1)
+            hitEntity(target);
 
         Vec3 targetPos = new Vec3(target.getX(), target.getY() + target.getBbHeight() / 2F, target.getZ());
         Vec3 direction = targetPos.subtract(this.position()).normalize();
@@ -68,11 +72,16 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     protected void onHitEntity(@NotNull EntityHitResult result) {
         super.onHitEntity(result);
 
-        if (this.getOwner() instanceof Player player && result instanceof EntityHitResult entityResult && entityResult.getEntity() instanceof LivingEntity entity && !entity.getStringUUID().equals(player.getStringUUID())) {
-            entity.invulnerableTime = 0;
+        if (result instanceof EntityHitResult entityResult && entityResult.getEntity() instanceof LivingEntity entity)
+            hitEntity(entity);
+    }
 
-            if (entity.hurt(getCommandSenderWorld().damageSources().thrown(this, player), getDamage()) && getRelicStack().getItem() instanceof IRelicItem relic) {
-                entity.setRemainingFireTicks((int) relic.getStatValue(getRelicStack(), "caster", "duration"));
+    public void hitEntity(LivingEntity target) {
+        if (this.getOwner() instanceof Player player && !target.getStringUUID().equals(player.getStringUUID())) {
+            target.invulnerableTime = 0;
+
+            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage()) && getRelicStack().getItem() instanceof IRelicItem relic) {
+                target.setRemainingFireTicks((int) relic.getStatValue(getRelicStack(), "caster", "duration"));
                 relic.spreadRelicExperience(player, getRelicStack(), 1);
             }
         }

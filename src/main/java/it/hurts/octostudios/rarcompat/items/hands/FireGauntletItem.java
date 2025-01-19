@@ -115,8 +115,10 @@ public class FireGauntletItem extends WearableRelicItem {
                 spark.setRelicStack(stack);
                 spark.setTarget(targets.get(targetIndex));
                 spark.setDamage((float) (player.getAttributes().getValue(Attributes.ATTACK_DAMAGE) * relic.getStatValue(stack, "caster", "damage")));
-                spark.setPos(player.position().add(0F, player.getBbHeight() / 2F, 0F));
-                spark.setDeltaMovement(targets.get(targetIndex).position().subtract(spark.position()).normalize().add(0.2, 0.35F, -0.6));
+
+                double angle = random.nextDouble() * 2 * Math.PI;
+
+                spark.setPos(player.position().add(Math.cos(angle), 1, Math.sin(angle)));
 
                 level.addFreshEntity(spark);
 

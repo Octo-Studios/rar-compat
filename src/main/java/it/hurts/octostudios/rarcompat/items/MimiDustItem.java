@@ -65,8 +65,12 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
 
         level.addFreshEntity(mimic);
 
-        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.ATTACK_DAMAGE, 4F * count, AttributeModifier.Operation.ADD_VALUE);
-        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.MAX_HEALTH, 5F * count, AttributeModifier.Operation.ADD_VALUE);
+        var multiplier = (float) Math.pow(count, 1.7);
+
+        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.ATTACK_DAMAGE,  multiplier, AttributeModifier.Operation.ADD_VALUE);
+        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.MAX_HEALTH, multiplier, AttributeModifier.Operation.ADD_VALUE);
+
+        mimic.setHealth(mimic.getMaxHealth());
 
         var center = pos.getCenter();
         var random = mimic.getRandom();

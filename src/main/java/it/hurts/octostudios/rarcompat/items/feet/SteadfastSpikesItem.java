@@ -2,6 +2,7 @@ package it.hurts.octostudios.rarcompat.items.feet;
 
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
 import it.hurts.sskirillss.relics.api.events.common.LivingSlippingEvent;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
@@ -13,6 +14,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
@@ -78,8 +80,9 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                 || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1)
             return;
 
-        player.setDeltaMovement(player.getDeltaMovement().x, -0.05, player.getDeltaMovement().z);
+        NetworkHandler.sendToServer(new SteadfastSpikesPacket());
 
+        player.setDeltaMovement(player.getDeltaMovement().x, -0.05, player.getDeltaMovement().z);
         player.getCommandSenderWorld().addParticle(ParticleUtils.constructSimpleSpark(new Color(50, 20 + player.getRandom().nextInt(50), 0), 0.5F, 50, 0.9F),
                 player.getX(), player.getY(), player.getZ(), 0, 0, 0);
     }

@@ -20,6 +20,9 @@ import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -37,10 +40,10 @@ public class BunnyHoppersItem extends WearableRelicItem {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("hold")
-                                .stat(StatData.builder("distance")
+                                .stat(StatData.builder("duration")
                                         .initialValue(3D, 5D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.06)
-                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2)
+                                        .formatValue(value -> MathUtils.round(value / 20, 2))
                                         .build())
                                 .research(ResearchData.builder()
                                         .star(0, 3, 16).star(1, 8, 15).star(2, 7, 11).star(3, 9, 6).star(4, 11, 8)
@@ -88,9 +91,8 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
         var level = player.getCommandSenderWorld();
 
-        if (!level.isClientSide() || !(player instanceof LocalPlayer localPlayer)
-                || getTime(stack) >= getStatValue(stack, "hold", "distance") || player.isFallFlying()
-                || !getToggled(stack))
+        if (!level.isClientSide() || !(player instanceof LocalPlayer localPlayer) || getTime(stack) >= getStatValue(stack, "hold", "duration")
+                || player.isFallFlying() || !getToggled(stack))
             return;
 
         if (!localPlayer.input.jumping) {
@@ -98,7 +100,15 @@ public class BunnyHoppersItem extends WearableRelicItem {
         } else {
             NetworkHandler.sendToServer(new PowerJumpPacket());
 
-            player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.5 + ((double) getTime(stack) / 80), player.getDeltaMovement().z));
+            var jumpAttribute = player.getAttribute(Attributes.JUMP_STRENGTH).getValue();
+
+            if (player.hasEffect(MobEffects.JUMP)) {
+                MobEffectInstance jumpBoost = player.getEffect(MobEffects.JUMP);
+                if (jumpBoost != null)
+                    jumpAttribute += (double) jumpBoost.getAmplifier() / 10;
+            }
+
+            player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.1 + jumpAttribute, player.getDeltaMovement().z));
 
             var random = player.getRandom();
 
@@ -157,8 +167,9 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
             if (!(stack.getItem() instanceof BunnyHoppersItem relic) || player.getCommandSenderWorld().isClientSide())
                 return;
-
-            event.setDistance(Math.max(event.getDistance() - (float) relic.getTime(stack), 0));
+            System.out.println(relic.getTime(stack));
+            System.out.println(event.getDistance());
+            event.setDistance(Math.max(event.getDistance() - (float) (relic.getTime(stack)  / 1.5), 0));
         }
     }
 }

@@ -18,5 +18,6 @@ public class NetworkHandler {
         registrar.playToServer(PowerJumpPacket.TYPE, PowerJumpPacket.STREAM_CODEC, PowerJumpPacket::handle);
         registrar.playToServer(RepulsionUmbrellaPacket.TYPE, RepulsionUmbrellaPacket.STREAM_CODEC, RepulsionUmbrellaPacket::handle);
         registrar.playToServer(FlamingoSwimPacket.TYPE, FlamingoSwimPacket.STREAM_CODEC, FlamingoSwimPacket::handle);
+        registrar.playToServer(SteadfastSpikesPacket.TYPE, SteadfastSpikesPacket.STREAM_CODEC, SteadfastSpikesPacket::handle);
     }
 }

@@ -150,7 +150,7 @@
   "tooltip.relics.onion_ring.ability.onion": "Голод шахтёра",
   "tooltip.relics.onion_ring.ability.onion.description": "Увеличивает скорость добычи блоков на %1$s%% за единицу сытости игрока.",
   "tooltip.relics.onion_ring.ability.saturation": "",
-  "tooltip.relics.onion_ring.ability.saturation.description": "",
+  "tooltip.relics.onion_ring.ability.saturation.description": "%2$s",
   "tooltip.relics.onion_ring.leveling_source.saturation.title": "",
   "tooltip.relics.onion_ring.leveling_source.saturation.description": "",
   "tooltip.relics.onion_ring.leveling_source.onion.title": "Голод шахтёра",
