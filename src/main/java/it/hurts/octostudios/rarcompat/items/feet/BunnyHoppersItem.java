@@ -167,8 +167,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
             if (!(stack.getItem() instanceof BunnyHoppersItem relic) || player.getCommandSenderWorld().isClientSide())
                 return;
-            System.out.println(relic.getTime(stack));
-            System.out.println(event.getDistance());
+
             event.setDistance(Math.max(event.getDistance() - (float) (relic.getTime(stack)  / 1.5), 0));
         }
     }
