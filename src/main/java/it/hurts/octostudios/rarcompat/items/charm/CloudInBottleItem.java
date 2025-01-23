@@ -117,6 +117,8 @@ public class CloudInBottleItem extends WearableRelicItem {
                     || player.isFallFlying() || player.onGround())
                 return;
 
+            NetworkHandler.sendToServer(new DoubleJumpPacket());
+
             var upwardsMotion = 0.5;
 
             if (player.hasEffect(MobEffects.JUMP))
@@ -125,8 +127,6 @@ public class CloudInBottleItem extends WearableRelicItem {
             var movement = player.getDeltaMovement().scale(0.75F);
 
             player.setDeltaMovement(movement.x + player.getKnownMovement().x, upwardsMotion, movement.z + player.getKnownMovement().z);
-
-            NetworkHandler.sendToServer(new DoubleJumpPacket());
         }
     }
 }

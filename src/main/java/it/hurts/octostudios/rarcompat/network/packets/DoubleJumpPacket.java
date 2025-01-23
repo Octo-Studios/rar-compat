@@ -12,8 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
@@ -38,10 +36,10 @@ public class DoubleJumpPacket implements CustomPacketPayload {
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            Player player = ctx.player();
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.CLOUD_IN_A_BOTTLE.value());
+            var player = ctx.player();
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.CLOUD_IN_A_BOTTLE.value());
 
-            if (!(stack.getItem() instanceof CloudInBottleItem relic) || relic.getCount(stack) >= Math.round(relic.getStatValue(stack, "jump", "count")))
+            if (!(stack.getItem() instanceof CloudInBottleItem relic))
                 return;
 
             relic.addCount(stack, 1);
