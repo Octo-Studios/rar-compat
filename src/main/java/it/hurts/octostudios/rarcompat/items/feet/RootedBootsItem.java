@@ -83,12 +83,11 @@ public class RootedBootsItem extends WearableRelicItem {
         var blockPos = player.blockPosition().below();
         var footData = player.getFoodData();
 
-        if (player.tickCount % Math.round(this.getStatValue(stack, "devouring", "frequency")) != 0 || footData.getFoodLevel() > 20
+        if (player.tickCount % Math.round(this.getStatValue(stack, "devouring", "frequency")) != 0 || !footData.needsFood()
                 || !level.getBlockState(blockPos).is(Blocks.GRASS_BLOCK))
             return;
 
-        footData.setFoodLevel(footData.getFoodLevel() + 1);
-        footData.setSaturation(footData.getFoodLevel() + 1);
+        footData.add(1, 1F);
 
         spreadRelicExperience(player, stack, 1);
 

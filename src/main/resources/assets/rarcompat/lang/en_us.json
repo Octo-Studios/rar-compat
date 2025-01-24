@@ -150,7 +150,7 @@
   "tooltip.relics.onion_ring.ability.onion": "Miner's Hunger",
   "tooltip.relics.onion_ring.ability.onion.description": "Increases block mining speed by %1$s%% per unit of the player's saturation.",
   "tooltip.relics.onion_ring.ability.saturation": "Raw Appetite",
-  "tooltip.relics.onion_ring.ability.saturation.description": "While mining blocks, has a %1$s%% chance to restore 1 unit of saturation.",
+  "tooltip.relics.onion_ring.ability.saturation.description": "When mining blocks, there is a %1$s%% chance to restore 1 hunger point and 0.5 saturation to the player.",
   "tooltip.relics.onion_ring.leveling_source.saturation.title": "Raw Appetite",
   "tooltip.relics.onion_ring.leveling_source.saturation.description": "+%1$s experience points for each activation of the %2$s ability.",
   "tooltip.relics.onion_ring.leveling_source.onion.title": "Miner's Hunger",
@@ -214,7 +214,7 @@
 
   "tooltip.relics.rooted_boots.description": "Grants the relic bearer the mysterious power of a sheep.",
   "tooltip.relics.rooted_boots.ability.devouring": "Herbivory",
-  "tooltip.relics.rooted_boots.ability.devouring.description": "Every %1$s seconds, transforms the grass block beneath the player into dirt, restoring 1 hunger point.",
+  "tooltip.relics.rooted_boots.ability.devouring.description": "Every %1$s seconds transforms the grass block beneath the player into dirt, restoring 1 hunger and saturation point.",
   "tooltip.relics.rooted_boots.leveling_source.devouring.title": "Herbivory",
   "tooltip.relics.rooted_boots.leveling_source.devouring.description": "+%1$s experience points for each activation of the %2$s ability.",
 

@@ -15,7 +15,6 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -112,10 +111,12 @@ public class OnionRingItem extends WearableRelicItem {
                     && player.getFoodData().getFoodLevel() / 20D >= random.nextDouble())
                 relic.spreadRelicExperience(player, stack, 1);
 
-            if (relic.isAbilityUnlocked(stack, "saturation") && random.nextDouble() <= relic.getStatValue(stack, "saturation", "chance")) {
-                var footData = player.getFoodData();
+            var footData = player.getFoodData();
 
-                footData.setFoodLevel(footData.getFoodLevel() + 1);
+            if (relic.isAbilityUnlocked(stack, "saturation") && random.nextDouble() <= relic.getStatValue(stack, "saturation", "chance")
+                    && footData.needsFood()) {
+
+                footData.add(1, 0.5F);
 
                 relic.spreadRelicExperience(player, stack, 1);
             }
