@@ -133,6 +133,7 @@ public class ShockPendantItem extends WearableRelicItem {
 
             level.addFreshEntity(bolt);
 
+            attacker.invulnerableTime = 0;
             attacker.hurt(bolt.damageSources().lightningBolt(), (float) relic.getStatValue(stack, "lightning", "damage"));
 
             ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)), 0.4F, 30, 0.95F),
