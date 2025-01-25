@@ -92,7 +92,7 @@ public class PanicNecklaceItem extends WearableRelicItem {
         var radius = getStatValue(stack, "panic", "radius");
 
         double target = player.getCommandSenderWorld().getEntitiesOfClass(Monster.class, player.getBoundingBox().inflate(radius)).stream().filter(mob -> mob.getTarget() == player).count() * this.getStatValue(stack, "panic", "movement")
-                + player.getCommandSenderWorld().getEntitiesOfClass(Player.class, player.getBoundingBox().inflate(radius)).size();
+                + player.getCommandSenderWorld().getEntitiesOfClass(Player.class, player.getBoundingBox().inflate(radius)).stream().filter(player1 -> !player1.getUUID().equals(player.getUUID())).count();
 
         double speed = getSpeed(stack);
         double step = 0.01D;
