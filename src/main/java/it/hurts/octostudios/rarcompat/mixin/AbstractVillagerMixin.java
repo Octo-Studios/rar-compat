@@ -27,24 +27,24 @@ abstract class AbstractVillagerMixin {
     private void notifyTrade(MerchantOffer offer, CallbackInfo ci) {
         ItemStack relicStack = EntityUtils.findEquippedCurio(tradingPlayer, ModItems.VILLAGER_HAT.value());
 
-        if (!(relicStack.getItem() instanceof VillagerHatItem hat) || offers == null)
+        if (!(relicStack.getItem() instanceof VillagerHatItem relic) || offers == null || !relic.isAbilityUnlocked(relicStack, "discount"))
             return;
 
-        int newPrice = (int) Math.round(offer.getItemCostA().count() * hat.getStatValue(relicStack, "discount", "multiplier"));
+        int newPrice = (int) Math.round(offer.getItemCostA().count() * relic.getStatValue(relicStack, "discount", "multiplier"));
 
         if (newPrice > 1)
-            hat.spreadRelicExperience(tradingPlayer, relicStack, 1 + tradingPlayer.getRandom().nextInt(newPrice) + 1);
+            relic.spreadRelicExperience(tradingPlayer, relicStack, 1 + tradingPlayer.getRandom().nextInt(newPrice) + 1);
     }
 
     @Inject(method = "getOffers", at = @At(value = "HEAD"))
     private void getOffers(CallbackInfoReturnable<MerchantOffers> cir) {
         ItemStack relicStack = EntityUtils.findEquippedCurio(tradingPlayer, ModItems.VILLAGER_HAT.value());
 
-        if (!(relicStack.getItem() instanceof VillagerHatItem hat) || offers == null)
+        if (!(relicStack.getItem() instanceof VillagerHatItem relic) || offers == null || !relic.isAbilityUnlocked(relicStack, "discount"))
             return;
 
         for (MerchantOffer offer : offers) {
-            int newPrice = (int) Math.round(offer.getItemCostA().count() * hat.getStatValue(relicStack, "discount", "multiplier") / 100);
+            int newPrice = (int) Math.round(offer.getItemCostA().count() * relic.getStatValue(relicStack, "discount", "multiplier") / 100);
 
             offer.setSpecialPriceDiff(-newPrice);
         }
