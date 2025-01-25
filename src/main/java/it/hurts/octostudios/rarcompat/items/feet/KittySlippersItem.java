@@ -15,11 +15,15 @@ import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
+import it.hurts.sskirillss.relics.network.packets.PacketItemActivation;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Phantom;
@@ -208,9 +212,13 @@ public class KittySlippersItem extends WearableRelicItem {
             var level = player.getCommandSenderWorld();
             var random = player.getRandom();
 
-            if (!(stack.getItem() instanceof KittySlippersItem relic) || random.nextFloat() > relic.getStatValue(stack, "resurrected", "chance")
-                    || !relic.canPlayerUseAbility(player, stack, "resurrected") || level.isClientSide())
+            if (!(stack.getItem() instanceof KittySlippersItem relic) || level.isClientSide() || !relic.canPlayerUseAbility(player, stack, "resurrected")
+                    || random.nextFloat() > relic.getStatValue(stack, "resurrected", "chance"))
                 return;
+
+            NetworkHandler.sendToClient(new PacketItemActivation(stack), (ServerPlayer) player);
+
+            level.playSound(null, player, SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0F, 0.9F + random.nextFloat() * 0.2F);
 
             relic.spreadRelicExperience(player, stack, stack.getOrDefault(DataComponentRegistry.COUNT, 1));
 
@@ -219,8 +227,6 @@ public class KittySlippersItem extends WearableRelicItem {
             event.setCanceled(true);
 
             stack.set(DataComponentRegistry.TOGGLED, false);
-
-            level.playSound(null, player.blockPosition(), SoundEvents.TOTEM_USE, player.getSoundSource(), 1F, 0.75F + random.nextFloat() * 0.5F);
 
             for (int i = 0; i < 50; i++)
                 ((ServerLevel) level).sendParticles(
