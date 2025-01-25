@@ -3,6 +3,7 @@ package it.hurts.octostudios.rarcompat.items.hat;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.init.DataComponentRegistry;
+import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
 import it.hurts.sskirillss.relics.items.relics.base.data.cast.CastData;
 import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastStage;
@@ -238,7 +239,7 @@ public class CowboyHatItem extends WearableRelicItem {
                     || !(event.getEntityBeingMounted() instanceof Mob mount) || !relic.getToggled(stack))
                 return;
 
-            relic.addAbilityCooldown(stack, "overlord", 1200);
+            relic.addAbilityCooldown(stack, "overlord", 600);
             relic.setTime(stack, 0);
             relic.setToggled(stack, false);
             relic.changeAttributes(mount, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
