@@ -22,7 +22,6 @@ import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -89,9 +88,18 @@ public class BunnyHoppersItem extends WearableRelicItem {
             setToggled(stack, true);
         }
 
+        var statValue = getStatValue(stack, "hold", "duration");
+
+        if (player.hasEffect(MobEffects.JUMP)) {
+            MobEffectInstance jumpBoost = player.getEffect(MobEffects.JUMP);
+
+            if (jumpBoost != null)
+                statValue += jumpBoost.getAmplifier() * 4;
+        }
+
         var level = player.getCommandSenderWorld();
 
-        if (!level.isClientSide() || !(player instanceof LocalPlayer localPlayer) || getTime(stack) >= getStatValue(stack, "hold", "duration")
+        if (!level.isClientSide() || !(player instanceof LocalPlayer localPlayer) || getTime(stack) >= statValue
                 || player.isFallFlying() || !getToggled(stack))
             return;
 
@@ -100,15 +108,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
         } else {
             NetworkHandler.sendToServer(new PowerJumpPacket());
 
-            var jumpAttribute = player.getAttribute(Attributes.JUMP_STRENGTH).getValue();
-
-            if (player.hasEffect(MobEffects.JUMP)) {
-                MobEffectInstance jumpBoost = player.getEffect(MobEffects.JUMP);
-                if (jumpBoost != null)
-                    jumpAttribute += (double) jumpBoost.getAmplifier() / 10;
-            }
-
-            player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.1 + jumpAttribute, player.getDeltaMovement().z));
+            player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.6, player.getDeltaMovement().z));
 
             var random = player.getRandom();
 
@@ -168,7 +168,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic) || player.getCommandSenderWorld().isClientSide())
                 return;
 
-            event.setDistance(Math.max(event.getDistance() - (float) (relic.getTime(stack)  / 1.5), 0));
+            event.setDistance(Math.max(event.getDistance() - (float) (relic.getTime(stack) / 1.5), 0));
         }
     }
 }
