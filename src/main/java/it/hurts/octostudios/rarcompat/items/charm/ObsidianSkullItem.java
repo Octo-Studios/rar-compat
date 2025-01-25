@@ -80,13 +80,20 @@ public class ObsidianSkullItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide())
             return;
 
-        addCooldown(stack, 1);
-
         if (getCooldown(stack) >= 60)
             addTime(stack, -1);
+        else {
+            if (getTime(stack) > 0)
+                addCooldown(stack, 1);
+        }
 
-        if (getTime(stack) == 0)
-            setCooldown(stack, 0);
+        if (!player.isOnFire() || getTime(stack) >= (int) getStatValue(stack, "hell", "duration"))
+            return;
+
+        if (player.tickCount % 20 == 0)
+            spreadRelicExperience(player, stack, 1);
+
+        addTime(stack, 1);
     }
 
     public void addTime(ItemStack stack, int time) {
@@ -127,27 +134,17 @@ public class ObsidianSkullItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof ObsidianSkullItem relic) || !relic.isAbilityUnlocked(stack, "hell"))
                 return;
 
-            var statValue = (int) relic.getStatValue(stack, "hell", "duration");
-
-            relic.addTime(stack, 1);
-            relic.setCooldown(stack, 0);
-
-            if (relic.getTime(stack) > statValue) {
-                relic.setTime(stack, statValue);
-            } else {
+            if (relic.getTime(stack) >= (int) relic.getStatValue(stack, "hell", "duration"))
+                relic.setCooldown(stack, 0);
+            else {
                 event.setCanceled(true);
 
-                if (player.tickCount % 20 == 0)
-                    relic.spreadRelicExperience(player, stack, 1);
+                relic.setCooldown(stack, 0);
 
                 RandomSource random = level.getRandom();
 
-                ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(
-                                new Color(64 + random.nextInt(64), random.nextInt(50), 200 + random.nextInt(55)),
-                                0.5F, 10, 0.9F),
-                        player.getX(), player.getY() + player.getBbHeight() / 2F, player.getZ(),
-                        10, player.getBbWidth() / 2F, player.getBbHeight() / 2F, player.getBbWidth() / 2F,
-                        0.025F);
+                ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(64 + random.nextInt(64), random.nextInt(50), 200 + random.nextInt(55)), 0.35F, 10, 0.9F),
+                        player.getX(), player.getY() + player.getBbHeight() / 2F, player.getZ(), 1, player.getBbWidth() / 2F, player.getBbHeight() / 2F, player.getBbWidth() / 2F, 0.025F);
             }
         }
     }
