@@ -17,9 +17,7 @@ import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.network.packets.PacketItemActivation;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,8 +30,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-
-import java.awt.*;
 
 public class ChorusTotemItem extends WearableRelicItem {
     @Override
@@ -136,22 +132,22 @@ public class ChorusTotemItem extends WearableRelicItem {
 
                     ((ServerLevel) level).sendParticles(ParticleTypes.PORTAL, targetPos.getX() + 0.5, targetPos.getY() + 1, targetPos.getZ() + 0.5, 40, 0.5, 0.5, 0.5, 0.1);
 
-                    createLine(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)), 0.8F, 80, 0.9F), level, Vec3.atLowerCornerOf(targetPos), oldPos);
+                    createLine(level, Vec3.atLowerCornerOf(targetPos), oldPos);
 
                     break;
                 }
             }
         }
 
-        public static void createLine(ParticleOptions particle, Level level, Vec3 start, Vec3 end) {
+        public static void createLine(Level level, Vec3 start, Vec3 end) {
             var delta = end.subtract(start);
             var dir = delta.normalize();
-            var amount = delta.length() * 10;
+            var amount = delta.length() * 5;
 
             for (double i = 0; i < amount; ++i) {
                 var progress = i * delta.length() / amount;
 
-                ((ServerLevel) level).sendParticles(particle, start.x + dir.x * progress, start.y + dir.y * progress + 1, start.z + dir.z * progress, 0, 0, -0.1, 0, 0.1);
+                ((ServerLevel) level).sendParticles(ParticleTypes.PORTAL, start.x + dir.x * progress, start.y + dir.y * progress + 1, start.z + dir.z * progress, 5, 0.1, -0.01, 0.1, 0.1);
             }
         }
     }
