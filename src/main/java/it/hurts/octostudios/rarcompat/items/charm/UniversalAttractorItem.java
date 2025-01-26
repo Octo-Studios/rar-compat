@@ -19,15 +19,20 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import top.theillusivec4.curios.api.SlotContext;
+
+import java.awt.*;
 
 public class UniversalAttractorItem extends WearableRelicItem {
     @Override
@@ -41,8 +46,8 @@ public class UniversalAttractorItem extends WearableRelicItem {
                                 .icon((player, stack, ability) -> ability + (stack.getOrDefault(DataComponentRegistry.TOGGLED, true) ? "_attract" : "_repel"))
                                 .stat(StatData.builder("radius")
                                         .initialValue(3D, 5D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.18D)
-                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .upgradeModifier(UpgradeOperation.ADD, 1D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 1))
                                         .build())
                                 .research(ResearchData.builder()
                                         .star(0, 8, 12).star(1, 11, 5).star(2, 19, 8).star(3, 15, 16)
@@ -93,39 +98,38 @@ public class UniversalAttractorItem extends WearableRelicItem {
                 || !canPlayerUseAbility(player, stack, "attractor"))
             return;
 
-        double range = getStatValue(stack, "attractor", "radius");
-        int amountItem = 0;
+        var pos = player.position();
+        var random = player.getRandom();
+        var level = player.getCommandSenderWorld();
 
-        Vec3 pos = player.position();
-
-        for (ItemEntity item : player.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, new AABB(pos.x - range, pos.y - range, pos.z - range,
-                pos.x + range, pos.y + range, pos.z + range))) {
-            if (item.position().y > pos.y)
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(getStatValue(stack, "attractor", "radius")))) {
+            if (!item.isAlive() || item.hasPickUpDelay())
                 continue;
 
-            if (stack.getOrDefault(DataComponentRegistry.TOGGLED, true) && item.isAlive() && !item.hasPickUpDelay()) {
-                if (amountItem++ > 50)
-                    break;
+            var oldPos = new Vec3(item.getX(), item.getY() - item.getBbHeight() * 3, item.getZ());
 
-                Vec3 motion = pos.subtract(item.position().add(0, item.getBbHeight() / 2, 0));
+            if (stack.getOrDefault(DataComponentRegistry.TOGGLED, true)) {
+                item.moveTo(pos);
 
-                if (Math.sqrt(motion.x * motion.x + motion.y * motion.y + motion.z * motion.z) > 1)
-                    motion = motion.normalize();
-
-                item.setDeltaMovement(motion.scale(0.6));
+                createLine(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(55), random.nextInt(50), random.nextInt(50)), 0.2F, 20, 0.8F), level, pos, oldPos);
             } else {
-                if (item.isAlive() && !item.hasPickUpDelay()) {
-                    if (amountItem++ > 50)
-                        break;
+                item.setDeltaMovement(item.position().subtract(pos).normalize().scale(0.5));
 
-                    Vec3 motion = item.position().add(0, item.getBbHeight() / 2, 0).subtract(pos);
-
-                    if (Math.sqrt(motion.x * motion.x + motion.y * motion.y + motion.z * motion.z) > 1)
-                        motion = motion.normalize();
-
-                    item.setDeltaMovement(motion.scale(0.6));
-                }
+                if (!item.horizontalCollision)
+                    createLine(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 200 + random.nextInt(55)), 0.2F, 3, 0.5F), level, pos, oldPos);
             }
+        }
+    }
+
+    public static void createLine(ParticleOptions particle, Level level, Vec3 start, Vec3 end) {
+        var delta = end.subtract(start);
+        var dir = delta.normalize();
+        var amount = delta.length() * 3;
+
+        for (double i = 0; i < amount; ++i) {
+            var progress = i * delta.length() / amount;
+
+            ((ServerLevel) level).sendParticles(particle, start.x + dir.x * progress, start.y + dir.y * progress + 1, start.z + dir.z * progress, 0, 0, 0, 0, 0);
         }
     }
 
@@ -133,18 +137,22 @@ public class UniversalAttractorItem extends WearableRelicItem {
     public static class UniversalAttractorEvent {
         @SubscribeEvent
         public static void onItemPickedUp(ItemEntityPickupEvent.Post event) {
-            Player player = event.getPlayer();
+            var player = event.getPlayer();
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.UNIVERSAL_ATTRACTOR.value());
 
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.UNIVERSAL_ATTRACTOR.value());
-
-            if (!(stack.getItem() instanceof UniversalAttractorItem relic) || !stack.getOrDefault(DataComponentRegistry.TOGGLED, true)
-                    || player.getCommandSenderWorld().isClientSide())
+            if (player.getCommandSenderWorld().isClientSide() || !(stack.getItem() instanceof UniversalAttractorItem relic)
+                    || !stack.getOrDefault(DataComponentRegistry.TOGGLED, true))
                 return;
 
-            ItemEntity item = event.getItemEntity();
+            var item = event.getOriginalStack();
+            var itemEntity = event.getItemEntity();
 
-            if (item.getRandom().nextFloat() >= player.getRandom().nextFloat() && item.getOwner() != player)
+            if (itemEntity.getRandom().nextDouble() <= (double) item.getCount() / item.getMaxStackSize()) {
+                if (itemEntity.getOwner() != null && itemEntity.getOwner().getUUID().equals(player.getUUID()))
+                    return;
+
                 relic.spreadRelicExperience(player, stack, 1);
+            }
         }
     }
 }
