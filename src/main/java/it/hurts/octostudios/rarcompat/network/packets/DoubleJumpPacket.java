@@ -49,7 +49,7 @@ public class DoubleJumpPacket implements CustomPacketPayload {
             player.fallDistance = 0;
             player.awardStat(Stats.JUMP);
 
-            NeoForge.EVENT_BUS.post(new LivingEvent.LivingJumpEvent(player));
+            player.jumpFromGround();
 
             Level level = player.getCommandSenderWorld();
 

@@ -22,6 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -119,14 +120,7 @@ public class CloudInBottleItem extends WearableRelicItem {
 
             NetworkHandler.sendToServer(new DoubleJumpPacket());
 
-            var upwardsMotion = 0.5;
-
-            if (player.hasEffect(MobEffects.JUMP))
-                upwardsMotion += 0.1 * (double) Objects.requireNonNull(player.getEffect(MobEffects.JUMP)).getAmplifier();
-
-            var movement = player.getDeltaMovement().scale(0.75F);
-
-            player.setDeltaMovement(movement.x + player.getKnownMovement().x, upwardsMotion, movement.z + player.getKnownMovement().z);
+            player.jumpFromGround();
         }
     }
 }
