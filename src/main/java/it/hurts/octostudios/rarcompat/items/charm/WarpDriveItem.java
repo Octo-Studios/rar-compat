@@ -27,6 +27,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.awt.*;
 
@@ -46,7 +47,7 @@ public class WarpDriveItem extends WearableRelicItem {
                                 .stat(StatData.builder("distance")
                                         .initialValue(5D, 15D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.565D)
-                                        .formatValue(value ->(int)  MathUtils.round(value, 0))
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(StatData.builder("cooldown")
                                         .initialValue(100D, 80D)
@@ -97,18 +98,12 @@ public class WarpDriveItem extends WearableRelicItem {
             return;
 
         var blockPos = getHitResult(player, stack);
-        var random = player.getRandom();
         var pos = getHitResult(player, stack);
 
         if (pos == null)
             return;
 
-        ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)),
-                        0.7F, 40, 0.9F),
-                player.getX(), player.getY() + 1, player.getZ(),
-                30,
-                0,
-                0, 0, 0.1);
+        spawnCuboidOutlineParticles(level, player.position(), player.getBbHeight(), player.getBbWidth(), (int) player.getBbHeight() * 20);
 
         for (int i = 1; i <= player.position().distanceTo(pos.getCenter()) + 9; i++)
             if (i % 10 == 0)
@@ -116,6 +111,7 @@ public class WarpDriveItem extends WearableRelicItem {
 
         player.teleportTo(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
         player.fallDistance = 0;
+
         level.playSound(null, player, SoundEvents.ENDER_EYE_DEATH, SoundSource.PLAYERS,
                 1.0F, 0.9F + player.getRandom().nextFloat() * 0.2F);
 
@@ -151,5 +147,31 @@ public class WarpDriveItem extends WearableRelicItem {
 
     private boolean hasCollision(Level level, BlockPos pos) {
         return level.getBlockState(pos).getCollisionShape(level, pos).max(Direction.Axis.Y) == 1;
+    }
+
+    public void spawnCuboidOutlineParticles(Level level, Vec3 position, double height, double halfWidth, int density) {
+        var half = halfWidth / 2;
+
+        Vec3[] corners = {position.add(-half, 0, -half), position.add(half, 0, -half), position.add(half, 0, half), position.add(-half, 0, half),
+                position.add(-half, height, -half), position.add(half, height, -half), position.add(half, height, half), position.add(-half, height, half)};
+
+        int[][] edges = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+
+        var random = level.getRandom();
+
+        for (int[] edge : edges) {
+            Vec3 start = corners[edge[0]];
+            Vec3 end = corners[edge[1]];
+
+            for (int j = 0; j <= density; j++) {
+                double t = (double) j / density;
+                double x = start.x + t * (end.x - start.x);
+                double y = start.y + t * (end.y - start.y);
+                double z = start.z + t * (end.z - start.z);
+
+                ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)),
+                        0.7F, 40, 0.9F), x, y, z, 0, 0, -0.1, 0, 0.2);
+            }
+        }
     }
 }
