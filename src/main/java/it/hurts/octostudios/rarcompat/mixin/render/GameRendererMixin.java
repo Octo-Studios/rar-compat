@@ -20,7 +20,8 @@ public class GameRendererMixin {
 
         var stack = EntityUtils.findEquippedCurio(player, ModItems.NIGHT_VISION_GOGGLES.value());
 
-        if (!(stack.getItem() instanceof NightVisionGogglesItem relic) || !relic.isAbilityTicking(stack, "vision"))
+        if (!(stack.getItem() instanceof NightVisionGogglesItem relic) || !relic.isAbilityTicking(stack, "vision")
+                || !relic.isAbilityMaxLevel(stack, "vision") && !relic.isNightVision(player.getActiveEffects()))
             return;
 
         cir.setReturnValue((float) relic.getStatValue(stack, "vision", "amount"));

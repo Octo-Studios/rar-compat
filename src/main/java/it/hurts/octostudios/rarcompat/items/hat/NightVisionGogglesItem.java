@@ -30,6 +30,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.util.Collection;
+
 public class NightVisionGogglesItem extends WearableRelicItem {
     @Override
     public RelicData constructDefaultRelicData() {
@@ -91,6 +93,9 @@ public class NightVisionGogglesItem extends WearableRelicItem {
             if (player.getRandom().nextFloat() <= percent && player.tickCount % 60 == 0 && !(Math.abs(player.getKnownMovement().x) <= 0.01D
                     || Math.abs(player.getKnownMovement().z) <= 0.01D))
                 spreadRelicExperience(player, stack, 1);
+        } else {
+            if (isNightVision(player.getActiveEffects()))
+                player.removeEffect(MobEffects.NIGHT_VISION);
         }
     }
 
@@ -98,6 +103,11 @@ public class NightVisionGogglesItem extends WearableRelicItem {
     public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
         if (ability.equals("vision") && player.getCommandSenderWorld().isClientSide && stage == CastStage.START)
             player.playSound(SoundRegistry.NIGHT_VISION_TOGGLE.get(), 1F, 0.75F + player.getRandom().nextFloat() * 0.5F);
+    }
+
+    public boolean isNightVision(Collection<MobEffectInstance> activeEffects) {
+        return !activeEffects.isEmpty() && activeEffects.stream().anyMatch(mobEffectInstance -> mobEffectInstance.is(MobEffects.NIGHT_VISION)
+                && mobEffectInstance.getDuration() <= 10);
     }
 
     @EventBusSubscriber(Dist.CLIENT)
@@ -115,13 +125,9 @@ public class NightVisionGogglesItem extends WearableRelicItem {
                     || !player.hasEffect(MobEffects.BLINDNESS) && !player.hasEffect(MobEffects.DARKNESS))
                 return;
 
-            var statValue = relic.getStatValue(stack, "vision", "amount");
+            var statValue = relic.getStatValue(stack, "vision", "amount") * (player.hasEffect(MobEffects.BLINDNESS) ? 9 : 1);
 
-            if (player.hasEffect(MobEffects.DARKNESS))
-                event.scaleFarPlaneDistance((float) (event.getFarPlaneDistance() * statValue));
-
-            if (player.hasEffect(MobEffects.BLINDNESS))
-                event.scaleFarPlaneDistance((float) (event.getFarPlaneDistance() * (statValue * 7f)));
+            event.scaleFarPlaneDistance((float) (event.getFarPlaneDistance() * statValue));
 
             event.setCanceled(true);
         }
