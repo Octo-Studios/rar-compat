@@ -4,31 +4,26 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.charm.HeliumFlamingoItem;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
-import it.hurts.sskirillss.relics.utils.MathUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import javax.annotation.Nonnull;
-
+@Data
+@AllArgsConstructor
 public class FlamingoSwimPacket implements CustomPacketPayload {
+    private final boolean toggled;
+
     public static final CustomPacketPayload.Type<FlamingoSwimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "swim"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, FlamingoSwimPacket> STREAM_CODEC = new StreamCodec<>() {
-        @Override
-        public void encode(RegistryFriendlyByteBuf buf, FlamingoSwimPacket packet) {
-
-        }
-
-        @Nonnull
-        @Override
-        public FlamingoSwimPacket decode(@Nonnull RegistryFriendlyByteBuf buf) {
-            return new FlamingoSwimPacket();
-        }
-    };
+    public static final StreamCodec<RegistryFriendlyByteBuf, FlamingoSwimPacket> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.BOOL, FlamingoSwimPacket::isToggled,
+            FlamingoSwimPacket::new);
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
@@ -40,14 +35,15 @@ public class FlamingoSwimPacket implements CustomPacketPayload {
                     || !relic.isAbilityTicking(stack, "flying"))
                 return;
 
-            var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
-            var time = relic.getTime(stack);
+            if (toggled) {
+                player.setSprinting(true);
 
-            if (time >= statValue || Math.abs(player.getKnownMovement().x) <= 0.01D || Math.abs(player.getKnownMovement().z) <= 0.01D)
-                return;
+                relic.setToggled(stack, true);
+            } else {
+                player.setSprinting(false);
 
-            player.setSprinting(true);
-            relic.setToggled(stack, true);
+                relic.setToggled(stack, false);
+            }
         });
     }
 

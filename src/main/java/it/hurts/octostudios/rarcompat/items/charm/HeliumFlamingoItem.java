@@ -40,9 +40,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         return RelicData.builder()
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("flying")
-                                .active(CastData.builder()
-                                        .type(CastType.TOGGLEABLE)
-                                        .build())
                                 .stat(StatData.builder("time")
                                         .initialValue(3D, 5D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2D)
@@ -88,12 +85,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
     }
 
     @Override
-    public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
-        if (stage == CastStage.END)
-            setToggled(stack, false);
-    }
-
-    @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!(slotContext.entity() instanceof Player player) || !isAbilityTicking(stack, "flying") || player.isInWater())
             return;
@@ -109,6 +100,15 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
             setToggled(stack, false);
         }
+
+        if (player.getCommandSenderWorld().isClientSide()) {
+            HeliumFlamingoClientEvent.ticKCount++;
+
+            if (HeliumFlamingoClientEvent.ticKCount % 15 == 0) {
+                HeliumFlamingoClientEvent.onDoubleJump = false;
+                HeliumFlamingoClientEvent.ticKCount = 0;
+            }
+        }
     }
 
     @Override
@@ -117,6 +117,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             return;
 
         EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
         setToggled(stack, false);
         setTime(stack, 0);
     }
@@ -143,6 +144,9 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     @EventBusSubscriber(Dist.CLIENT)
     public static class HeliumFlamingoClientEvent {
+        private static boolean onDoubleJump = false;
+        private static int ticKCount;
+
         @SubscribeEvent
         public static void onClientTick(InputEvent.Key event) {
             var minecraft = Minecraft.getInstance();
@@ -155,7 +159,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
             if (minecraft.screen != null || event.getAction() != 1 || !(stack.getItem() instanceof HeliumFlamingoItem relic)
                     || !relic.canPlayerUseAbility(player, stack, "flying") || event.getKey() != minecraft.options.keyJump.getKey().getValue()
-                    || player.mayFly() || player.onGround())
+                    || player.mayFly())
                 return;
 
             var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
@@ -164,7 +168,14 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             if (time >= statValue || Math.abs(player.getKnownMovement().x) <= 0.01D || Math.abs(player.getKnownMovement().z) <= 0.01D)
                 return;
 
-            NetworkHandler.sendToServer(new FlamingoSwimPacket());
+            if (!onDoubleJump)
+                onDoubleJump = true;
+            else {
+                if (!relic.getToggled(stack))
+                    NetworkHandler.sendToServer(new FlamingoSwimPacket(true));
+                else
+                    NetworkHandler.sendToServer(new FlamingoSwimPacket(false));
+            }
         }
     }
 
