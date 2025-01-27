@@ -81,7 +81,7 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
 
         var time = getTime(stack);
 
-        if (time == 0 && player.getCommandSenderWorld().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(15)).stream().anyMatch(mob -> mob.getTarget() == player)) {
+        if (time == 0 && player.getCommandSenderWorld().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(15)).stream().noneMatch(mob -> mob.getTarget() == player)) {
             if (!player.hasEffect(EffectRegistry.VANISHING))
                 spreadRelicExperience(player, stack, 1);
 
