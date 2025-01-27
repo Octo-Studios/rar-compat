@@ -7,9 +7,6 @@ import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.network.packets.FlamingoSwimPacket;
 import it.hurts.sskirillss.relics.init.DataComponentRegistry;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.CastData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastStage;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastType;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
@@ -86,7 +83,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || !isAbilityTicking(stack, "flying") || player.isInWater())
+        if (!(slotContext.entity() instanceof Player player) || !isAbilityUnlocked(stack, "flying") || player.isInWater())
             return;
 
         if (player.tickCount % 20 == 0 && getToggled(stack)) {
@@ -165,7 +162,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
             var time = relic.getTime(stack);
 
-            if (time >= statValue || Math.abs(player.getKnownMovement().x) <= 0.01D || Math.abs(player.getKnownMovement().z) <= 0.01D)
+            if (time >= statValue || Math.abs(player.getKnownMovement().x) <= 0.01D && Math.abs(player.getKnownMovement().z) <= 0.01D)
                 return;
 
             if (!onDoubleJump)
@@ -186,7 +183,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             Player player = event.getEntity();
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
-            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || player.isInWater() || !relic.isAbilityTicking(stack, "flying"))
+            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || player.isInWater() || !relic.isAbilityUnlocked(stack, "flying"))
                 return;
 
             if (player.onGround()) {
