@@ -15,13 +15,16 @@ import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
+import it.hurts.sskirillss.relics.network.packets.PacketPlayerMotion;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -102,11 +105,15 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
         spreadRelicExperience(player, stack, 1);
 
-        for (Mob mob : level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(getStatValue(stack, "push", "radius")))) {
-            var vec3 = mob.position().subtract(player.position()).normalize();
+        for (LivingEntity livingEntity : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(getStatValue(stack, "push", "radius"))).stream().filter(livingEntity -> !livingEntity.getUUID().equals(player.getUUID())).toList()) {
+            var vec3 = livingEntity.position().subtract(player.position()).normalize();
 
-            mob.setDeltaMovement(vec3.x, 0.4, vec3.z);
-            mob.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
+            if (livingEntity instanceof ServerPlayer serverPlayer)
+                NetworkHandler.sendToClient(new PacketPlayerMotion(vec3.x, 0.2, vec3.z), serverPlayer);
+            else
+                livingEntity.setDeltaMovement(vec3.x, 0.2, vec3.z);
+
+            livingEntity.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
         }
 
         var random = player.getRandom();
