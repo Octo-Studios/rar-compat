@@ -88,7 +88,7 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                 setToggled(stack, true);
 
             if (player.tickCount % 20 == 0 && player.onGround() && player.getMaxAirSupply() > player.getAirSupply()) {
-                player.setAirSupply((int) (player.getAirSupply() + getStatValue(stack, "dipping", "air") * 20));
+                player.setAirSupply((int) (player.getAirSupply() + getStatValue(stack, "dipping", "air") * 15));
 
                 if (getToggled(stack)) {
                     setToggled(stack, false);

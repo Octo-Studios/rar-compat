@@ -17,10 +17,13 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
+import it.hurts.sskirillss.relics.network.packets.PacketPlayerMotion;
+import it.hurts.sskirillss.relics.network.packets.sync.S2CEntityMotionPacket;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -30,6 +33,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
@@ -140,12 +145,17 @@ public class UmbrellaItem extends WearableRelicItem {
                 break;
             }
 
-        if (!hasUmbrella || player.isInLiquid() || player.getDeltaMovement().y > 0)
+        if (!hasUmbrella || player.isInLiquid() || player.getDeltaMovement().y > 0 || player.isShiftKeyDown())
             return;
+
+        var step = 0.01D;
+
+        if (getSpeed(stack) >= 0.15D)
+            addSpeed(stack, -step);
 
         var motion = player.getDeltaMovement();
 
-        player.setDeltaMovement(motion.x(), -(player.isShiftKeyDown() ? 0.65F : 0.15F), motion.z());
+        player.setDeltaMovement(motion.x(), -getSpeed(stack), motion.z());
         player.fallDistance = 0;
 
         if (player.tickCount % 20 == 0 && !isOnGround)
@@ -213,6 +223,18 @@ public class UmbrellaItem extends WearableRelicItem {
         return entity.getItemInHand(hand).getItem() instanceof UmbrellaItem && (!entity.isUsingItem() || entity.getUsedItemHand() != hand);
     }
 
+    public void addSpeed(ItemStack stack, double val) {
+        setSpeed(stack, getSpeed(stack) + val);
+    }
+
+    public double getSpeed(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.SPEED, 0.15D);
+    }
+
+    public void setSpeed(ItemStack stack, double val) {
+        stack.set(DataComponentRegistry.SPEED, Math.max(val, 0D));
+    }
+
     @EventBusSubscriber(value = Dist.CLIENT)
     public static class UmbrellaClientEvents {
         @SubscribeEvent
@@ -234,12 +256,12 @@ public class UmbrellaItem extends WearableRelicItem {
                     || player.getCooldowns().isOnCooldown(relic) || relic.getCharges(stack) <= 0)
                 return;
 
+            NetworkHandler.sendToServer(new RepulsionUmbrellaPacket());
+
             var angle = player.getLookAngle().scale(-1.15F);
             var motion = player.getDeltaMovement().add(angle);
 
             player.setDeltaMovement(motion.x(), angle.y(), motion.z());
-
-            NetworkHandler.sendToServer(new RepulsionUmbrellaPacket());
         }
 
         @SubscribeEvent
@@ -251,6 +273,9 @@ public class UmbrellaItem extends WearableRelicItem {
             var isHoldingMainHand = isHoldingUmbrella(player, InteractionHand.MAIN_HAND);
 
             var isRightHanded = player.getMainArm() == HumanoidArm.RIGHT;
+
+            if (player.isShiftKeyDown() && !player.onGround() && (isHoldingMainHand || isHoldingOffHand))
+                return;
 
             if ((isHoldingMainHand && isRightHanded) || (isHoldingOffHand && !isRightHanded))
                 humanoidModel.rightArmPose = HumanoidModel.ArmPose.THROW_SPEAR;
@@ -264,8 +289,10 @@ public class UmbrellaItem extends WearableRelicItem {
     public static class UmbrellaCommonEvents {
         @SubscribeEvent
         public static void onPlayerHurt(LivingIncomingDamageEvent event) {
-            if (!(event.getEntity() instanceof Player player))
+            if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide())
                 return;
+
+            var level = player.getCommandSenderWorld();
 
             var stack = ItemStack.EMPTY;
 
@@ -284,29 +311,39 @@ public class UmbrellaItem extends WearableRelicItem {
 
             var relic = (UmbrellaItem) stack.getItem();
 
-            if (!player.isUsingItem() || !(event.getSource().getEntity() instanceof LivingEntity source)
-                    || source.position().subtract(player.position()).normalize().dot(player.getLookAngle().normalize()) < 0.65F)
+            if (level.isClientSide() || !player.isUsingItem() || !(event.getSource().getEntity() instanceof LivingEntity source)
+                    || source.position().subtract(player.position()).normalize().dot(player.getLookAngle().normalize()) < 0.65F
+                    || player.getCooldowns().isOnCooldown(stack.getItem()))
                 return;
 
-            var level = player.getCommandSenderWorld();
+            if (event.getSource().getDirectEntity() instanceof AbstractArrow arrow)
+                NetworkHandler.sendToClientsTrackingEntityAndSelf(new S2CEntityMotionPacket(arrow.getId(), arrow.getX(), arrow.getY(), arrow.getZ()), player);
+
+            if (source.getMainHandItem().getItem() instanceof AxeItem) {
+                player.getCooldowns().addCooldown(relic, 110);
+                player.stopUsingItem();
+
+                level.playSound(null, player.blockPosition(), SoundEvents.ALLAY_DEATH, SoundSource.MASTER, 0.3F, 1 + (player.getRandom().nextFloat() * 0.25F));
+            } else
+                level.playSound(null, player.blockPosition(), SoundEvents.ALLAY_HURT, SoundSource.MASTER, 0.3F, 1 + (player.getRandom().nextFloat() * 0.25F));
 
             event.setCanceled(true);
-
             relic.spreadRelicExperience(player, stack, 1);
 
-            for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(2), entity -> entity != player && entity.isAlive())) {
+            for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(3), entity -> !entity.getUUID().equals(player.getUUID()) && entity.isAlive())) {
                 var motion = entity.position().subtract(player.position()).normalize().scale(0.4F + (relic.getStatValue(stack, "glider", "count") * 0.2F));
 
-                entity.setDeltaMovement(motion);
+                if (entity instanceof Player serverPlayer)
+                    NetworkHandler.sendToClient(new PacketPlayerMotion(motion.x(), motion.y() / 5, motion.z()), (ServerPlayer) serverPlayer);
+                else
+                    entity.setDeltaMovement(motion.x(), motion.y() / 5, motion.z());
 
                 var pos = source.position().add(new Vec3(0F, source.getBbHeight() / 2F, 0F));
                 var velocity = motion.normalize().scale(0.5F);
 
-                if (!level.isClientSide())
-                    ((ServerLevel) level).sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z, 10, velocity.x, velocity.y, velocity.z, 0.1F);
+                ((ServerLevel) level).sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z, 10, velocity.x, velocity.y, velocity.z, 0.1F);
             }
 
-            level.playSound(null, player.blockPosition(), SoundEvents.ALLAY_HURT, SoundSource.MASTER, 0.3F, 1 + (player.getRandom().nextFloat() * 0.25F));
         }
     }
 }
