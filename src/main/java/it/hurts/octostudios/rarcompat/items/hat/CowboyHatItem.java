@@ -87,7 +87,7 @@ public class CowboyHatItem extends WearableRelicItem {
                                 .borderBottom(0xff473626)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFF572814)
+                                .startColor(0xFF6b3425)
                                 .endColor(0x00473626)
                                 .build())
                         .build())

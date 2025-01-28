@@ -85,7 +85,7 @@ public class DrinkingHatItem extends WearableRelicItem {
                                 stack.getItem() == ModItems.PLASTIC_DRINKING_HAT.value()
                                         ? BeamsData.builder()
                                         .startColor(0xFFfc933c)
-                                        .endColor(0x00ad3923)
+                                        .endColor(0x00a24720)
                                         .build()
                                         : BeamsData.builder()
                                         .startColor(0xFF415db0)

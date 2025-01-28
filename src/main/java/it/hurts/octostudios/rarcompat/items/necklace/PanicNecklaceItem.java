@@ -55,7 +55,7 @@ public class PanicNecklaceItem extends WearableRelicItem {
                                 .borderBottom(0xff57000d)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFFdc291b)
+                                .startColor(0xFFfc725a)
                                 .endColor(0x0057000d)
                                 .build())
                         .build())

@@ -87,7 +87,7 @@ public class UmbrellaItem extends WearableRelicItem {
                                 .borderBottom(0xff600f15)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFFb63a2b)
+                                .startColor(0xFFcf321f)
                                 .endColor(0x00600f15)
                                 .build())
                         .build())

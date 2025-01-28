@@ -65,7 +65,7 @@ public class UniversalAttractorItem extends WearableRelicItem {
                                 .borderBottom(0xff175dea)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFFe01010)
+                                .startColor(0xFFfced59)
                                 .endColor(0x006e230a)
                                 .build())
                         .build())

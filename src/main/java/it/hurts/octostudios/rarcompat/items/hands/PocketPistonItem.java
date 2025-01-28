@@ -70,7 +70,7 @@ public class PocketPistonItem extends WearableRelicItem {
                                 .borderBottom(0xff6a6a6a)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFFcb9848)
+                                .startColor(0xFFddaf68)
                                 .endColor(0x006a6a6a)
                                 .build())
                         .build())

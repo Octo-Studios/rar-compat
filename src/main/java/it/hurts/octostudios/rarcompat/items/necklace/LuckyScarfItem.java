@@ -43,7 +43,7 @@ public class LuckyScarfItem extends WearableRelicItem {
                                 .build())
                         .beams(BeamsData.builder()
                                 .startColor(0xFF84ca26)
-                                .endColor(0x00205c0e)
+                                .endColor(0x00174708)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()

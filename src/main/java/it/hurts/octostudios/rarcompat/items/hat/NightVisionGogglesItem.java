@@ -60,7 +60,7 @@ public class NightVisionGogglesItem extends WearableRelicItem {
                                 .build())
                         .beams(BeamsData.builder()
                                 .startColor(0xFF84fc40)
-                                .endColor(0x0000e03e)
+                                .endColor(0x000b222d)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()
