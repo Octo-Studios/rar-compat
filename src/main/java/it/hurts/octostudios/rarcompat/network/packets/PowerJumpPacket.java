@@ -13,8 +13,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -46,7 +49,12 @@ public class PowerJumpPacket implements CustomPacketPayload {
             if (relic.getTime(stack) >= relic.getStatValue(stack, "hold", "duration") - 1)
                 relic.spreadRelicExperience(player, stack, 1);
 
-            relic.addTime(stack, 1);
+            var countRelic = CuriosApi.getCuriosInventory(player).map(inventory -> inventory.findCurios(ModItems.BUNNY_HOPPERS.value()).stream()
+                    .map(SlotResult::stack).toList()).orElse(List.of());
+
+            for (var entry : countRelic)
+                if (player.tickCount % countRelic.size() == 0)
+                    relic.addTime(entry, 1);
         });
     }
 

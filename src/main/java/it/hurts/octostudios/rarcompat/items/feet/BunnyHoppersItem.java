@@ -29,9 +29,12 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.SlotResult;
 
 import java.awt.*;
+import java.util.List;
 
 public class BunnyHoppersItem extends WearableRelicItem {
     @Override
@@ -94,7 +97,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
             MobEffectInstance jumpBoost = player.getEffect(MobEffects.JUMP);
 
             if (jumpBoost != null)
-                statValue += jumpBoost.getAmplifier() * 4;
+                statValue += (jumpBoost.getAmplifier() + 1) * 4;
         }
 
         var level = player.getCommandSenderWorld();
@@ -168,7 +171,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic) || player.getCommandSenderWorld().isClientSide())
                 return;
 
-            event.setDistance(Math.max(event.getDistance() - (float) (relic.getTime(stack) / 1.5), 0));
+            event.setDistance(Math.max(event.getDistance() - relic.getTime(stack), 0));
         }
     }
 }
