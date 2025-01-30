@@ -60,8 +60,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                                 .borderBottom(0xffb43263)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFFf003fc)
-                                .endColor(0x00d35fd9)
+                                .startColor(0xFFfca4af)
+                                .endColor(0x00b43263)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()
@@ -85,6 +85,11 @@ public class HeliumFlamingoItem extends WearableRelicItem {
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!(slotContext.entity() instanceof Player player) || !isAbilityUnlocked(stack, "flying") || player.isInWater())
             return;
+
+        if (player.onGround()) {
+            setTime(stack, 0);
+            setToggled(stack, false);
+        }
 
         if (player.tickCount % 20 == 0 && getToggled(stack)) {
             addTime(stack, 1);
@@ -185,11 +190,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
             if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || player.isInWater() || !relic.isAbilityUnlocked(stack, "flying"))
                 return;
-
-            if (player.onGround()) {
-                relic.setTime(stack, 0);
-                relic.setToggled(stack, false);
-            }
 
             if (relic.getToggled(stack)) {
                 event.setResult(EventResult.SUCCESS);

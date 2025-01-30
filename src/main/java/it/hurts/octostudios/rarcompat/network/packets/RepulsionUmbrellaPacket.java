@@ -50,7 +50,7 @@ public class RepulsionUmbrellaPacket implements CustomPacketPayload {
 
             relic.spreadRelicExperience(player, stack, 1);
             relic.addCharges(stack, -1);
-            relic.setSpeed(stack, 0.45);
+            relic.setSpeed(stack, 0.65);
 
             var pos = player.position().add(player.getLookAngle());
 

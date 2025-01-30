@@ -19,6 +19,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import org.jetbrains.annotations.NotNull;
 import top.theillusivec4.curios.api.SlotContext;
 
 import java.awt.*;
@@ -54,8 +56,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
                                 .borderBottom(0xff150b2c)
                                 .build())
                         .beams(BeamsData.builder()
-                                .startColor(0xFF583d7a)
-                                .endColor(0x00000004)
+                                .startColor(0xFFa457ff)
+                                .endColor(0x00060a61)
                                 .build())
                         .build())
                 .leveling(LevelingData.builder()
@@ -87,13 +89,32 @@ public class ObsidianSkullItem extends WearableRelicItem {
                 addCooldown(stack, 1);
         }
 
-        if (!player.isOnFire() || getTime(stack) >= (int) getStatValue(stack, "hell", "duration"))
+        if (!player.isOnFire() || getTime(stack) >= getMaxTime(stack))
             return;
 
         if (player.tickCount % 20 == 0)
             spreadRelicExperience(player, stack, 1);
 
         addTime(stack, 1);
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        return Math.max(0, Math.round((13F * (getMaxTime(stack) - getTime(stack))) / getMaxTime(stack)));
+    }
+
+    @Override
+    public boolean isBarVisible(@NotNull ItemStack stack) {
+        return this.getTime(stack) != 0 && hasUnlockedAbility(stack);
+    }
+
+    @Override
+    public int getBarColor(@NotNull ItemStack stack) {
+        return Mth.hsvToRgb(Math.max(0F, Math.min(1F, (1F - Math.max(0F, (float) getTime(stack) / getMaxTime(stack)))) / 3F), 1F, 1F);
+    }
+
+    public int getMaxTime(ItemStack stack) {
+        return (int) MathUtils.round(getStatValue(stack, "hell", "duration"), 0);
     }
 
     public void addTime(ItemStack stack, int time) {
@@ -134,7 +155,12 @@ public class ObsidianSkullItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof ObsidianSkullItem relic) || !relic.isAbilityUnlocked(stack, "hell"))
                 return;
 
-            if (relic.getTime(stack) >= (int) relic.getStatValue(stack, "hell", "duration"))
+            if (!player.isOnFire())
+                relic.addTime(stack, 1);
+
+            relic.setCooldown(stack, 0);
+
+            if (relic.getTime(stack) >= relic.getMaxTime(stack))
                 relic.setCooldown(stack, 0);
             else {
                 event.setCanceled(true);

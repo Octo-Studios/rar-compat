@@ -157,11 +157,16 @@ public class WarpDriveItem extends WearableRelicItem {
 
         int[][] edges = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
 
+        density = (height < 1) ? Math.max(density, 5) : density;
+
         var random = level.getRandom();
 
         for (int[] edge : edges) {
             Vec3 start = corners[edge[0]];
             Vec3 end = corners[edge[1]];
+
+            if (start.distanceTo(end) < 0.01)
+                continue;
 
             for (int j = 0; j <= density; j++) {
                 double t = (double) j / density;
@@ -169,8 +174,8 @@ public class WarpDriveItem extends WearableRelicItem {
                 double y = start.y + t * (end.y - start.y);
                 double z = start.z + t * (end.z - start.z);
 
-                ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)),
-                        0.7F, 40, 0.9F), x, y, z, 0, 0, -0.1, 0, 0.2);
+                ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(random.nextInt(50), random.nextInt(50), 50 + random.nextInt(55)), (float) (0.2F + height / 80), 100, 0.9F),
+                        x, y, z, 0, 0, -0.1, 0, 0.1);
             }
         }
     }

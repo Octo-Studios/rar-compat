@@ -88,7 +88,7 @@ public class DrinkingHatItem extends WearableRelicItem {
                                         .endColor(0x00a24720)
                                         .build()
                                         : BeamsData.builder()
-                                        .startColor(0xFF415db0)
+                                        .startColor(0xFFbd2711)
                                         .endColor(0x001d205d)
                                         .build())
                         .build())

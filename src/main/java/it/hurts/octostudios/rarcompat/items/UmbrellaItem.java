@@ -258,7 +258,7 @@ public class UmbrellaItem extends WearableRelicItem {
 
             NetworkHandler.sendToServer(new RepulsionUmbrellaPacket());
 
-            var angle = player.getLookAngle().scale(-1.15F);
+            var angle = player.getLookAngle().scale(-1.5F);
             var motion = player.getDeltaMovement().add(angle);
 
             player.setDeltaMovement(motion.x(), angle.y(), motion.z());

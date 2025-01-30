@@ -41,7 +41,7 @@ public class FlamingoSwimPacket implements CustomPacketPayload {
             } else {
                 player.setSprinting(false);
 
-                relic.setTime(stack, (int) relic.getStatValue(stack, "flying", "time"));
+                relic.setTime(stack, (int) relic.getStatValue(stack, "flying", "time") + 10);
                 relic.setToggled(stack, false);
             }
         });
