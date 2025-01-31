@@ -69,7 +69,7 @@
 
   "tooltip.relics.scarf_of_invisibility.description": "При достаточно осторожном передвижении делает игрока незаметным для окружающих.",
   "tooltip.relics.scarf_of_invisibility.ability.invisible": "Тихий шаг",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Наделяет игрока полной невидимостью. Эффект спадает на %1$s секунд при любом взаимодействии с миром. Если во время отсутствия невидимости какой-либо моб выберет игрока своей целью, эффект не восстановится пока этот моб не выберет себе другую цель.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Наделяет игрока полной невидимостью. Эффект спадает на %1$s секунд при любом взаимодействии с миром. Если во время отсутствия невидимости какой-либо моб выберет игрока своей целью, эффект не восстановится пока этот моб не потеряет игрока из виду.",
   "tooltip.relics.scarf_of_invisibility.leveling_source.invisible.title": "Тихий шаг",
   "tooltip.relics.scarf_of_invisibility.leveling_source.invisible.description": "+%1$s единиц опыта за каждое применение невидимости от способности %2$s.",
 
@@ -257,7 +257,7 @@
   "tooltip.relics.charm_of_sinking.ability.dive": "Якорь",
   "tooltip.relics.charm_of_sinking.ability.dive.description": "Увеличивает скорость потопления игрока в 2 раза.",
   "tooltip.relics.charm_of_sinking.ability.dipping": "Ныряльщик",
-  "tooltip.relics.charm_of_sinking.ability.dipping.description": "Восполняет запас воздуха игрока на %1$s секунд каждую секунду, пока тот стоит на подводном дне.",
+  "tooltip.relics.charm_of_sinking.ability.dipping.description": "Пока игрок стоит на подводном дне, блокирует расход воздуха и медленно восполняет его запас по %1$s секунд каждую секунду.",
   "tooltip.relics.charm_of_sinking.leveling_source.dipping.title": "Ныряльщик",
   "tooltip.relics.charm_of_sinking.leveling_source.dipping.description": "+%1$s единиц опыта за каждое совершённое касание подводного дна.",
 
@@ -269,7 +269,8 @@
 
   "tooltip.relics.helium_flamingo.description": "На время позволяет носителю реликвии рассекать воздух так же, как он рассекает воду.",
   "tooltip.relics.helium_flamingo.ability.flying": "Воздушный пловец",
-  "tooltip.relics.helium_flamingo.ability.flying.description": "При совершении двойного прыжка позволяет игроку плавать в воздухе на время до %1$s секунд. Скорость передвижения в воздухе пропорциональна скорости плавания игрока с бонусом в дополнительные %2$s%%.",  "tooltip.relics.helium_flamingo.leveling_source.flying.title": "Воздушный пловец",
+  "tooltip.relics.helium_flamingo.ability.flying.description": "При совершении двойного прыжка позволяет игроку плавать в воздухе на время до %1$s секунд. Скорость передвижения в воздухе пропорциональна скорости плавания игрока с бонусом в дополнительные %2$s%%.",
+  "tooltip.relics.helium_flamingo.leveling_source.flying.title": "Воздушный пловец",
   "tooltip.relics.helium_flamingo.leveling_source.flying.description": "+%1$s единиц опыта за каждую секунду плавания в воздухе от способности %2$s.",
 
   "tooltip.relics.pocket_piston.description": "Наделяет руки носителя реликвии силой, свойственной лишь механизмам.",

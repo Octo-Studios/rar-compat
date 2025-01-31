@@ -69,7 +69,7 @@
 
   "tooltip.relics.scarf_of_invisibility.description": "When moving carefully, makes the player invisible to surroundings.",
   "tooltip.relics.scarf_of_invisibility.ability.invisible": "Silent Step",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Grants the player complete invisibility. The effect is lost for %1$s seconds upon any interaction with the world. If during the absence of invisibility any mob targets the player, the effect will not restore until that mob selects a different target.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Grants the player complete invisibility. The effect is lost for %1$s seconds upon any interaction with the world. If during the absence of invisibility any mob targets the player, the effect will not restore until that mob won't lose sight of the player.",
   "tooltip.relics.scarf_of_invisibility.leveling_source.invisible.title": "Silent Step",
   "tooltip.relics.scarf_of_invisibility.leveling_source.invisible.description": "+%1$s experience points for each use of the %2$s ability to become invisible.",
 
@@ -257,7 +257,7 @@
   "tooltip.relics.charm_of_sinking.ability.dive": "Anchor",
   "tooltip.relics.charm_of_sinking.ability.dive.description": "Doubles the player's sinking speed.",
   "tooltip.relics.charm_of_sinking.ability.dipping": "Diver",
-  "tooltip.relics.charm_of_sinking.ability.dipping.description": "Restores the player's air supply by %1$s seconds every second while standing on the underwater floor.",
+  "tooltip.relics.charm_of_sinking.ability.dipping.description": "While the player stands on the underwater floor, it blocks air consumption and slowly restores its supply by %1$s seconds every second.",
   "tooltip.relics.charm_of_sinking.leveling_source.dipping.title": "Diver",
   "tooltip.relics.charm_of_sinking.leveling_source.dipping.description": "+%1$s experience points for each touch of the underwater floor.",
 
