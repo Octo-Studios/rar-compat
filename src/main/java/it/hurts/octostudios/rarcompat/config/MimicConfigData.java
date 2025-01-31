@@ -4,8 +4,6 @@ import it.hurts.octostudios.octolib.modules.config.annotations.Prop;
 import it.hurts.octostudios.octolib.modules.config.impl.OctoConfig;
 import it.hurts.octostudios.rarcompat.handlers.MimicHandler;
 import lombok.Data;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +20,8 @@ public class MimicConfigData implements OctoConfig {
             "relics:magic_mirror", "relics:ice_breaker", "relics:blazing_flask",
             "relics:spore_sack", "relics:shadow_glaive", "relics:roller_skates",
             "relics:infinity_ham", "relics:leather_belt", "relics:wool_mitten",
-            "relics:amphibian_boot", "relics:leafy_ring", "relics:phantom_boot",
-            "relics:springy_boot", "artifacts:umbrella", "artifacts:plastic_drinking_hat",
+            "relics:amphibian_boot", "relics:phantom_boot", "relics:springy_boot",
+            "artifacts:umbrella", "artifacts:plastic_drinking_hat", "artifacts:whoopee_cushion",
             "artifacts:novelty_drinking_hat", "artifacts:snorkel", "artifacts:night_vision_goggles",
             "artifacts:villager_hat", "artifacts:superstitious_hat", "artifacts:cowboy_hat",
             "artifacts:anglers_hat", "artifacts:lucky_scarf", "artifacts:scarf_of_invisibility",
@@ -37,7 +35,7 @@ public class MimicConfigData implements OctoConfig {
             "artifacts:golden_hook", "artifacts:onion_ring", "artifacts:pickaxe_heater",
             "artifacts:withered_bracelet", "artifacts:bunny_hoppers", "artifacts:kitty_slippers",
             "artifacts:running_shoes", "artifacts:snowshoes", "artifacts:steadfast_spikes",
-            "artifacts:flippers", "artifacts:rooted_boots", "artifacts:whoopee_cushion"
+            "artifacts:flippers", "artifacts:rooted_boots"
     );
 
     @Override
