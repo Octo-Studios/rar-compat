@@ -30,6 +30,13 @@ public class VillagerHatItem extends WearableRelicItem {
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("passive")
                                 .maxLevel(0)
+                                .research(ResearchData.builder()
+                                        .star(0, 2, 24).star(1, 12, 27).star(2, 12, 22)
+                                        .star(3, 11, 13).star(4, 6, 11).star(5, 11, 8)
+                                        .star(6, 15, 11).star(7, 7, 5).star(8, 15, 6)
+                                        .link(0, 2).link(1, 2).link(0, 2).link(2, 3).link(3, 5).link(3, 4).link(3, 6)
+                                        .link(4, 5).link(6, 5).link(5, 7).link(5, 8).link(8, 6).link(8, 7).link(7, 8).link(4, 7)
+                                        .build())
                                 .build())
                         .ability(AbilityData.builder("discount")
                                 .stat(StatData.builder("multiplier")
@@ -74,7 +81,7 @@ public class VillagerHatItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player))
+        if (!(slotContext.entity() instanceof Player player) || !isAbilityUnlocked(stack, "passive"))
             return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(IronGolem.class, player.getBoundingBox().inflate(8)).stream().filter(mob -> mob.getTarget() == player).forEach(mob -> mob.setTarget(null));
@@ -87,9 +94,9 @@ public class VillagerHatItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof IronGolem) || !(event.getNewAboutToBeSetTarget() instanceof Player player))
                 return;
 
-            var itemStack = EntityUtils.findEquippedCurio(player, ModItems.VILLAGER_HAT.value());
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.VILLAGER_HAT.value());
 
-            if (itemStack.getItem() instanceof VillagerHatItem)
+            if (stack.getItem() instanceof VillagerHatItem relic && relic.isAbilityUnlocked(stack, "passive"))
                 event.setCanceled(true);
         }
     }
