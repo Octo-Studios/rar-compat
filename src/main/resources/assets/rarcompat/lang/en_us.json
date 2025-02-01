@@ -112,7 +112,7 @@
 
   "tooltip.relics.universal_attractor.description": "Manipulates a weak magnetic field around the relic bearer, controlling the gravity of nearby items.",
   "tooltip.relics.universal_attractor.ability.attractor": "Magnetism",
-  "tooltip.relics.universal_attractor.ability.attractor.description": "Toggleable ability with 2 modes: attraction and repulsion. In attraction mode, pulls items within %1$s blocks radius to the player; in repulsion mode, pushes them away.",
+  "tooltip.relics.universal_attractor.ability.attractor.description": "A toggleable ability with 3 modes: Attraction, Repulsion, and Neutrality. In the red Attraction mode, items within a radius of %1$s blocks are drawn toward the player. In the blue Repulsion mode, items are pushed away. The purple Neutrality mode disables the relic's effect.",
   "tooltip.relics.universal_attractor.leveling_source.attractor.title": "Magnetism",
   "tooltip.relics.universal_attractor.leveling_source.attractor.description": "+%1$s experience points for each item picked up using the %2$s ability. The probability of gaining experience is directly proportional to the ratio of current item count in the stack to its maximum capacity. Does not work if the item was dropped by the relic bearer.",
 
