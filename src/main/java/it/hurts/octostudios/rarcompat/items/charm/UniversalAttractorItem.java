@@ -20,6 +20,8 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -33,6 +35,9 @@ import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 import java.awt.*;
+import java.util.Locale;
+
+import static it.hurts.octostudios.rarcompat.init.DataComponentRegistry.MODE;
 
 public class UniversalAttractorItem extends WearableRelicItem {
     @Override
@@ -43,8 +48,7 @@ public class UniversalAttractorItem extends WearableRelicItem {
                                 .active(CastData.builder()
                                         .type(CastType.INTERRUPTIBLE)
                                         .build())
-                                .icon((player, stack, ability) -> ability + (stack.getOrDefault(DataComponentRegistry.TOGGLED, true) ? "_attract" : "_repel"))
-                                .stat(StatData.builder("radius")
+                                .icon((player, stack, ability) -> ability + "_" + getMode(stack).name().toLowerCase(Locale.ROOT)).stat(StatData.builder("radius")
                                         .initialValue(3D, 5D)
                                         .upgradeModifier(UpgradeOperation.ADD, 1D)
                                         .formatValue(value -> (int) MathUtils.round(value, 1))
@@ -86,16 +90,27 @@ public class UniversalAttractorItem extends WearableRelicItem {
                 .build();
     }
 
+    public Mode getMode(ItemStack stack) {
+        return Mode.byIndex(stack.getOrDefault(MODE, Mode.ATTRACT.getIndex()));
+    }
+
+    public void setMode(ItemStack stack, Mode mode) {
+        stack.set(MODE, mode.getIndex());
+    }
+
+    public void cycleMode(ItemStack stack, int steps) {
+        setMode(stack, getMode(stack).cycle(steps));
+    }
+
     @Override
     public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
-        if (ability.equals("attractor"))
-            stack.set(DataComponentRegistry.TOGGLED, !stack.getOrDefault(DataComponentRegistry.TOGGLED, true));
+        cycleMode(stack, 1);
     }
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide()
-                || !canPlayerUseAbility(player, stack, "attractor"))
+                || !canPlayerUseAbility(player, stack, "attractor") || getMode(stack) == Mode.NEUTRAL)
             return;
 
         var pos = player.position();
@@ -108,7 +123,7 @@ public class UniversalAttractorItem extends WearableRelicItem {
 
             var oldPos = new Vec3(item.getX(), item.getY() - item.getBbHeight() * 3, item.getZ());
 
-            if (stack.getOrDefault(DataComponentRegistry.TOGGLED, true)) {
+            if (getMode(stack) == Mode.ATTRACT) {
                 item.moveTo(pos);
 
                 createLine(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(55), random.nextInt(50), random.nextInt(50)), 0.2F, 20, 0.8F), level, pos, oldPos);
@@ -130,6 +145,34 @@ public class UniversalAttractorItem extends WearableRelicItem {
             var progress = i * delta.length() / amount;
 
             ((ServerLevel) level).sendParticles(particle, start.x + dir.x * progress, start.y + dir.y * progress + 1, start.z + dir.z * progress, 0, 0, 0, 0, 0);
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum Mode {
+        ATTRACT(1),
+        REPEL(2),
+        NEUTRAL(3);
+
+        private final int index;
+
+        public static Mode byIndex(int index) {
+            for (var mode : Mode.values())
+                if (mode.getIndex() == index)
+                    return mode;
+
+            throw new IllegalArgumentException();
+        }
+
+        public Mode cycle(int steps) {
+            var modes = Mode.values();
+            int index = (this.ordinal() + steps) % modes.length;
+
+            if (index < 0)
+                index += modes.length;
+
+            return modes[index];
         }
     }
 
