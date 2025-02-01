@@ -7,7 +7,7 @@
 
   "tooltip.relics.umbrella.description": "Softens the fall, providing safe landing from any height. When skillfully used, it can serve as a reliable shield, keeping enemies at bay.",
   "tooltip.relics.umbrella.ability.glider": "Soft Fall",
-  "tooltip.relics.umbrella.ability.glider.description": "When held in hand, it reduces the player's vertical speed, preventing fall damage. Pressing LMB while falling pushes the player backward, disabling item use for %2$s seconds. The push can be used up to %1$s times in a row before the player touches the ground.",
+  "tooltip.relics.umbrella.ability.glider.description": "When held in hand, reduces the player's vertical speed, negating fall damage. Pressing LMB propels the player backward and triggers a cooldown of %2$s seconds. The push can be used up to %1$s times in succession before the player touches the ground.",
   "tooltip.relics.umbrella.ability.shield": "Air Shield",
   "tooltip.relics.umbrella.ability.shield.description": "When used, functions as a shield, pushing targets up to %1$s blocks away.",
   "tooltip.relics.umbrella.leveling_source.glider_1.title": "Free Fall",
