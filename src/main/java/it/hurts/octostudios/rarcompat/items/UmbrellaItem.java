@@ -61,6 +61,11 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .upgradeModifier(UpgradeOperation.ADD, 1D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
+                                .stat(StatData.builder("cooldown")
+                                        .initialValue(2D, 1.5D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, -0.07D)
+                                        .formatValue(value -> MathUtils.round(value, 2))
+                                        .build())
                                 .research(ResearchData.builder()
                                         .star(0, 3, 10).star(1, 11, 5).star(2, 19, 10)
                                         .star(3, 11, 22).star(4, 15, 22).star(5, 13, 25)
@@ -147,11 +152,6 @@ public class UmbrellaItem extends WearableRelicItem {
 
         if (!hasUmbrella || player.isInLiquid() || player.getDeltaMovement().y > 0 || player.isShiftKeyDown())
             return;
-
-        var step = 0.01D;
-
-        if (getSpeed(stack) >= 0.15D)
-            addSpeed(stack, -step);
 
         var motion = player.getDeltaMovement();
 
@@ -261,7 +261,10 @@ public class UmbrellaItem extends WearableRelicItem {
             var angle = player.getLookAngle().scale(-1.15F);
             var motion = player.getDeltaMovement().add(angle);
 
-            player.setDeltaMovement(motion.x(), angle.y(), motion.z());
+            if (angle.y < 0)
+                player.setDeltaMovement(new Vec3(motion.x(), 0, motion.z()));
+            else
+                player.setDeltaMovement(motion.x(), angle.y(), motion.z());
         }
 
         @SubscribeEvent
