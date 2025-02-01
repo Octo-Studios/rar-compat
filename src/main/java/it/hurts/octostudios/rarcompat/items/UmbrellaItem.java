@@ -155,7 +155,7 @@ public class UmbrellaItem extends WearableRelicItem {
 
         var motion = player.getDeltaMovement();
 
-        player.setDeltaMovement(motion.x(), -getSpeed(stack), motion.z());
+        player.setDeltaMovement(motion.x(), -0.15D, motion.z());
         player.fallDistance = 0;
 
         if (player.tickCount % 20 == 0 && !isOnGround)
@@ -221,18 +221,6 @@ public class UmbrellaItem extends WearableRelicItem {
 
     public static boolean isHoldingUmbrella(LivingEntity entity, InteractionHand hand) {
         return entity.getItemInHand(hand).getItem() instanceof UmbrellaItem && (!entity.isUsingItem() || entity.getUsedItemHand() != hand);
-    }
-
-    public void addSpeed(ItemStack stack, double val) {
-        setSpeed(stack, getSpeed(stack) + val);
-    }
-
-    public double getSpeed(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.SPEED, 0.15D);
-    }
-
-    public void setSpeed(ItemStack stack, double val) {
-        stack.set(DataComponentRegistry.SPEED, Math.max(val, 0D));
     }
 
     @EventBusSubscriber(value = Dist.CLIENT)
