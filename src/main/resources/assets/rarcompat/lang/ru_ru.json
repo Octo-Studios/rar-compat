@@ -167,8 +167,8 @@
   "tooltip.relics.feral_claws.description": "Пробуждает в носителе реликвии жажду крови, заставляя его драться быстрее с каждой следующей атакой.",
   "tooltip.relics.feral_claws.ability.claws": "Ярость зверя",
   "tooltip.relics.feral_claws.ability.claws.description": "Увеличивает скорость атаки игрока на %1$s%% за каждую последующую атаку, совершенную не позднее 3 секунд после последней. В противном случае начинает теряет по 1 заряду каждую секунду. Атака с незаполненной шкалой скорости атаки обнулит количество накопленных зарядов.",
-  "tooltip.relics.feral_claws.leveling_source.antidote.title": "Ярость зверя",
-  "tooltip.relics.feral_claws.leveling_source.antidote.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
+  "tooltip.relics.feral_claws.leveling_source.claws.title": "Ярость зверя",
+  "tooltip.relics.feral_claws.leveling_source.claws.description": "+%1$s единиц опыта за каждое срабатывание способности %2$s.",
 
   "tooltip.relics.antidote_vessel.description": "Усиливает сопротивление эффектам у носителя реликвии.",
   "tooltip.relics.antidote_vessel.ability.antidote": "Сопротивление ядам",
