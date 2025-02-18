@@ -45,9 +45,9 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
 
         for (int i = 0; i < chest.getContainerSize(); i++)
             if (MimicHandler.MIMIFICABLE.contains(chest.getItem(i).getItem())) {
-                chest.setItem(i, ItemStack.EMPTY);
+                count += chest.getItem(i).getCount();
 
-                count++;
+                chest.setItem(i, ItemStack.EMPTY);
             }
 
         if (count == 0)

@@ -11,8 +11,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class MimicHandler {
     public static final List<Item> MIMIFICABLE = new ArrayList<>();
 
     @SubscribeEvent
-    public static void onStartedServer(ServerStartedEvent event) {
+    public static void onStartedServer(TagsUpdatedEvent event) {
         var mimicLoot = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "mimic_loot")))
                 .stream().flatMap(holderSet -> holderSet.stream().map(Holder::value)).toList();
         var mimificable = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "mimificable")))
