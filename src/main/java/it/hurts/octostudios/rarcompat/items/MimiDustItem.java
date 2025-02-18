@@ -2,10 +2,10 @@ package it.hurts.octostudios.rarcompat.items;
 
 import artifacts.entity.MimicEntity;
 import artifacts.registry.ModEntityTypes;
+import it.hurts.octostudios.rarcompat.handlers.MimicHandler;
 import it.hurts.sskirillss.relics.init.CreativeTabRegistry;
 import it.hurts.sskirillss.relics.items.misc.CreativeContentConstructor;
 import it.hurts.sskirillss.relics.items.misc.ICreativeTabContent;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.ChatFormatting;
@@ -44,7 +44,7 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
         var count = 0;
 
         for (int i = 0; i < chest.getContainerSize(); i++)
-            if (chest.getItem(i).getItem() instanceof IRelicItem) {
+            if (MimicHandler.MIMIFICABLE.contains(chest.getItem(i).getItem())) {
                 chest.setItem(i, ItemStack.EMPTY);
 
                 count++;
@@ -67,7 +67,7 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
 
         var multiplier = (float) Math.pow(count, 1.7);
 
-        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.ATTACK_DAMAGE,  multiplier, AttributeModifier.Operation.ADD_VALUE);
+        EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.ATTACK_DAMAGE, multiplier, AttributeModifier.Operation.ADD_VALUE);
         EntityUtils.applyAttribute(mimic, ItemStack.EMPTY, Attributes.MAX_HEALTH, multiplier, AttributeModifier.Operation.ADD_VALUE);
 
         mimic.setHealth(mimic.getMaxHealth());

@@ -2,7 +2,6 @@ package it.hurts.octostudios.rarcompat.handlers;
 
 import artifacts.entity.MimicEntity;
 import it.hurts.octostudios.rarcompat.RARCompat;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -20,31 +19,29 @@ import java.util.List;
 
 @EventBusSubscriber
 public class MimicHandler {
-    public static final List<Item> ITEMS = new ArrayList<>();
+    public static final List<Item> MIMIC_LOOT = new ArrayList<>();
+    public static final List<Item> MIMIFICABLE = new ArrayList<>();
 
     @SubscribeEvent
     public static void onStartedServer(ServerStartedEvent event) {
-        var entries = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "mimic_drops")))
+        var mimicLoot = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "mimic_loot")))
+                .stream().flatMap(holderSet -> holderSet.stream().map(Holder::value)).toList();
+        var mimificable = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "mimificable")))
                 .stream().flatMap(holderSet -> holderSet.stream().map(Holder::value)).toList();
 
-        MimicHandler.ITEMS.clear();
+        MIMIC_LOOT.clear();
+        MIMIFICABLE.clear();
 
-        if (entries.isEmpty())
+        if (mimicLoot.isEmpty() || mimificable.isEmpty())
             return;
 
-        for (var entry : entries) {
-            var id = ResourceLocation.parse(String.valueOf(entry));
-
-            if (!BuiltInRegistries.ITEM.containsKey(id) || !(BuiltInRegistries.ITEM.get(id) instanceof IRelicItem))
-                continue;
-
-            MimicHandler.ITEMS.add(BuiltInRegistries.ITEM.get(id));
-        }
+        mimicLoot.stream().map(entry -> ResourceLocation.parse(String.valueOf(entry))).filter(BuiltInRegistries.ITEM::containsKey).map(BuiltInRegistries.ITEM::get).forEach(MIMIC_LOOT::add);
+        mimificable.stream().map(entry -> ResourceLocation.parse(String.valueOf(entry))).filter(BuiltInRegistries.ITEM::containsKey).map(BuiltInRegistries.ITEM::get).forEach(MIMIFICABLE::add);
     }
 
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
-        if (ITEMS.isEmpty() || !(event.getEntity() instanceof MimicEntity entity))
+        if (MIMIC_LOOT.isEmpty() || !(event.getEntity() instanceof MimicEntity entity))
             return;
 
         var level = entity.getCommandSenderWorld();
@@ -52,6 +49,6 @@ public class MimicHandler {
         var persistentData = entity.getPersistentData();
 
         for (int i = 0; i < (persistentData.getInt("relicCount") == 0 ? 1 : persistentData.getInt("relicCount")); i++)
-            event.getDrops().add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), ITEMS.get(random.nextInt(ITEMS.size())).getDefaultInstance()));
+            event.getDrops().add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), MIMIC_LOOT.get(random.nextInt(MIMIC_LOOT.size())).getDefaultInstance()));
     }
 }
