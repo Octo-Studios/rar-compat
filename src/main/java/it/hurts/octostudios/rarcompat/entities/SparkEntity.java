@@ -47,13 +47,16 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0), 0.01F + random.nextFloat() * 0.1F, 5 + random.nextInt(3), 0.9F),
                 particleCenter.x() + MathUtils.randomFloat(random) * 0.05F, particleCenter.y() + MathUtils.randomFloat(random) * 0.05F, particleCenter.z() + MathUtils.randomFloat(random) * 0.05F, 0F, 0F, 0F);
 
-        if (level.isClientSide() || target == null)
+        if (level.isClientSide())
             return;
 
-        if (target.isDeadOrDying())
+        if (target == null || target.isDeadOrDying() || tickCount >= 120) {
             this.discard();
 
-        if (this.distanceTo(target) < 1)
+            return;
+        }
+
+        if (this.distanceTo(target) <= 1)
             hitEntity(target);
 
         Vec3 targetPos = new Vec3(target.getX(), target.getY() + target.getBbHeight() / 2F, target.getZ());
