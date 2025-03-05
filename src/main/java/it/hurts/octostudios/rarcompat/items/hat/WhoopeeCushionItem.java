@@ -22,12 +22,12 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -88,19 +88,20 @@ public class WhoopeeCushionItem extends WearableRelicItem {
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!(slotContext.entity() instanceof Player player) || player.getCommandSenderWorld().isClientSide() || !isAbilityUnlocked(stack, "push")
-                || player.getRandom().nextDouble() > getStatValue(stack, "push", "chance") || !player.onGround())
+                || !player.onGround())
             return;
 
         var isSneaking = player.isShiftKeyDown();
+        var random = player.getRandom();
 
-        if (isSneaking && !stack.getOrDefault(DataComponentRegistry.TOGGLED, false)) {
-            createWhoopee(player.level(), player, stack);
-        }
+        if (isSneaking && !stack.getOrDefault(DataComponentRegistry.TOGGLED, false)
+                && random.nextDouble() < getStatValue(stack, "push", "chance"))
+            createWhoopee((ServerLevel) player.level(), player, stack, random);
 
         stack.set(DataComponentRegistry.TOGGLED, isSneaking);
     }
 
-    public void createWhoopee(Level level, Player player, ItemStack stack) {
+    public void createWhoopee(ServerLevel level, Player player, ItemStack stack, RandomSource random) {
         level.playSound(null, player.blockPosition(), ModSoundEvents.FART.value(), player.getSoundSource(), 1F, 0.75F + player.getRandom().nextFloat());
 
         spreadRelicExperience(player, stack, 1);
@@ -116,9 +117,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
             livingEntity.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
         }
 
-        var random = player.getRandom();
-
-        ((ServerLevel) level).sendParticles(ParticleUtils.constructSimpleSpark(new Color(0, 100 + random.nextInt(50), 0), 0.5F, 50, 0.9F),
+        level.sendParticles(ParticleUtils.constructSimpleSpark(new Color(0, 100 + random.nextInt(50), 0), 0.5F, 50, 0.9F),
                 player.getX(), player.getY() + 0.5, player.getZ(), 30, 0.25, 0.3, 0.25, 0.1);
     }
 
@@ -126,7 +125,8 @@ public class WhoopeeCushionItem extends WearableRelicItem {
     public static class WhoopeeCushionEvent {
         @SubscribeEvent
         public static void onAttackPlayer(LivingDamageEvent.Pre event) {
-            if (!(event.getEntity() instanceof Player player) || event.getSource().getEntity() == player)
+            if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide()
+                    || event.getSource().getEntity() == player)
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.WHOOPEE_CUSHION.value());
@@ -135,7 +135,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                     || player.getRandom().nextDouble() > relic.getStatValue(stack, "push", "chance"))
                 return;
 
-            relic.createWhoopee(player.getCommandSenderWorld(), player, stack);
+            relic.createWhoopee((ServerLevel) player.getCommandSenderWorld(), player, stack, player.getRandom());
         }
     }
 }
