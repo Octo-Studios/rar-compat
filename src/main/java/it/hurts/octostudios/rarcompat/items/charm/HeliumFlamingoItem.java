@@ -83,8 +83,17 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || !isAbilityUnlocked(stack, "flying") || player.isInWater())
+        if (!(slotContext.entity() instanceof Player player) || !isAbilityUnlocked(stack, "flying"))
             return;
+
+        if (player.getCommandSenderWorld().isClientSide() && HeliumFlamingoClientEvent.onDoubleJump) {
+            HeliumFlamingoClientEvent.ticKCount++;
+
+            if (HeliumFlamingoClientEvent.ticKCount % 10 == 0) {
+                HeliumFlamingoClientEvent.onDoubleJump = false;
+                HeliumFlamingoClientEvent.ticKCount = 0;
+            }
+        }
 
         if (player.onGround()) {
             setTime(stack, 0);
@@ -101,15 +110,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             player.fallDistance = 0;
 
             setToggled(stack, false);
-        }
-
-        if (player.getCommandSenderWorld().isClientSide()) {
-            HeliumFlamingoClientEvent.ticKCount++;
-
-            if (HeliumFlamingoClientEvent.ticKCount % 15 == 0) {
-                HeliumFlamingoClientEvent.onDoubleJump = false;
-                HeliumFlamingoClientEvent.ticKCount = 0;
-            }
         }
     }
 
@@ -167,16 +167,16 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
             var time = relic.getTime(stack);
 
-            if (time >= statValue || Math.abs(player.getKnownMovement().x) <= 0.01D && Math.abs(player.getKnownMovement().z) <= 0.01D)
+            if (time >= statValue)
                 return;
 
             if (!onDoubleJump)
                 onDoubleJump = true;
             else {
+                NetworkHandler.sendToServer(new FlamingoSwimPacket(!relic.getToggled(stack)));
+
                 if (!relic.getToggled(stack))
-                    NetworkHandler.sendToServer(new FlamingoSwimPacket(true));
-                else
-                    NetworkHandler.sendToServer(new FlamingoSwimPacket(false));
+                    player.setDeltaMovement(player.getLookAngle().scale(0.6));
             }
         }
     }
@@ -188,7 +188,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             Player player = event.getEntity();
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
-            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || player.isInWater() || !relic.isAbilityUnlocked(stack, "flying"))
+            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || !relic.isAbilityUnlocked(stack, "flying"))
                 return;
 
             if (relic.getToggled(stack)) {

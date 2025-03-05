@@ -31,7 +31,7 @@ public class FlamingoSwimPacket implements CustomPacketPayload {
 
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
-            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || player.isInWater())
+            if (!(stack.getItem() instanceof HeliumFlamingoItem relic))
                 return;
 
             if (toggled) {
