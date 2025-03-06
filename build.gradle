@@ -27,6 +27,11 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neoforge_version
 
+    parchment {
+        mappingsVersion = "2024.11.10"
+        minecraftVersion = project.minecraft_version
+    }
+
     // This line is optional. Access Transformers are automatically detected
     // accessTransformers.add('src/main/resources/META-INF/accesstransformer.cfg')
 
