@@ -95,17 +95,15 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             }
         }
 
-        if (player.onGround()) {
+        if (player.onGround() || player.isInLiquid())
             setTime(stack, 0);
-            setToggled(stack, false);
-        }
 
         if (player.tickCount % 20 == 0 && getToggled(stack)) {
             addTime(stack, 1);
             spreadRelicExperience(player, stack, 1);
         }
 
-        if (getTime(stack) >= (int) MathUtils.round(getStatValue(stack, "flying", "time"), 0)) {
+        if (getTime(stack) >= (int) MathUtils.round(getStatValue(stack, "flying", "time"), 0) && !player.isInLiquid()) {
             player.setDeltaMovement(player.getDeltaMovement().x, -0.25, player.getKnownMovement().z);
             player.fallDistance = 0;
 
@@ -160,23 +158,27 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             var stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
             if (minecraft.screen != null || event.getAction() != 1 || !(stack.getItem() instanceof HeliumFlamingoItem relic)
-                    || !relic.canPlayerUseAbility(player, stack, "flying") || event.getKey() != minecraft.options.keyJump.getKey().getValue()
-                    || player.mayFly())
-                return;
-
-            var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
-            var time = relic.getTime(stack);
-
-            if (time >= statValue)
+                    || !relic.canPlayerUseAbility(player, stack, "flying") || event.getKey() != minecraft.options.keyJump.getKey().getValue())
                 return;
 
             if (!onDoubleJump)
                 onDoubleJump = true;
             else {
-                NetworkHandler.sendToServer(new FlamingoSwimPacket(!relic.getToggled(stack)));
+                if (!player.mayFly()) {
+                    var statValue = (int) MathUtils.round(relic.getStatValue(stack, "flying", "time"), 0);
+                    var time = relic.getTime(stack);
 
-                if (!relic.getToggled(stack))
-                    player.setDeltaMovement(player.getDeltaMovement().add(player.getLookAngle().scale(0.6F)));
+                    if (time >= statValue)
+                        return;
+
+                    NetworkHandler.sendToServer(new FlamingoSwimPacket(!relic.getToggled(stack)));
+
+                    if (!relic.getToggled(stack) && !player.isInLiquid())
+                        player.setDeltaMovement(player.getDeltaMovement().add(player.getLookAngle().scale(0.6F)));
+                } else {
+                    if (relic.getToggled(stack))
+                        NetworkHandler.sendToServer(new FlamingoSwimPacket(false));
+                }
             }
         }
     }
