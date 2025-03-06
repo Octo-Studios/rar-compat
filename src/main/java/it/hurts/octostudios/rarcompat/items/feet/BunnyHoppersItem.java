@@ -29,12 +29,9 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
-import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.SlotResult;
 
 import java.awt.*;
-import java.util.List;
 
 public class BunnyHoppersItem extends WearableRelicItem {
     @Override
@@ -86,10 +83,8 @@ public class BunnyHoppersItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || !canPlayerUseAbility(player, stack, "hold"))
             return;
 
-        if (player.onGround() || getTime(stack) == 0) {
+        if (player.onGround())
             addTime(stack, -getTime(stack));
-            setToggled(stack, true);
-        }
 
         var statValue = getStatValue(stack, "hold", "duration");
 
@@ -155,10 +150,10 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.BUNNY_HOPPERS.value());
 
-            if (!(stack.getItem() instanceof BunnyHoppersItem relic))
+            if (!(stack.getItem() instanceof BunnyHoppersItem relic) || !relic.canPlayerUseAbility(player, stack, "hold"))
                 return;
 
-            relic.addTime(stack, -relic.getTime(stack));
+            relic.setToggled(stack, true);
         }
 
         @SubscribeEvent
@@ -171,7 +166,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic) || player.getCommandSenderWorld().isClientSide())
                 return;
 
-            event.setDistance(Math.max(event.getDistance() - relic.getTime(stack), 0));
+            event.setDistance(Math.max(event.getDistance() - relic.getTime(stack) * 1.20F, 0));
         }
     }
 }
