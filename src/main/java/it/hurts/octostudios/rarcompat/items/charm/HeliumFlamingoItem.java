@@ -176,7 +176,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                 NetworkHandler.sendToServer(new FlamingoSwimPacket(!relic.getToggled(stack)));
 
                 if (!relic.getToggled(stack))
-                    player.setDeltaMovement(player.getLookAngle().scale(0.6));
+                    player.setDeltaMovement(player.getDeltaMovement().add(player.getLookAngle().scale(0.6F)));
             }
         }
     }
