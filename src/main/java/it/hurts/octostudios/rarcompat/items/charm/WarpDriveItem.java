@@ -23,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -98,14 +99,13 @@ public class WarpDriveItem extends WearableRelicItem {
             return;
 
         var blockPos = getHitResult(player, stack);
-        var pos = getHitResult(player, stack);
 
-        if (pos == null)
+        if (blockPos == null)
             return;
 
         spawnCuboidOutlineParticles(level, player.position(), player.getBbHeight(), player.getBbWidth(), (int) player.getBbHeight() * 20);
 
-        for (int i = 1; i <= player.position().distanceTo(pos.getCenter()) + 9; i++)
+        for (int i = 1; i <= player.position().distanceTo(blockPos.getCenter()) + 9; i++)
             if (i % 10 == 0)
                 spreadRelicExperience(player, stack, 1);
 
@@ -127,7 +127,7 @@ public class WarpDriveItem extends WearableRelicItem {
         var blockPos = level.clip(new ClipContext(eyeVec, eyeVec.add(viewVec.x * distance, viewVec.y * distance,
                 viewVec.z * distance), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)).getBlockPos();
 
-        if (!hasCollision(level, blockPos))
+        if (!hasCollision(level, blockPos) || level.getBlockState(blockPos).isAir())
             return null;
 
         blockPos = blockPos.above();
@@ -146,7 +146,7 @@ public class WarpDriveItem extends WearableRelicItem {
     }
 
     private boolean hasCollision(Level level, BlockPos pos) {
-        return level.getBlockState(pos).getCollisionShape(level, pos).max(Direction.Axis.Y) == 1;
+        return level.getBlockState(pos).getCollisionShape(level, pos).max(Direction.Axis.Y) >= 0.25;
     }
 
     public void spawnCuboidOutlineParticles(Level level, Vec3 position, double height, double halfWidth, int density) {
