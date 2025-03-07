@@ -15,13 +15,9 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
 import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
-
-import java.util.List;
 
 public class GoldenHookItem extends WearableRelicItem {
 
@@ -71,24 +67,26 @@ public class GoldenHookItem extends WearableRelicItem {
 
     @EventBusSubscriber
     public static class GoldenHookEvent {
-
         @SubscribeEvent
         public static void onLivingExperienceDrop(LivingExperienceDropEvent event) {
-            Player player = event.getAttackingPlayer();
+            var player = event.getAttackingPlayer();
+            var stacks = EntityUtils.findEquippedCurios(player, ModItems.GOLDEN_HOOK.value());
 
-            List<ItemStack> stacks = EntityUtils.findEquippedCurios(player, ModItems.GOLDEN_HOOK.value());
-            double percentage = stacks.stream().mapToDouble(stack -> {
-                if (!(stack.getItem() instanceof GoldenHookItem relic) || !relic.isAbilityUnlocked(stack, "hook")) {
+            if (stacks.isEmpty())
+                return;
+
+            var percentage = stacks.stream().mapToDouble(stack -> {
+                if (!(stack.getItem() instanceof GoldenHookItem relic) || !relic.isAbilityUnlocked(stack, "hook"))
                     return 0d;
-                }
+
                 relic.spreadRelicExperience(player, stack, 1);
+
                 return relic.getStatValue(stack, "hook", "amount");
             }).sum();
 
             var droppedExp = event.getDroppedExperience();
+
             event.setDroppedExperience((int) (droppedExp + (droppedExp * percentage)));
         }
-
     }
-
 }
