@@ -21,6 +21,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
 
+import java.util.List;
+
 public class GoldenHookItem extends WearableRelicItem {
 
     @Override
@@ -74,16 +76,17 @@ public class GoldenHookItem extends WearableRelicItem {
         public static void onLivingExperienceDrop(LivingExperienceDropEvent event) {
             Player player = event.getAttackingPlayer();
 
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.GOLDEN_HOOK.value());
-
-            if (!(stack.getItem() instanceof GoldenHookItem relic) || !relic.isAbilityUnlocked(stack, "hook"))
-                return;
-
-            relic.spreadRelicExperience(player, stack, 1);
+            List<ItemStack> stacks = EntityUtils.findEquippedCurios(player, ModItems.GOLDEN_HOOK.value());
+            double percentage = stacks.stream().mapToDouble(stack -> {
+                if (!(stack.getItem() instanceof GoldenHookItem relic) || !relic.isAbilityUnlocked(stack, "hook")) {
+                    return 0d;
+                }
+                relic.spreadRelicExperience(player, stack, 1);
+                return relic.getStatValue(stack, "hook", "amount");
+            }).sum();
 
             var droppedExp = event.getDroppedExperience();
-
-            event.setDroppedExperience((int) (droppedExp + (droppedExp * relic.getStatValue(stack, "hook", "amount"))));
+            event.setDroppedExperience((int) (droppedExp + (droppedExp * percentage)));
         }
 
     }
