@@ -57,7 +57,7 @@ public class MimiDustItem extends Item implements ICreativeTabContent {
 
         level.removeBlock(pos, true);
 
-        var mimic = new MimicEntity(ModEntityTypes.MIMIC.value(), level);
+        var mimic = new MimicEntity(ModEntityTypes.MIMIC.get(), level);
 
         mimic.getPersistentData().putInt("relicCount", count);
         mimic.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
