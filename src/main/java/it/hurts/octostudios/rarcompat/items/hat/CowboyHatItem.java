@@ -28,12 +28,14 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.Saddleable;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.ElderGuardian;
@@ -121,43 +123,53 @@ public class CowboyHatItem extends WearableRelicItem {
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!(slotContext.entity() instanceof Player player) || !(player.getRootVehicle() instanceof Mob beingMounted)
-                || !getToggled(stack) || !checkMob(player, EnderDragon.class, WitherBoss.class, Warden.class, ElderGuardian.class))
+                || !checkMob(player, EnderDragon.class, WitherBoss.class, Warden.class, ElderGuardian.class)
+                || (beingMounted instanceof AbstractHorse && !((AbstractHorse) beingMounted).isTamed()))
             return;
 
-        if (isAbilityOnCooldown(stack, "overlord") || !isAbilityUnlocked(stack, "overlord"))
-            player.stopRiding();
-        else {
-            var random = player.getRandom();
-            var level = player.getCommandSenderWorld();
+        var random = player.getRandom();
+        var level = player.getCommandSenderWorld();
 
-            if (getTime(stack) >= getStatValue(stack, "overlord", "time") * 20) {
-                player.stopRiding();
-                player.playSound(SoundEvents.WOOL_HIT, 1.0F, 0.9F + player.getRandom().nextFloat() * 0.2F);
+        // Ensure Overlord ability does not interfere with cowboy ability by applying cowboy ability first
+        if(isAbilityUnlocked(stack, "cowboy")){
+            if (level.isClientSide() && player instanceof LocalPlayer localPlayer
+                    && localPlayer.input.jumping && beingMounted.onGround()
+                    && !isWaterOrFlyingMob(beingMounted) && !(beingMounted instanceof AbstractHorse))
+                beingMounted.addDeltaMovement(new Vec3(0, 0.8, 0));
 
-                setTime(stack, 0);
+            // Ensure experience is applied only while moving
+            var knownMovement = beingMounted.getKnownMovement();
+            if ((knownMovement.x != 0 || knownMovement.z != 0) && random.nextFloat() <= 0.25F && player.tickCount % 20 == 0)
+                spreadRelicExperience(player, stack, 1);
 
-                for (int i = 0; i < 50; i++)
-                    level.addParticle(ParticleUtils.constructSimpleSpark(new Color(150 + random.nextInt(106), 50 + random.nextInt(100), 50 + random.nextInt(100)),
-                                    0.5F, 60, 0.95F),
-                            player.getX(), player.getY() + 1.0, player.getZ(),
-                            (random.nextDouble() - 0.5) * 3.0,
-                            random.nextDouble() * 1.5,
-                            (random.nextDouble() - 0.5) * 3.0);
-            } else {
-                if (level.isClientSide() && player instanceof LocalPlayer localPlayer && localPlayer.input.jumping && beingMounted.onGround()
-                        && !isWaterOrFlyingMob(beingMounted))
-                    beingMounted.addDeltaMovement(new Vec3(0, 0.8, 0));
+            changeAttributes(beingMounted, stack, true, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+        } else {
+            // Ensure attributes are not applied
+            changeAttributes(beingMounted, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+        }
 
-                var knownMovement = beingMounted.getKnownMovement();
+        // Handle overlord ability
+        if (getToggled(stack) && isAbilityUnlocked(stack, "overlord")){
+            // Stop riding if the ability is on cooldown
+           if (isAbilityOnCooldown(stack, "overlord")){
+               player.stopRiding();
+           } else if (getTime(stack) >= getStatValue(stack, "overlord", "time") * 20) {
+               player.stopRiding();
+               // Play sound and display particles
+               player.playSound(SoundEvents.WOOL_HIT, 1.0F, 0.9F + player.getRandom().nextFloat() * 0.2F);
 
-                if ((knownMovement.x != 0 || knownMovement.z != 0) && random.nextFloat() <= 0.25F && player.tickCount % 20 == 0)
-                    spreadRelicExperience(player, stack, 1);
+               for (int i = 0; i < 50; i++)
+                   level.addParticle(ParticleUtils.constructSimpleSpark(new Color(150 + random.nextInt(106), 50 + random.nextInt(100), 50 + random.nextInt(100)),
+                                   0.5F, 60, 0.95F),
+                           player.getX(), player.getY() + 1.0, player.getZ(),
+                           (random.nextDouble() - 0.5) * 3.0,
+                           random.nextDouble() * 1.5,
+                           (random.nextDouble() - 0.5) * 3.0);
 
-                if (isAbilityUnlocked(stack, "cowboy"))
-                    changeAttributes(beingMounted, stack, true, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
-
-                addTime(stack, 1);
-            }
+               resetOverlordState(stack, beingMounted);
+           } else {
+               addTime(stack, 1);
+           }
         }
     }
 
@@ -232,6 +244,16 @@ public class CowboyHatItem extends WearableRelicItem {
         return stack.getOrDefault(DataComponentRegistry.TOGGLED, false);
     }
 
+    private void resetOverlordState(ItemStack stack, Mob beingMounted) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof CowboyHatItem relic))
+            return;
+
+        relic.addAbilityCooldown(stack, "overlord", 600);
+        relic.setTime(stack, 0);
+        relic.setToggled(stack, false);
+        relic.changeAttributes(beingMounted, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+    }
+
     @EventBusSubscriber
     public static class CowboyEvent {
         @SubscribeEvent
@@ -241,14 +263,34 @@ public class CowboyHatItem extends WearableRelicItem {
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
 
-            if (player.getCommandSenderWorld().isClientSide() || !(stack.getItem() instanceof CowboyHatItem relic) || !event.isDismounting()
-                    || !(event.getEntityBeingMounted() instanceof Mob mount) || !relic.getToggled(stack))
+            if (player.getCommandSenderWorld().isClientSide() || !(stack.getItem() instanceof CowboyHatItem relic)
+                    || !event.isDismounting() || !(event.getEntityBeingMounted() instanceof Mob mount)
+                    || !relic.getToggled(stack))
+                        return;
+
+            relic.resetOverlordState(stack, mount);
+        }
+
+        @SubscribeEvent
+        public static void onEntityDismount(EntityMountEvent event) {
+            Entity entity = event.getEntityBeingMounted();
+            Entity rider = event.getEntityMounting();
+
+            if (!(rider instanceof Player player))
                 return;
 
-            relic.addAbilityCooldown(stack, "overlord", 600);
-            relic.setTime(stack, 0);
-            relic.setToggled(stack, false);
-            relic.changeAttributes(mount, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+            // Check if the player has the Cowboy Hat equipped
+            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
+
+            if (stack.isEmpty() || !(stack.getItem() instanceof CowboyHatItem relic))
+                return;
+
+            if (event.isDismounting() && entity instanceof Mob mob && entity instanceof Saddleable) {
+                // Apply attribute removal on the server side
+                if (!player.getCommandSenderWorld().isClientSide()) {
+                    relic.changeAttributes(mob, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+                }
+            }
         }
     }
 }

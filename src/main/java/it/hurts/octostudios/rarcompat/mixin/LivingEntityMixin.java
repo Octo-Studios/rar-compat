@@ -24,8 +24,10 @@ abstract class LivingEntityMixin {
     private void travelRidden(Player player, Vec3 vec, CallbackInfo ci) {
         ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
 
-        if (!((LivingEntity) (Object) this instanceof Mob mounted) || !(stack.getItem() instanceof CowboyHatItem relic)
-                || !relic.getToggled(stack))
+        if (stack.isEmpty() || !(stack.getItem() instanceof CowboyHatItem relic))
+            return;
+
+        if (!((LivingEntity) (Object) this instanceof Mob mounted))
             return;
 
         if (!mounted.isControlledByLocalInstance()) {
@@ -34,19 +36,29 @@ abstract class LivingEntityMixin {
             mounted.calculateEntityAnimation(false);
         }
 
-        var speed = player.getSpeed();
-
-        mounted.setTarget(null);
-        mounted.setSpeed((float) (speed + (speed * relic.getStatValue(stack, "cowboy", "speed") * 2)));
+        // Handle passive Cowboy ability (speed buff enhancements)
+        if (relic.isAbilityUnlocked(stack, "cowboy")) {
+            var speed = player.getSpeed();
+            mounted.setTarget(null); // Reset mob's target to avoid conflicts
+            mounted.setSpeed((float) (speed + (speed * relic.getStatValue(stack, "cowboy", "speed") * 2)));
+        }
 
         rarcompat$tickRidden(mounted, player);
 
-        if (relic.isWaterOrFlyingMob(mounted))
-            rarcompat$travel(rarcompat$getRiddenInput(player, relic, mounted), mounted);
-        else
-            mounted.travel(rarcompat$getRiddenInput(player, relic, mounted));
-
-        ci.cancel();
+        // Handle travel (default for Cowboy, custom for Overlord if toggled)
+        Vec3 riddenInput = rarcompat$getRiddenInput(player, relic, mounted);
+        if (relic.getToggled(stack) && relic.isAbilityUnlocked(stack, "overlord")) {
+            // Overlord-specific travel logic
+            if (relic.isWaterOrFlyingMob(mounted)) {
+                rarcompat$travel(riddenInput, mounted);
+            } else {
+                mounted.travel(riddenInput);
+            }
+            ci.cancel(); // Cancel default behavior when Overlord is active
+        } else {
+            // Default travel for Cowboy ability
+            mounted.travel(riddenInput);
+        }
     }
 
     @Unique
