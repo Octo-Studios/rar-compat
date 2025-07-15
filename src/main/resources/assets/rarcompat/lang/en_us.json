@@ -269,7 +269,8 @@
 
   "tooltip.relics.helium_flamingo.description": "Temporarily allows the relic bearer to glide through air as they would water.",
   "tooltip.relics.helium_flamingo.ability.flying": "Air Swimmer",
-  "tooltip.relics.helium_flamingo.ability.flying.description": "When performing a double jump, allows the player to float in the air for up to %1$s seconds. Movement speed in the air is proportional to the player's swimming speed with an additional bonus of %2$s%%.",  "tooltip.relics.helium_flamingo.leveling_source.flying.title": "Air Swimmer",
+  "tooltip.relics.helium_flamingo.ability.flying.description": "When performing a double jump, allows the player to float in the air for up to %1$s seconds. Movement speed in the air is proportional to the player's swimming speed with an additional bonus of %2$s%%.",  
+  "tooltip.relics.helium_flamingo.leveling_source.flying.title": "Air Swimmer",
   "tooltip.relics.helium_flamingo.leveling_source.flying.description": "+%1$s experience points for each second of air swimming using the %2$s ability.",
 
   "tooltip.relics.pocket_piston.description": "Grants the relic bearer's hands the strength of mechanisms.",
