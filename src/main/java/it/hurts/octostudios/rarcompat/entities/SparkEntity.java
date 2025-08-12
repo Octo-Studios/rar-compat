@@ -1,7 +1,6 @@
 package it.hurts.octostudios.rarcompat.entities;
 
-import it.hurts.octostudios.octolib.modules.particles.OctoRenderManager;
-import it.hurts.octostudios.octolib.modules.particles.trail.TrailProvider;
+import it.hurts.octostudios.octolib.module.particle.trail.EntityTrailProvider;
 import it.hurts.sskirillss.relics.entities.misc.ITargetableEntity;
 import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -21,11 +20,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class SparkEntity extends ThrowableProjectile implements ITargetableEntity, TrailProvider {
+public class SparkEntity extends ThrowableProjectile implements ITargetableEntity {
     private static final EntityDataAccessor<Float> DAMAGE = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ItemStack> RELIC_STACK = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.ITEM_STACK);
 
@@ -92,13 +93,6 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         this.discard();
     }
 
-    @Override
-    public void onAddedToLevel() {
-        super.onAddedToLevel();
-
-        OctoRenderManager.registerProvider(this);
-    }
-
     public void setDamage(float damage) {
         this.getEntityData().set(DAMAGE, damage);
     }
@@ -147,43 +141,50 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         builder.define(RELIC_STACK, ItemStack.EMPTY);
     }
 
-    @Override
-    public Vec3 getTrailPosition(float partialTicks) {
-        return getPosition(partialTicks).add(0, 0.5, 0);
-    }
+    @OnlyIn(Dist.CLIENT)
+    public static class TrailProvider extends EntityTrailProvider<SparkEntity> {
+        public TrailProvider(SparkEntity entity) {
+            super(entity);
+        }
 
-    @Override
-    public int getTrailUpdateFrequency() {
-        return 1;
-    }
+        @Override
+        public Vec3 getTrailPosition(float partialTicks) {
+            return entity.getPosition(partialTicks).add(0, 0.5, 0);
+        }
 
-    @Override
-    public boolean isTrailAlive() {
-        return isAlive();
-    }
+        @Override
+        public int getTrailUpdateFrequency() {
+            return 1;
+        }
 
-    @Override
-    public boolean isTrailGrowing() {
-        return tickCount > 2;
-    }
+        @Override
+        public boolean isTrailAlive() {
+            return entity.isAlive();
+        }
 
-    @Override
-    public int getTrailMaxLength() {
-        return 4;
-    }
+        @Override
+        public boolean isTrailGrowing() {
+            return entity.tickCount > 2;
+        }
 
-    @Override
-    public int getTrailFadeInColor() {
-        return 0xFFB22222;
-    }
+        @Override
+        public int getTrailMaxLength() {
+            return 4;
+        }
 
-    @Override
-    public int getTrailFadeOutColor() {
-        return 0x80FF8C00;
-    }
+        @Override
+        public int getTrailFadeInColor() {
+            return 0xFFB22222;
+        }
 
-    @Override
-    public double getTrailScale() {
-        return 0.05F;
+        @Override
+        public int getTrailFadeOutColor() {
+            return 0x80FF8C00;
+        }
+
+        @Override
+        public double getTrailScale() {
+            return 0.05F;
+        }
     }
 }
