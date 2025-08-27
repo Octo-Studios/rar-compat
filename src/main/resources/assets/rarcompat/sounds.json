@@ -1,0 +1,6 @@
+{
+  "night_vision_toggle": {
+    "category": "master",
+    "sounds": [ { "name": "rarcompat:night_vision_toggle" } ]
+  }
+}

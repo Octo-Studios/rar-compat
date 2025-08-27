@@ -18,8 +18,7 @@ public class ModItemsMixin {
     @Redirect(method = "<clinit>", at = @At(value = "INVOKE", target = "Lartifacts/registry/ModItems;register(Ljava/lang/String;Ljava/util/function/Supplier;)Lartifacts/registry/RegistrySupplier;"))
     private static <T extends Item> RegistrySupplier<T> redirectWearableItem(String name, Supplier<T> supplier) {
         return switch (name) {
-            case "plastic_drinking_hat" -> register(name, DrinkingHatItem::new);
-            case "novelty_drinking_hat" -> register(name, DrinkingHatItem::new);
+            case "plastic_drinking_hat", "novelty_drinking_hat" -> register(name, DrinkingHatItem::new);
             case "snorkel" -> register(name, SnorkelItem::new);
             case "villager_hat" -> register(name, VillagerHatItem::new);
             case "superstitious_hat" -> register(name, SuperstitiousHatItem::new);
@@ -27,6 +26,7 @@ public class ModItemsMixin {
             case "lucky_scarf" -> register(name, LuckyScarfItem::new);
             case "scarf_of_invisibility" -> register(name, ScarfOfInvisibilityItem::new);
             case "cowboy_hat" -> register(name, CowboyHatItem::new);
+            case "night_vision_goggles" -> register(name, NightVisionGogglesItem::new);
 
             default -> register(name, supplier);
         };
