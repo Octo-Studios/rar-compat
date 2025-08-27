@@ -5,8 +5,12 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "rarcompat.refmap.json",
   "mixins": [
+    "AbstractHorseMixin",
     "AbstractVillagerMixin",
     "DrinkingHatItemMixin",
+    "LivingEntityMixin",
+    "MobMixin",
+    "PigMixin",
     "RollLootTableModifierMixin",
     "WearableArtifactCurioMixin",
     "init.ModItemsMixin"

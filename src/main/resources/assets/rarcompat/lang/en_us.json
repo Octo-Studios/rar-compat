@@ -65,5 +65,15 @@
   "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.title": "Maximum Speed:",
   "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.value": "%1$s blocks per second.",
   "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.title": "Area Radius",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.value": "%1$s blocks."
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.value": "%1$s blocks.",
+
+  "tooltip.relics.cowboy_hat.description": "Enhances the agility of the relic bearer’s mounts.",
+  "tooltip.relics.cowboy_hat.ability.cowboy": "Gallop",
+  "tooltip.relics.cowboy_hat.ability.cowboy.description": "Increases movement speed and jump height of mounts",
+  "tooltip.relics.cowboy_hat.ability.cowboy.stat.speed.title": "Mount Speed and Jump Bonus:",
+  "tooltip.relics.cowboy_hat.ability.cowboy.stat.speed.value": "+%1$s%%.",
+  "tooltip.relics.cowboy_hat.ability.overlord": "Lasso",
+  "tooltip.relics.cowboy_hat.ability.overlord.description": "When used, this ability allows you to ride and control any mob for limited time. After the time expires or dismounting, it goes on a 1-minute cooldown.",
+  "tooltip.relics.cowboy_hat.ability.overlord.stat.time.title": "Ride Duration:",
+  "tooltip.relics.cowboy_hat.ability.overlord.stat.time.value": "%1$s seconds."
 }

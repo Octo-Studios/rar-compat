@@ -26,6 +26,7 @@ public class ModItemsMixin {
             case "anglers_hat" -> register(name, AnglersHatItem::new);
             case "lucky_scarf" -> register(name, LuckyScarfItem::new);
             case "scarf_of_invisibility" -> register(name, ScarfOfInvisibilityItem::new);
+            case "cowboy_hat" -> register(name, CowboyHatItem::new);
 
             default -> register(name, supplier);
         };
