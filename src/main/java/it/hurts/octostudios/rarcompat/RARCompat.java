@@ -12,8 +12,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public class RARCompat {
     public static final String MODID = "rarcompat";
 
-    public RARCompat(IEventBus bus) {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupCommon);
+    public RARCompat() {
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(this::setupCommon);
         //ItemRegistry.register(bus);
         SoundRegistry.register(bus);
         //EntityRegistry.register(bus);
