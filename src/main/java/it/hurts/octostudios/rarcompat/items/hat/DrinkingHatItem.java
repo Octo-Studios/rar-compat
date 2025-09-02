@@ -10,10 +10,11 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootCollections;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,9 +27,9 @@ public class DrinkingHatItem extends WearableRelicItem {
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("drinking")
                                 .stat(StatData.builder("speed")
-                                        .initialValue(0.3D, 0.35D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.045D)
-                                        .formatValue(value -> MathUtils.round(value * 100, 0))
+                                        .initialValue(0.1D, 0.2D)
+                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
                                 .build())
                         .ability(AbilityData.builder("nutrition")
@@ -40,9 +41,25 @@ public class DrinkingHatItem extends WearableRelicItem {
                                         .build())
                                 .build())
                         .build())
-                .leveling(new LevelingData(100, 15, 100))
+                .leveling(LevelingData.builder()
+                        .initialCost(100)
+                        .maxLevel(15)
+                        .step(100)
+                        .build())
+                .style(StyleData.builder()
+                        .tooltip((player, stack) ->
+                                stack.getItem() == ModItems.PLASTIC_DRINKING_HAT.get()
+                                        ? TooltipData.builder()
+                                        .borderTop(0xfffc933c)
+                                        .borderBottom(0xffad3923)
+                                        .build()
+                                        : TooltipData.builder()
+                                        .borderTop(0xff415db0)
+                                        .borderBottom(0xff1d205d)
+                                        .build())
+                        .build())
                 .loot(LootData.builder()
-                        .entry(LootCollections.ANTHROPOGENIC)
+                        .entry(LootCollections.VILLAGE)
                         .build())
                 .build();
     }
@@ -54,7 +71,7 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide())
                 return;
 
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.PLASTIC_DRINKING_HAT.get());
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.PLASTIC_DRINKING_HAT.get());
 
             if (stack.isEmpty())
                 stack = EntityUtils.findEquippedCurio(player, ModItems.NOVELTY_DRINKING_HAT.get());
@@ -62,7 +79,7 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof DrinkingHatItem relic) || event.getItem().getUseAnimation() != UseAnim.DRINK)
                 return;
 
-            event.setDuration((int) (event.getDuration() * (1 - relic.getAbilityValue(stack, "drinking", "speed"))));
+            event.setDuration((int) (event.getDuration() * Math.max(0.1, 1 - relic.getAbilityValue(stack, "drinking", "speed"))));
         }
 
         @SubscribeEvent
@@ -70,7 +87,7 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.getCommandSenderWorld().isClientSide())
                 return;
 
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.PLASTIC_DRINKING_HAT.get());
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.PLASTIC_DRINKING_HAT.get());
 
             if (stack.isEmpty())
                 stack = EntityUtils.findEquippedCurio(player, ModItems.NOVELTY_DRINKING_HAT.get());
@@ -78,9 +95,9 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof DrinkingHatItem relic) || event.getItem().getUseAnimation() != UseAnim.DRINK)
                 return;
 
-            relic.addExperience(player, stack, (int) Math.ceil(event.getDuration() / 20F));
+            relic.spreadExperience(player, stack, (int) Math.ceil(event.getDuration() / 20F));
 
-            if (!relic.canUseAbility(stack, "nutrition"))
+            if (!relic.canPlayerUseActiveAbility(player, stack, "nutrition"))
                 return;
 
             int hunger = (int) relic.getAbilityValue(stack, "nutrition", "hunger");

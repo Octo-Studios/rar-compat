@@ -11,6 +11,8 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootCollections;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class SuperstitiousHatItem extends WearableRelicItem implements IRelicArtifact {
-
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
@@ -28,25 +29,35 @@ public class SuperstitiousHatItem extends WearableRelicItem implements IRelicArt
                                 .stat(StatData.builder("chance")
                                         .initialValue(0.1D, 0.2D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.25)
-                                        .formatValue(value -> MathUtils.round(value * 100, 1))
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
                                 .build())
                         .build())
-                .leveling(new LevelingData(100, 10, 100))
+                .style(StyleData.builder()
+                        .tooltip(TooltipData.builder()
+                                .borderTop(0xff55b014)
+                                .borderBottom(0xff206a2a)
+                                .build())
+                        .build())
+                .leveling(LevelingData.builder()
+                        .initialCost(100)
+                        .maxLevel(10)
+                        .step(100)
+                        .build())
                 .loot(LootData.builder()
                         .entry(LootCollections.ANTHROPOGENIC)
                         .build())
                 .build();
     }
 
+
     @Override
     public int getLootingLevel(ItemStack stack, SlotContext slotContext, DamageSource source, LivingEntity target, int baseLooting) {
-        if (!(slotContext.entity() instanceof Player player))
+        if (!(slotContext.entity() instanceof Player player) || !canPlayerUseActiveAbility(player, stack, "looting"))
             return 0;
 
         var random = player.getRandom();
-
-        var amount = MathBaseUtils.multicast(player.getRandom(), getAbilityValue(stack, "looting", "chance"), 1F);
+        var amount = MathBaseUtils.multicast(random, getAbilityValue(stack, "looting", "chance"), 1F);
 
         if (amount > 0)
             spreadExperience(player, stack, random.nextInt(amount) + 1);

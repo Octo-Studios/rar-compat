@@ -1,17 +1,11 @@
 package it.hurts.octostudios.rarcompat.mixin;
 
 import artifacts.forge.loot.RollLootTableModifier;
-import artifacts.item.wearable.WearableArtifactItem;
-import it.hurts.octostudios.rarcompat.RARCompat;
-import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.LootTable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;

@@ -11,16 +11,14 @@ import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootCollections;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -29,9 +27,6 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
-
-import java.util.List;
 
 public class AnglersHatItem extends WearableRelicItem {
     @Override
@@ -42,38 +37,48 @@ public class AnglersHatItem extends WearableRelicItem {
                                 .stat(StatData.builder("chance")
                                         .initialValue(0.1D, 0.2D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.25)
-                                        .formatValue(value -> MathUtils.round(value * 100, 1))
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
+
                                 .build())
                         .build())
-                .leveling(new LevelingData(100, 10, 100))
+                .style(StyleData.builder()
+                        .tooltip(TooltipData.builder()
+                                .borderTop(0xffa09088)
+                                .borderBottom(0xff524742)
+                                .build())
+                        .build())
+                .leveling(LevelingData.builder()
+                        .initialCost(100)
+                        .maxLevel(10)
+                        .step(100)
+                        .build())
                 .loot(LootData.builder()
                         .entry(LootCollections.AQUATIC)
+                        .entry(LootCollections.VILLAGE)
                         .build())
                 .build();
     }
 
     @Mod.EventBusSubscriber
-    public static class AnglersHatEvents {
+    public static class AnglersHatEvent {
         @SubscribeEvent
         public static void onItemFished(ItemFishedEvent event) {
-            Player player = event.getEntity();
-            Level level = player.getCommandSenderWorld();
+            var player = event.getEntity();
+            var level = player.getCommandSenderWorld();
 
-            FishingHook fishingHook = event.getHookEntity();
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.ANGLERS_HAT.get());
 
-            ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.ANGLERS_HAT.get());
-
-            if (!(stack.getItem() instanceof AnglersHatItem relic) || level.isClientSide())
+            if (level.isClientSide() || !(stack.getItem() instanceof AnglersHatItem relic) || !relic.canPlayerUseActiveAbility(player, stack, "catch"))
                 return;
 
-            ServerLevel serverLevel = (ServerLevel) level;
-            RandomSource random = serverLevel.getRandom();
+            var serverLevel = (ServerLevel) level;
+            var random = serverLevel.getRandom();
 
-            int rolls = MathBaseUtils.multicast(random, relic.getAbilityValue(stack, "catch", "chance"), 1F);
+            var rolls = MathBaseUtils.multicast(random, relic.getAbilityValue(stack, "catch", "chance"), 1F);
 
             if (rolls > 0)
-                relic.addExperience(player, stack, random.nextInt(rolls) + 1);
+                relic.spreadExperience(player, stack, random.nextInt(rolls) + 1);
 
             LootTable loottable = serverLevel.getServer().getLootData().getLootTable(BuiltInLootTables.FISHING);
 
@@ -83,10 +88,10 @@ public class AnglersHatItem extends WearableRelicItem {
                     .withParameter(LootContextParams.THIS_ENTITY, player)
                     .create(LootContextParamSets.FISHING);
 
-            for (int i = 0; i < rolls; i++) {
-                List<ItemStack> drop = loottable.getRandomItems(lootparams);
+            var fishingHook = event.getHookEntity();
 
-                for (ItemStack itemstack : drop) {
+            for (int i = 0; i < rolls; i++)
+                for (ItemStack itemstack : loottable.getRandomItems(lootparams)) {
                     ItemEntity itementity = new ItemEntity(serverLevel, fishingHook.getX(), fishingHook.getY(), fishingHook.getZ(), itemstack);
 
                     double x = player.getX() - fishingHook.getX();
@@ -96,10 +101,8 @@ public class AnglersHatItem extends WearableRelicItem {
                     itementity.setDeltaMovement(x * 0.1, y * 0.1 + Math.sqrt(Math.sqrt(x * x + y * y + z * z)) * 0.08, z * 0.1);
 
                     serverLevel.addFreshEntity(itementity);
-
                     serverLevel.addFreshEntity(new ExperienceOrb(serverLevel, player.getX(), player.getY() + 0.5, player.getZ() + 0.5, random.nextInt(6) + 1));
                 }
-            }
         }
     }
 }
