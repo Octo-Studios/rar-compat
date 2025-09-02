@@ -23,14 +23,13 @@ abstract class AbstractVillagerMixin {
     @Shadow
     protected MerchantOffers offers;
 
-    @Inject(method = "notifyTrade ", at = @At(value = "HEAD"))
+    @Inject(method = "notifyTrade", at = @At(value = "HEAD"))
     private void notifyTrade(MerchantOffer offer, CallbackInfo ci) {
         ItemStack relicStack = EntityUtils.findEquippedCurio(tradingPlayer, ModItems.VILLAGER_HAT.get());
-
         if (!(relicStack.getItem() instanceof VillagerHatItem relic) || offers == null || !relic.canUseAbility(relicStack, "discount"))
             return;
 
-        int newPrice = (int) Math.round(offer.getCostA().getCount() * relic.getAbilityValue(relicStack, "discount", "multiplier"));
+        int newPrice = (int) Math.round(offer.getBaseCostA().getCount() * relic.getAbilityValue(relicStack, "discount", "multiplier"));
 
         if (newPrice > 1)
             relic.spreadExperience(tradingPlayer, relicStack, 1 + tradingPlayer.getRandom().nextInt(newPrice) + 1);
@@ -44,7 +43,7 @@ abstract class AbstractVillagerMixin {
             return;
 
         for (MerchantOffer offer : offers) {
-            int newPrice = (int) Math.round(offer.getCostA().getCount() * relic.getAbilityValue(relicStack, "discount", "multiplier") / 100);
+            int newPrice = (int) Math.round(offer.getBaseCostA().getCount() * relic.getAbilityValue(relicStack, "discount", "multiplier") / 100);
 
             offer.setSpecialPriceDiff(-newPrice);
         }

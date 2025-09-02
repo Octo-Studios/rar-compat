@@ -27,7 +27,7 @@ public class DrinkingHatItem extends WearableRelicItem {
                 .abilities(AbilitiesData.builder()
                         .ability(AbilityData.builder("drinking")
                                 .stat(StatData.builder("speed")
-                                        .initialValue(0.3D, 0.4D)
+                                        .initialValue(0.1D, 0.2D)
                                         .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100, 1))
                                         .build())
@@ -79,7 +79,7 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof DrinkingHatItem relic) || event.getItem().getUseAnimation() != UseAnim.DRINK)
                 return;
 
-            event.setDuration((int) (event.getDuration() * (1 - relic.getAbilityValue(stack, "drinking", "speed"))));
+            event.setDuration((int) (event.getDuration() * Math.max(0.1, 1 - relic.getAbilityValue(stack, "drinking", "speed"))));
         }
 
         @SubscribeEvent
@@ -92,8 +92,7 @@ public class DrinkingHatItem extends WearableRelicItem {
             if (stack.isEmpty())
                 stack = EntityUtils.findEquippedCurio(player, ModItems.NOVELTY_DRINKING_HAT.get());
 
-            if (!(stack.getItem() instanceof DrinkingHatItem relic) || event.getItem().getUseAnimation() != UseAnim.DRINK
-                    || !relic.canUseAbility(stack, "drinking"))
+            if (!(stack.getItem() instanceof DrinkingHatItem relic) || event.getItem().getUseAnimation() != UseAnim.DRINK)
                 return;
 
             relic.spreadExperience(player, stack, (int) Math.ceil(event.getDuration() / 20F));

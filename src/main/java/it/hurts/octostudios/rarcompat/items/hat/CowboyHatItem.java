@@ -120,7 +120,7 @@ public class CowboyHatItem extends WearableRelicItem {
                 var movement = beingMounted.getDeltaMovement();
 
                 if ((movement.x != 0 || movement.z != 0) && random.nextFloat() <= 0.25F && player.tickCount % 20 == 0)
-                    addExperience(player, stack, 1);
+                    spreadExperience(player, stack, 1);
 
                 if (canPlayerUseActiveAbility(player, stack, "cowboy"))
                     changeAttributes(beingMounted, stack, true, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH);
