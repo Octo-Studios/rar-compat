@@ -65,13 +65,11 @@
   "tooltip.relics.lucky_scarf.ability.luck.stat.chance.title": "Вероятность срабатывания:",
   "tooltip.relics.lucky_scarf.ability.luck.stat.chance.value": "%1$s%%",
 
-  "tooltip.relics.scarf_of_invisibility.description": "При достаточно осторожном передвижении делает игрока незаметным для окружающих.",
+  "tooltip.relics.scarf_of_invisibility.description": "Делает игрока невидимым для других при осторожном передвижении.",
   "tooltip.relics.scarf_of_invisibility.ability.invisible": "Тихий шаг",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Если скорость передвижения игрока падает ниже порогового значения, он получает эффект исчезновения. При взаимодействии с объектом в мире появляется область, внутри которой невидимость больше не действует до момента выхода игрока за её пределы.",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.title": "Максимальная скорость:",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.value": "%1$s блоков в секунду.",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.title": "Радиус области",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.value": "%1$s блоков.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Дарует игроку полную невидимость. Эффект пропадает на короткое время при любом взаимодействии с миром. Если во время отсутствия невидимости какой-либо моб нацелится на игрока, эффект не восстановится, пока этот моб не потеряет игрока из виду.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.time.title": "Длительность потери невидимости:",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.time.value": "%1$s сек.",
 
   "tooltip.relics.cowboy_hat.description": "Повышает ловкость ездовых животных владельца реликвии.",
   "tooltip.relics.cowboy_hat.ability.cowboy": "Галоп",

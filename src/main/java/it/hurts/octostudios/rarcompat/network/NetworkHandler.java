@@ -1,12 +1,8 @@
 package it.hurts.octostudios.rarcompat.network;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
-import it.hurts.octostudios.rarcompat.network.packets.PacketCreateZone;
-import it.hurts.sskirillss.relics.utils.Reference;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
@@ -28,12 +24,6 @@ public class NetworkHandler {
                 () -> "1.0",
                 s -> true,
                 s -> true);
-
-        INSTANCE.messageBuilder(PacketCreateZone.class, nextID())
-                .encoder(PacketCreateZone::toBytes)
-                .decoder(PacketCreateZone::new)
-                .consumerMainThread(PacketCreateZone::handle)
-                .add();
     }
 
     public static void sendToClient(Object packet, ServerPlayer player) {

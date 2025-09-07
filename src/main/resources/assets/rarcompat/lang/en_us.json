@@ -1,5 +1,6 @@
 {
   "tooltip.rarcompat.modified" : "Modified by [Relics: Artifacts Compat]",
+  "item.artifacts.whoopee_cushion.tooltip": "Can only be equipped in head slot",
 
   "tooltip.relics.umbrella.description": "Softens the fall, ensuring a safe landing from any height. With skillful use, it can serve as a reliable shield, keeping enemies at bay.",
   "tooltip.relics.umbrella.ability.glider": "Soft Landing",
@@ -67,11 +68,9 @@
 
   "tooltip.relics.scarf_of_invisibility.description": "Makes the player invisible to others when moving cautiously.",
   "tooltip.relics.scarf_of_invisibility.ability.invisible": "Silent Step",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "If the player's movement speed falls below a threshold, they gain an invisibility effect. Interacting with objects in the world creates an area where invisibility no longer applies until the player exits the area.",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.title": "Maximum Speed:",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.threshold.value": "%1$s blocks per second.",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.title": "Area Radius",
-  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.radius.value": "%1$s blocks.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.description": "Grants the player complete invisibility. The effect is lost for a short time upon any interaction with the world. If during the absence of invisibility any mob targets the player, the effect will not restore until that mob loses sight of the player.",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.time.title": "Invisibility Lost Duration:",
+  "tooltip.relics.scarf_of_invisibility.ability.invisible.stat.time.value": "%1$s seconds.",
 
   "tooltip.relics.cowboy_hat.description": "Enhances the agility of the relic bearer's mounts.",
   "tooltip.relics.cowboy_hat.ability.cowboy": "Gallop",
