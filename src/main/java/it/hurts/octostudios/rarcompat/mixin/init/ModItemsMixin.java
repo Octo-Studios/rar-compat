@@ -28,6 +28,12 @@ public class ModItemsMixin {
             case "cowboy_hat" -> register(name, CowboyHatItem::new);
             case "night_vision_goggles" -> register(name, NightVisionGogglesItem::new);
             case "whoopee_cushion" -> register(name, WhoopeeCushionItem::new);
+            case "charm_of_sinking" -> register(name, CharmOfSinkingItem::new);
+            case "cross_necklace" -> register(name, CrossNecklaceItem::new);
+            case "flame_pendant" -> register(name, FlamePendantItem::new);
+            case "panic_necklace" -> register(name, PanicNecklaceItem::new);
+            case "shock_pendant" -> register(name, ShockPendantItem::new);
+            case "thorn_pendant" -> register(name, ThornPendantItem::new);
 
             default -> register(name, supplier);
         };
