@@ -26,6 +26,7 @@ import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ambient.AmbientCreature;
@@ -39,6 +40,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -135,9 +137,8 @@ public class CowboyHatItem extends WearableRelicItem {
         if (player.getCommandSenderWorld().isClientSide() || !ability.equals("overlord"))
             return;
 
-
-        // In 1.20.1 there is no: Attributes.ENTITY_INTERACTION_RANGE, so for now we'll use fixed reach values.
-        double range = player.isCreative() ? 5.0D : 3.0D;
+        var entityReach = player.getAttribute(ForgeMod.ENTITY_REACH.get());
+        var range = entityReach != null ? entityReach.getValue() : (player.isCreative() ? 5.0 : 3.0);
 
         EntityHitResult result = rayTraceEntity(player,
                 entity -> entity instanceof Mob

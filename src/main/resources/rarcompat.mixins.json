@@ -11,6 +11,7 @@
     "DrinkingHatItemMixin",
     "LivingEntityMixin",
     "MobMixin",
+    "ModGameRulesMixin",
     "PigMixin",
     "RollLootTableModifierMixin",
     "WearableArtifactCurioMixin",
