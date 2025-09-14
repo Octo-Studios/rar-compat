@@ -1,6 +1,8 @@
 package it.hurts.octostudios.rarcompat.network;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.network.packets.PowerJumpPacket;
+import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.common.Mod;
@@ -9,6 +11,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.Optional;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class NetworkHandler {
@@ -24,6 +27,18 @@ public class NetworkHandler {
                 () -> "1.0",
                 s -> true,
                 s -> true);
+
+        INSTANCE.registerMessage(nextID(), PowerJumpPacket.class,
+                PowerJumpPacket::encode,
+                PowerJumpPacket::decode,
+                PowerJumpPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(nextID(), SteadfastSpikesPacket.class,
+                SteadfastSpikesPacket::encode,
+                SteadfastSpikesPacket::decode,
+                SteadfastSpikesPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void sendToClient(Object packet, ServerPlayer player) {

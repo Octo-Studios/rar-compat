@@ -150,5 +150,57 @@
   "tooltip.relics.thorn_pendant.ability.poison.stat.time.title": "Poison Duration:",
   "tooltip.relics.thorn_pendant.ability.poison.stat.time.value": "%1$s seconds",
   "tooltip.relics.thorn_pendant.ability.poison.stat.chance.title": "Trigger Chance:",
-  "tooltip.relics.thorn_pendant.ability.poison.stat.chance.value": "%1$s%%"
+  "tooltip.relics.thorn_pendant.ability.poison.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.bunny_hoppers.description": "Strengthens the relic bearer's legs, allowing them to push off the ground more powerfully.",
+  "tooltip.relics.bunny_hoppers.ability.hold": "Jumper",
+  "tooltip.relics.bunny_hoppers.ability.hold.description": "Allows high jumps by continuously holding the jump key.",
+  "tooltip.relics.bunny_hoppers.ability.hold.stat.duration.title": "Maximum Hold Time:",
+  "tooltip.relics.bunny_hoppers.ability.hold.stat.duration.value": "%1$s seconds.",
+
+  "tooltip.relics.flippers.description": "Strengthens the relic bearer's legs, allowing them to swim faster.",
+  "tooltip.relics.flippers.ability.swimmer": "Fish Tail",
+  "tooltip.relics.flippers.ability.swimmer.description": "Increases the player's swimming speed.",
+  "tooltip.relics.flippers.ability.swimmer.stat.modifier.title": "Swimming Speed Bonus:",
+  "tooltip.relics.flippers.ability.swimmer.stat.modifier.value": "+%1$s%%.",
+
+  "tooltip.relics.kitty_slippers.description": "Grants the relic bearer feline traits, including soft paws and countless lives.",
+  "tooltip.relics.kitty_slippers.ability.passive": "Cat's Gaze",
+  "tooltip.relics.kitty_slippers.ability.passive.description": "Scares away all Creepers and Phantoms near the player.",
+  "tooltip.relics.kitty_slippers.ability.fall": "Soft Paws",
+  "tooltip.relics.kitty_slippers.ability.fall.description": "Increases safe falling height.",
+  "tooltip.relics.kitty_slippers.ability.fall.stat.modifier.title": "Safe Fall Height Bonus:",
+  "tooltip.relics.kitty_slippers.ability.fall.stat.modifier.value": "+%1$s blocks.",
+  "tooltip.relics.kitty_slippers.ability.resurrected": "Nine Lives",
+  "tooltip.relics.kitty_slippers.ability.resurrected.description": "Has a chance to save the player from fatal damage, leaving them with 1 health point.",
+  "tooltip.relics.kitty_slippers.ability.resurrected.stat.chance.title": "Survival Chance:",
+  "tooltip.relics.kitty_slippers.ability.resurrected.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.rooted_boots.description": "Grants the relic bearer the mysterious power of a sheep.",
+  "tooltip.relics.rooted_boots.ability.devouring": "Herbivory",
+  "tooltip.relics.rooted_boots.ability.devouring.description": "Transforms grass blocks beneath the player into dirt, restoring hunger and saturation.",
+  "tooltip.relics.rooted_boots.ability.devouring.stat.frequency.title": "Activation Interval:",
+  "tooltip.relics.rooted_boots.ability.devouring.stat.frequency.value": "Every %1$s seconds.",
+
+  "tooltip.relics.running_shoes.description": "Strengthens the relic bearer's legs, allowing them to move faster.",
+  "tooltip.relics.running_shoes.ability.runner": "Wide Stride",
+  "tooltip.relics.running_shoes.ability.runner.description": "Increases the player's running speed.",
+  "tooltip.relics.running_shoes.ability.runner.stat.speed.title": "Running Speed Bonus:",
+  "tooltip.relics.running_shoes.ability.runner.stat.speed.value": "+%1$s%%.",
+
+  "tooltip.relics.snowshoes.description": "Improves the relic bearer's mobility in harsh snowy conditions.",
+  "tooltip.relics.snowshoes.ability.passive": "Light Step",
+  "tooltip.relics.snowshoes.ability.passive.description": "Allows walking on powder snow without sinking.",
+  "tooltip.relics.snowshoes.ability.speed": "Snow Walker",
+  "tooltip.relics.snowshoes.ability.speed.description": "Increases movement speed on snow.",
+  "tooltip.relics.snowshoes.ability.speed.stat.amount.title": "Snow Movement Speed Bonus:",
+  "tooltip.relics.snowshoes.ability.speed.stat.amount.value": "+%1$s%%.",
+
+  "tooltip.relics.steadfast_spikes.description": "Firmly anchors the relic bearer's feet to any surface.",
+  "tooltip.relics.steadfast_spikes.ability.resistance": "Grip",
+  "tooltip.relics.steadfast_spikes.ability.resistance.description": "Increases resistance to knockback and slippery blocks.",
+  "tooltip.relics.steadfast_spikes.ability.resistance.stat.modifier.title": "Resistance Increase:",
+  "tooltip.relics.steadfast_spikes.ability.resistance.stat.modifier.value": "+%1$s%%.",
+  "tooltip.relics.steadfast_spikes.ability.passive": "Clinging Claws",
+  "tooltip.relics.steadfast_spikes.ability.passive.description": "Allows slow wall sliding, negating fall damage."
 }

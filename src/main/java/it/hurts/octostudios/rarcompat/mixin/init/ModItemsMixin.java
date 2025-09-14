@@ -2,6 +2,7 @@ package it.hurts.octostudios.rarcompat.mixin.init;
 
 import artifacts.registry.ModItems;
 import artifacts.registry.RegistrySupplier;
+import it.hurts.octostudios.rarcompat.items.feet.*;
 import it.hurts.octostudios.rarcompat.items.necklace.*;
 import it.hurts.octostudios.rarcompat.items.hat.*;
 import net.minecraft.world.item.Item;
@@ -34,6 +35,13 @@ public class ModItemsMixin {
             case "panic_necklace" -> register(name, PanicNecklaceItem::new);
             case "shock_pendant" -> register(name, ShockPendantItem::new);
             case "thorn_pendant" -> register(name, ThornPendantItem::new);
+            case "bunny_hoppers" -> register(name, BunnyHoppersItem::new);
+            case "flippers" -> register(name, FlippersItem::new);
+            case "kitty_slippers" -> register(name, KittySlippersItem::new);
+            case "rooted_boots" -> register(name, RootedBootsItem::new);
+            case "running_shoes" -> register(name, RunningShoesItem::new);
+            case "snowshoes" -> register(name, SnowshoesItem::new);
+            case "steadfast_spikes" -> register(name, SteadfastSpikesItem::new);
 
             default -> register(name, supplier);
         };

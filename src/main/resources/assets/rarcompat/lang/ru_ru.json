@@ -149,5 +149,57 @@
   "tooltip.relics.thorn_pendant.ability.poison.stat.time.title": "Длительность яда:",
   "tooltip.relics.thorn_pendant.ability.poison.stat.time.value": "%1$s секунд",
   "tooltip.relics.thorn_pendant.ability.poison.stat.chance.title": "Шанс срабатывания:",
-  "tooltip.relics.thorn_pendant.ability.poison.stat.chance.value": "%1$s%%"
+  "tooltip.relics.thorn_pendant.ability.poison.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.bunny_hoppers.description": "Укрепляет ноги носителя реликвии, позволяя ему сильнее отталкиваться от земли.",
+  "tooltip.relics.bunny_hoppers.ability.hold": "Прыгун",
+  "tooltip.relics.bunny_hoppers.ability.hold.description": "Позволяет совершать высокие прыжки посредством непрерывного удержания клавиши прыжка.",
+  "tooltip.relics.bunny_hoppers.ability.hold.stat.duration.title": "Максимальное время удержания:",
+  "tooltip.relics.bunny_hoppers.ability.hold.stat.duration.value": "%1$s сек.",
+
+  "tooltip.relics.flippers.description": "Укрепляет ноги носителя реликвии, позволяя плавать быстрее.",
+  "tooltip.relics.flippers.ability.swimmer": "Рыбий хвост",
+  "tooltip.relics.flippers.ability.swimmer.description": "Увеличивает скорость плавания игрока.",
+  "tooltip.relics.flippers.ability.swimmer.stat.modifier.title": "Бонус скорости плавания:",
+  "tooltip.relics.flippers.ability.swimmer.stat.modifier.value": "+%1$s%%.",
+
+  "tooltip.relics.kitty_slippers.description": "Наделяет носителя реликвии свойствами семейства кошачьих, в частности мягкими лапками и неисчисляемыми жизнями.",
+  "tooltip.relics.kitty_slippers.ability.passive": "Кошачий взгляд",
+  "tooltip.relics.kitty_slippers.ability.passive.description": "Распугивает всех криперов и фантомов около игрока.",
+  "tooltip.relics.kitty_slippers.ability.fall": "Мягкие лапки",
+  "tooltip.relics.kitty_slippers.ability.fall.description": "Увеличивает безопасную для падения высоту.",
+  "tooltip.relics.kitty_slippers.ability.fall.stat.modifier.title": "Бонус безопасной высоты:",
+  "tooltip.relics.kitty_slippers.ability.fall.stat.modifier.value": "+%1$s блоков.",
+  "tooltip.relics.kitty_slippers.ability.resurrected": "Девять жизней",
+  "tooltip.relics.kitty_slippers.ability.resurrected.description": "С шансом защищает игрока от получения фатального урона, оставляя 1 единицу здоровья.",
+  "tooltip.relics.kitty_slippers.ability.resurrected.stat.chance.title": "Шанс выживания:",
+  "tooltip.relics.kitty_slippers.ability.resurrected.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.rooted_boots.description": "Наделяет носителя реликвии тайной овечьей силой.",
+  "tooltip.relics.rooted_boots.ability.devouring": "Травоядность",
+  "tooltip.relics.rooted_boots.ability.devouring.description": "Превращает дёрн под ногами в блок земли, восполняя сытость и насыщенность.",
+  "tooltip.relics.rooted_boots.ability.devouring.stat.frequency.title": "Интервал активации:",
+  "tooltip.relics.rooted_boots.ability.devouring.stat.frequency.value": "Каждые %1$s сек.",
+
+  "tooltip.relics.running_shoes.description": "Укрепляет ноги носителя реликвии, позволяя двигаться быстрее.",
+  "tooltip.relics.running_shoes.ability.runner": "Широкий шаг",
+  "tooltip.relics.running_shoes.ability.runner.description": "Увеличивает скорость бега игрока.",
+  "tooltip.relics.running_shoes.ability.runner.stat.speed.title": "Бонус скорости бега:",
+  "tooltip.relics.running_shoes.ability.runner.stat.speed.value": "+%1$s%%.",
+
+  "tooltip.relics.snowshoes.description": "Повышает мобильность носителя реликвии в суровых снежных условиях.",
+  "tooltip.relics.snowshoes.ability.passive": "Лёгкая поступь",
+  "tooltip.relics.snowshoes.ability.passive.description": "Позволяет передвигаться по рыхлому снегу не проваливаясь.",
+  "tooltip.relics.snowshoes.ability.speed": "Снегоход",
+  "tooltip.relics.snowshoes.ability.speed.description": "Увеличивает скорость передвижения по снегу.",
+  "tooltip.relics.snowshoes.ability.speed.stat.amount.title": "Бонус скорости по снегу:",
+  "tooltip.relics.snowshoes.ability.speed.stat.amount.value": "+%1$s%%.",
+
+  "tooltip.relics.steadfast_spikes.description": "Крепко сцепляет ноги носителя реликвии с любой поверхностью.",
+  "tooltip.relics.steadfast_spikes.ability.resistance": "Сцепление",
+  "tooltip.relics.steadfast_spikes.ability.resistance.description": "Увеличивает сопротивление отдаче и скользким блокам.",
+  "tooltip.relics.steadfast_spikes.ability.resistance.stat.modifier.title": "Увеличение сопротивления:",
+  "tooltip.relics.steadfast_spikes.ability.resistance.stat.modifier.value": "+%1$s%%.",
+  "tooltip.relics.steadfast_spikes.ability.passive": "Цепкие когти",
+  "tooltip.relics.steadfast_spikes.ability.passive.description": "Позволяет медленно сползать по стенам, нивелируя урон от падения."
 }
