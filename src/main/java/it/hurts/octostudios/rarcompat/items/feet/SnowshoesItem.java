@@ -16,7 +16,6 @@ import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.NBTUtils;
 import it.hurts.sskirillss.relics.utils.WorldUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -86,17 +85,9 @@ public class SnowshoesItem extends WearableRelicItem {
         return false;
     }
 
-
     @Override
     public boolean canWalkOnPowderedSnow() {
-        Player player = Minecraft.getInstance().player;
-
-        if (player == null)
-            return super.canWalkOnPowderedSnow();
-
-        var stack = EntityUtils.findEquippedCurio(player, ModItems.SNOWSHOES.get());
-
-        return canPlayerUseActiveAbility(player, stack, "passive");
+        return true;
     }
 
     @Override
