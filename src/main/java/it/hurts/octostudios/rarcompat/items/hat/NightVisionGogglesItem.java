@@ -97,7 +97,7 @@ public class NightVisionGogglesItem extends WearableRelicItem {
     }
 
     @Mod.EventBusSubscriber(Dist.CLIENT)
-    public static class NightVisionGogglesEvent {
+    public static class NightVisionGogglesClientEvent {
         @SubscribeEvent
         public static void onFogRender(ViewportEvent.RenderFog event) {
             Player player = Minecraft.getInstance().player;

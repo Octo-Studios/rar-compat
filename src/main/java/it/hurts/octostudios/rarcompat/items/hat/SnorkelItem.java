@@ -95,7 +95,7 @@ public class SnorkelItem extends WearableRelicItem {
     }
 
     @Mod.EventBusSubscriber(value = Dist.CLIENT)
-    public static class SnorkelEvent {
+    public static class SnorkelClientEvent {
         @SubscribeEvent
         public static void onFogRender(ViewportEvent.RenderFog event) {
             Player player = Minecraft.getInstance().player;
