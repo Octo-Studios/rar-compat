@@ -1,10 +1,13 @@
 package it.hurts.octostudios.rarcompat.network;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.network.packets.EntityMotionPacket;
 import it.hurts.octostudios.rarcompat.network.packets.PowerJumpPacket;
+import it.hurts.octostudios.rarcompat.network.packets.RepulsionUmbrellaPacket;
 import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
@@ -39,6 +42,19 @@ public class NetworkHandler {
                 SteadfastSpikesPacket::decode,
                 SteadfastSpikesPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(nextID(), RepulsionUmbrellaPacket.class,
+                RepulsionUmbrellaPacket::encode,
+                RepulsionUmbrellaPacket::decode,
+                RepulsionUmbrellaPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(nextID(), EntityMotionPacket.class,
+                EntityMotionPacket::encode,
+                EntityMotionPacket::decode,
+                EntityMotionPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
     }
 
     public static void sendToClient(Object packet, ServerPlayer player) {
@@ -51,5 +67,9 @@ public class NetworkHandler {
 
     public static void sendToClients(PacketDistributor.PacketTarget target, Object packet) {
         INSTANCE.send(target, packet);
+    }
+
+    public static void sendToClientsTrackingEntityAndSelf(Object packet, Entity entity) {
+        INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), packet);
     }
 }

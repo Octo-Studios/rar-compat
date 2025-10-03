@@ -10,15 +10,19 @@
     "CharmOfSinkingMixin",
     "DrinkingHatItemMixin",
     "LivingEntityMixin",
+    "LootTableMixin",
     "MobMixin",
-    "ModGameRulesMixin",
+    "ModGameRulesBooleanMixin",
+    "ModGameRulesDoubleMixin",
+    "ModGameRulesIntegerMixin",
     "PigMixin",
     "RollLootTableModifierMixin",
     "WearableArtifactCurioMixin",
     "init.ModItemsMixin"
   ],
   "client": [
-    "render.GameRendererMixin"
+    "render.GameRendererMixin",
+    "render.HumanoidModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

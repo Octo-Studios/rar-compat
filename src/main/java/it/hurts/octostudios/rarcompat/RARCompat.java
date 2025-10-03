@@ -17,7 +17,6 @@ public class RARCompat {
         bus.addListener(this::setupCommon);
         //ItemRegistry.register(bus);
         SoundRegistry.register(bus);
-        //EntityRegistry.register(bus);
     }
 
     private void setupCommon(final FMLCommonSetupEvent event) {

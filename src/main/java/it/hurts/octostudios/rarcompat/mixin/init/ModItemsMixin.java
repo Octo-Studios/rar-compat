@@ -2,7 +2,9 @@ package it.hurts.octostudios.rarcompat.mixin.init;
 
 import artifacts.registry.ModItems;
 import artifacts.registry.RegistrySupplier;
+import it.hurts.octostudios.rarcompat.items.UmbrellaItem;
 import it.hurts.octostudios.rarcompat.items.feet.*;
+import it.hurts.octostudios.rarcompat.items.hands.*;
 import it.hurts.octostudios.rarcompat.items.necklace.*;
 import it.hurts.octostudios.rarcompat.items.hat.*;
 import net.minecraft.world.item.Item;
@@ -42,6 +44,15 @@ public class ModItemsMixin {
             case "running_shoes" -> register(name, RunningShoesItem::new);
             case "snowshoes" -> register(name, SnowshoesItem::new);
             case "steadfast_spikes" -> register(name, SteadfastSpikesItem::new);
+            case "digging_claws" -> register(name, DiggingClawsItem::new);
+            case "feral_claws" -> register(name, FeralClawsItem::new);
+            case "fire_gauntlet" -> register(name, FireGauntletItem::new);
+            case "golden_hook" -> register(name, GoldenHookItem::new);
+            case "pickaxe_heater" -> register(name, PickaxeHeaterItem::new);
+            case "pocket_piston" -> register(name, PocketPistonItem::new);
+            case "power_glove" -> register(name, PowerGloveItem::new);
+            case "vampiric_glove" -> register(name, VampiricGloveItem::new);
+            case "umbrella" -> register(name, UmbrellaItem::new);
 
             default -> register(name, supplier);
         };
