@@ -21,6 +21,7 @@
     "init.ModItemsMixin"
   ],
   "client": [
+    "render.BeltModelMixin",
     "render.GameRendererMixin",
     "render.HumanoidModelMixin"
   ],

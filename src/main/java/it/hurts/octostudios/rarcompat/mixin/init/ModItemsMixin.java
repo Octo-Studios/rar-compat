@@ -2,7 +2,10 @@ package it.hurts.octostudios.rarcompat.mixin.init;
 
 import artifacts.registry.ModItems;
 import artifacts.registry.RegistrySupplier;
+import it.hurts.octostudios.rarcompat.items.MimiDustItem;
 import it.hurts.octostudios.rarcompat.items.UmbrellaItem;
+import it.hurts.octostudios.rarcompat.items.bracelet.OnionRingItem;
+import it.hurts.octostudios.rarcompat.items.charm.*;
 import it.hurts.octostudios.rarcompat.items.feet.*;
 import it.hurts.octostudios.rarcompat.items.hands.*;
 import it.hurts.octostudios.rarcompat.items.necklace.*;
@@ -53,6 +56,15 @@ public class ModItemsMixin {
             case "power_glove" -> register(name, PowerGloveItem::new);
             case "vampiric_glove" -> register(name, VampiricGloveItem::new);
             case "umbrella" -> register(name, UmbrellaItem::new);
+            case "mimi_dust" -> register(name, MimiDustItem::new);
+            case "antidote_vessel" -> register(name, AntidoteVesselItem::new);
+            case "chorus_totem" -> register(name, ChorusTotemItem::new);
+            case "cloud_in_a_bottle" -> register(name, CloudInBottleItem::new);
+            case "crystal_heart" -> register(name, CrystalHeartItem::new);
+            case "helium_flamingo" -> register(name, HeliumFlamingoItem::new);
+            case "obsidian_skull" -> register(name, ObsidianSkullItem::new);
+            case "universal_attractor" -> register(name, UniversalAttractorItem::new);
+            case "onion_ring" -> register(name, OnionRingItem::new);
 
             default -> register(name, supplier);
         };

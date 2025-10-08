@@ -1,6 +1,7 @@
 package it.hurts.octostudios.rarcompat;
 
 
+import it.hurts.octostudios.rarcompat.init.ItemRegistry;
 import it.hurts.octostudios.rarcompat.init.SoundRegistry;
 import it.hurts.octostudios.rarcompat.network.NetworkHandler;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -15,7 +16,7 @@ public class RARCompat {
     public RARCompat() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(this::setupCommon);
-        //ItemRegistry.register(bus);
+        ItemRegistry.register(bus);
         SoundRegistry.register(bus);
     }
 
