@@ -67,7 +67,7 @@ public class FlippersItem extends WearableRelicItem {
 
         var statValue = (float) getAbilityValue(stack, "swimmer", "modifier");
 
-        if (player.isInWater() && canPlayerUseActiveAbility(player, stack, "swimmer")) {
+        if ((player.isInWater() || player.isSwimming()) && canPlayerUseActiveAbility(player, stack, "swimmer")) {
             EntityUtils.applyAttribute(player, stack, ForgeMod.SWIM_SPEED.get(), statValue, AttributeModifier.Operation.MULTIPLY_TOTAL);
         } else {
             EntityUtils.removeAttribute(player, stack, ForgeMod.SWIM_SPEED.get(), AttributeModifier.Operation.MULTIPLY_TOTAL);

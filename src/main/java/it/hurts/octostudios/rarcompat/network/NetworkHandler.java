@@ -1,7 +1,9 @@
 package it.hurts.octostudios.rarcompat.network;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.network.packets.DoubleJumpPacket;
 import it.hurts.octostudios.rarcompat.network.packets.EntityMotionPacket;
+import it.hurts.octostudios.rarcompat.network.packets.FlamingoSwimPacket;
 import it.hurts.octostudios.rarcompat.network.packets.PowerJumpPacket;
 import it.hurts.octostudios.rarcompat.network.packets.RepulsionUmbrellaPacket;
 import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
@@ -47,6 +49,18 @@ public class NetworkHandler {
                 RepulsionUmbrellaPacket::encode,
                 RepulsionUmbrellaPacket::decode,
                 RepulsionUmbrellaPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(nextID(), FlamingoSwimPacket.class,
+                FlamingoSwimPacket::encode,
+                FlamingoSwimPacket::decode,
+                FlamingoSwimPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(nextID(), DoubleJumpPacket.class,
+                DoubleJumpPacket::encode,
+                DoubleJumpPacket::decode,
+                DoubleJumpPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
 
         INSTANCE.registerMessage(nextID(), EntityMotionPacket.class,

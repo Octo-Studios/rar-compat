@@ -1,6 +1,10 @@
 {
   "tooltip.rarcompat.modified" : "Modified by [Relics: Artifacts Compat]",
 
+  "tooltip.rarcompat.mimi_dust": "When used on a chest, it transforms it into a mimic that drops as many random relics as it originally contained before the transformation.",
+
+  "item.rarcompat.mimi_dust": "Mimi-Dust",
+
   "tooltip.relics.umbrella.description": "Softens the fall, providing safe landing from any height. When skillfully used, it can serve as a reliable shield, keeping enemies at bay.",
   "tooltip.relics.umbrella.ability.glider": "Soft Fall",
   "tooltip.relics.umbrella.ability.glider.description": "When held in hand, reduces the player's vertical speed, negating fall damage. Pressing LMB propels the player backward and triggers a cooldown. The push can be used multiple times in succession before the player touches the ground.",
@@ -263,5 +267,65 @@
   "tooltip.relics.vampiric_glove.ability.vampire": "Life Steal",
   "tooltip.relics.vampiric_glove.ability.vampire.description": "Heals the player for a percentage of the damage dealt.",
   "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.title": "Life Steal:",
-  "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.value": "%1$s%% of damage dealt"
+  "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.value": "%1$s%% of damage dealt",
+
+  "tooltip.relics.crystal_heart.description": "Grants the relic bearer extra strength by increasing their maximum health.",
+  "tooltip.relics.crystal_heart.ability.heart": "Will to Live",
+  "tooltip.relics.crystal_heart.ability.heart.description": "Increases the player's maximum health.",
+  "tooltip.relics.crystal_heart.ability.heart.stat.amount.title": "Maximum Health Bonus:",
+  "tooltip.relics.crystal_heart.ability.heart.stat.amount.value": "+%1$s points",
+
+  "tooltip.relics.universal_attractor.description": "Manipulates a weak magnetic field around the relic bearer, controlling the gravity of nearby items.",
+  "tooltip.relics.universal_attractor.ability.attractor": "Magnetism",
+  "tooltip.relics.universal_attractor.ability.attractor.description": "A toggleable ability with 3 modes: Attraction, Repulsion, and Neutrality. Items are affected within a configurable radius.",
+  "tooltip.relics.universal_attractor.ability.attractor.stat.radius.title": "Effect Radius:",
+  "tooltip.relics.universal_attractor.ability.attractor.stat.radius.value": "%1$s blocks",
+
+  "tooltip.relics.cloud_in_a_bottle.description": "Enhances the relic bearer's agility, allowing for additional jumps in the air.",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump": "Air Jump",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.description": "Allows additional air jumps.",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.stat.count.title": "Additional Jumps:",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.stat.count.value": "%1$s jumps",
+
+  "tooltip.relics.onion_ring.description": "Enhances the relic bearer's block mining efficiency when sufficiently satiated.",
+  "tooltip.relics.onion_ring.ability.onion": "Miner's Hunger",
+  "tooltip.relics.onion_ring.ability.onion.description": "Increases block mining speed based on the player's saturation.",
+  "tooltip.relics.onion_ring.ability.onion.stat.amount.title": "Speed Bonus per Saturation:",
+  "tooltip.relics.onion_ring.ability.onion.stat.amount.value": "%1$s%% per unit",
+  "tooltip.relics.onion_ring.ability.saturation": "Raw Appetite",
+  "tooltip.relics.onion_ring.ability.saturation.description": "When mining blocks, has a chance to restore hunger and saturation.",
+  "tooltip.relics.onion_ring.ability.saturation.stat.chance.title": "Trigger Chance:",
+  "tooltip.relics.onion_ring.ability.saturation.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.antidote_vessel.description": "Enhances the relic bearer's resistance to effects.",
+  "tooltip.relics.antidote_vessel.ability.antidote": "Poison Resistance",
+  "tooltip.relics.antidote_vessel.ability.antidote.description": "Reduces the duration of negative effects received.",
+  "tooltip.relics.antidote_vessel.ability.antidote.stat.amount.title": "Duration Reduction:",
+  "tooltip.relics.antidote_vessel.ability.antidote.stat.amount.value": "%1$s%%",
+  "tooltip.relics.antidote_vessel.ability.devourer": "Alchemical Touch",
+  "tooltip.relics.antidote_vessel.ability.devourer.description": "Each successful attack steals time from all positive effects present on the target.",
+  "tooltip.relics.antidote_vessel.ability.devourer.stat.duration.title": "Effect Duration Stolen:",
+  "tooltip.relics.antidote_vessel.ability.devourer.stat.duration.value": "%1$s seconds",
+
+  "tooltip.relics.helium_flamingo.description": "Temporarily allows the relic bearer to glide through air as they would water.",
+  "tooltip.relics.helium_flamingo.ability.flying": "Air Swimmer",
+  "tooltip.relics.helium_flamingo.ability.flying.description": "When performing a double jump, allows the player to float in the air for a limited time. Flying speed is proportional to that of the player's swimming speed with an additional bonus.",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.time.title": "Flight Duration:",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.time.value": "%1$s seconds",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.speed.title": "Flying Speed Bonus:",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.speed.value": "+%1$s%%",
+
+  "tooltip.relics.obsidian_skull.description": "Redirects heat aimed at harming the relic bearer onto itself.",
+  "tooltip.relics.obsidian_skull.ability.hell": "Heat Resistance",
+  "tooltip.relics.obsidian_skull.ability.hell.description": "Completely absorbs damage from fire sources for a limited time. The absorption time regenerates when not taking fire damage.",
+  "tooltip.relics.obsidian_skull.ability.hell.stat.duration.title": "Absorption Duration:",
+  "tooltip.relics.obsidian_skull.ability.hell.stat.duration.value": "%1$s seconds",
+
+  "tooltip.relics.chorus_totem.description": "Allows the relic bearer to rewind time when making rash decisions.",
+  "tooltip.relics.chorus_totem.ability.past": "Temporal Loop",
+  "tooltip.relics.chorus_totem.ability.past.description": "Each attack against the relic bearer has a chance to teleport the attacker to a random location nearby.",
+  "tooltip.relics.chorus_totem.ability.past.stat.chance.title": "Teleport Chance:",
+  "tooltip.relics.chorus_totem.ability.past.stat.chance.value": "%1$s%% per missing health",
+  "tooltip.relics.chorus_totem.ability.past.stat.radius.title": "Teleport Radius:",
+  "tooltip.relics.chorus_totem.ability.past.stat.radius.value": "%1$s blocks"
 }

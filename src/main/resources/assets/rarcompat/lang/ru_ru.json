@@ -1,6 +1,10 @@
 {
   "tooltip.rarcompat.modified" : "Модифицировано [Relics: Artifacts Compat]",
 
+  "tooltip.rarcompat.mimi_dust": "При использовании на сундуке создаст из него мимика, дропающего столько случайных реликвий, сколько было в нём до превращения.",
+
+  "item.rarcompat.mimi_dust": "Мими-пыль",
+
   "tooltip.relics.umbrella.description": "Смягчает падение, обеспечивая безопасное приземление с любой высоты. При умелом использовании может послужить верным щитом, не подпускающим врагов.",
   "tooltip.relics.umbrella.ability.glider": "Мягкое падение",
   "tooltip.relics.umbrella.ability.glider.description": "При удержании в руке снижает вертикальную скорость игрока, подавляя урон от падения. При нажатии ЛКМ отталкивает игрока назад и уходит на перезарядку. Использовать отталкивание можно несколько раз подряд, прежде чем игрок коснётся земли.",
@@ -261,7 +265,67 @@
 
   "tooltip.relics.vampiric_glove.description": "Наделяет атаки владельца реликвии эффектом вампиризма, исцеляя его на долю от нанесённого урона.",
   "tooltip.relics.vampiric_glove.ability.vampire": "Кража жизни",
-  "tooltip.relics.vampiric_glove.ability.vampire.description": "Исцеляет игрока на процент от нанесённого урона.",
+  "tooltip.relics.vampiric_glove.ability.vampire.description": "Исцеляет игрока на %1$s%% от нанесённого им урона.",
   "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.title": "Кража жизни:",
-  "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.value": "%1$s%% от нанесённого урона"
+  "tooltip.relics.vampiric_glove.ability.vampire.stat.amount.value": "%1$s%% от нанесённого урона",
+
+  "tooltip.relics.crystal_heart.description": "Наделяет обладателя реликвии дополнительной силой, увеличивая его максимальное здоровье.",
+  "tooltip.relics.crystal_heart.ability.heart": "Воля к жизни",
+  "tooltip.relics.crystal_heart.ability.heart.description": "Увеличивает объём максимального здоровья игрока.",
+  "tooltip.relics.crystal_heart.ability.heart.stat.amount.title": "Бонус максимального здоровья:",
+  "tooltip.relics.crystal_heart.ability.heart.stat.amount.value": "+%1$s единиц",
+
+  "tooltip.relics.universal_attractor.description": "Манипулирует слабым магнитным полем вокруг обладателя реликвии, контролируя гравитацию ближайших предметов.",
+  "tooltip.relics.universal_attractor.ability.attractor": "Магнетизм",
+  "tooltip.relics.universal_attractor.ability.attractor.description": "Переключаемая способность с 3 режимами: притяжение, отталкивание и нейтралитет. Предметы попадают под воздействие в настраиваемом радиусе.",
+  "tooltip.relics.universal_attractor.ability.attractor.stat.radius.title": "Радиус воздействия:",
+  "tooltip.relics.universal_attractor.ability.attractor.stat.radius.value": "%1$s блоков",
+
+  "tooltip.relics.cloud_in_a_bottle.description": "Повышает манёвренность владельца реликвии, позволяя совершать дополнительные прыжки в воздухе.",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump": "Воздушный прыжок",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.description": "Позволяет совершать дополнительные прыжки в воздухе.",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.stat.count.title": "Дополнительные прыжки:",
+  "tooltip.relics.cloud_in_a_bottle.ability.jump.stat.count.value": "%1$s прыжков",
+
+  "tooltip.relics.onion_ring.description": "Увеличивает эффективность добычи блоков носителем реликвии при достаточном уровне сытости.",
+  "tooltip.relics.onion_ring.ability.onion": "Голод шахтёра",
+  "tooltip.relics.onion_ring.ability.onion.description": "Увеличивает скорость добычи блоков в зависимости от сытости игрока.",
+  "tooltip.relics.onion_ring.ability.onion.stat.amount.title": "Бонус скорости за единицу сытости:",
+  "tooltip.relics.onion_ring.ability.onion.stat.amount.value": "%1$s%% за единицу",
+  "tooltip.relics.onion_ring.ability.saturation": "Сыроедение",
+  "tooltip.relics.onion_ring.ability.saturation.description": "При добыче блоков с шансом восполняет голод и сытость.",
+  "tooltip.relics.onion_ring.ability.saturation.stat.chance.title": "Шанс срабатывания:",
+  "tooltip.relics.onion_ring.ability.saturation.stat.chance.value": "%1$s%%",
+
+  "tooltip.relics.antidote_vessel.description": "Усиливает сопротивление эффектам у носителя реликвии.",
+  "tooltip.relics.antidote_vessel.ability.antidote": "Сопротивление ядам",
+  "tooltip.relics.antidote_vessel.ability.antidote.description": "Сокращает продолжительность получаемых негативных эффектов.",
+  "tooltip.relics.antidote_vessel.ability.antidote.stat.amount.title": "Сокращение длительности:",
+  "tooltip.relics.antidote_vessel.ability.antidote.stat.amount.value": "%1$s%%",
+  "tooltip.relics.antidote_vessel.ability.devourer": "Алхимическое касание",
+  "tooltip.relics.antidote_vessel.ability.devourer.description": "Каждая совершённая атака крадёт время от всех положительных эффектов цели.",
+  "tooltip.relics.antidote_vessel.ability.devourer.stat.duration.title": "Украденная длительность эффектов:",
+  "tooltip.relics.antidote_vessel.ability.devourer.stat.duration.value": "%1$s секунд",
+
+  "tooltip.relics.helium_flamingo.description": "На время позволяет носителю реликвии рассекать воздух так же, как он рассекает воду.",
+  "tooltip.relics.helium_flamingo.ability.flying": "Воздушный пловец",
+  "tooltip.relics.helium_flamingo.ability.flying.description": "При совершении двойного прыжка позволяет игроку парить в воздухе ограниченное время. Скорость полёта пропорциональна скорости плавания игрока с дополнительным бонусом.",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.time.title": "Длительность полёта:",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.time.value": "%1$s секунд",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.speed.title": "Бонус скорости полёта:",
+  "tooltip.relics.helium_flamingo.ability.flying.stat.speed.value": "+%1$s%%",
+
+  "tooltip.relics.obsidian_skull.description": "Перенаправляет на себя жар, исходно нацеленный навредить носителю реликвии.",
+  "tooltip.relics.obsidian_skull.ability.hell": "Жаростойкость",
+  "tooltip.relics.obsidian_skull.ability.hell.description": "Полностью поглощает урон от огненных источников на ограниченное время. Время поглощения восполняется при отсутствии огненного урона.",
+  "tooltip.relics.obsidian_skull.ability.hell.stat.duration.title": "Длительность поглощения:",
+  "tooltip.relics.obsidian_skull.ability.hell.stat.duration.value": "%1$s секунд",
+
+  "tooltip.relics.chorus_totem.description": "Позволяет носителю реликвии обернуть время вспять при совершении необдуманных действий.",
+  "tooltip.relics.chorus_totem.ability.past": "Временная петля",
+  "tooltip.relics.chorus_totem.ability.past.description": "Каждая атака по носителю реликвии с шансом телепортирует атакующего в случайную локацию поблизости.",
+  "tooltip.relics.chorus_totem.ability.past.stat.chance.title": "Шанс телепортации:",
+  "tooltip.relics.chorus_totem.ability.past.stat.chance.value": "%1$s%% за недостающее здоровье",
+  "tooltip.relics.chorus_totem.ability.past.stat.radius.title": "Радиус телепортации:",
+  "tooltip.relics.chorus_totem.ability.past.stat.radius.value": "%1$s блоков"
 }
