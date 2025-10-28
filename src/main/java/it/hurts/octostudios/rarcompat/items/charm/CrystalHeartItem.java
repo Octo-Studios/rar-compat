@@ -16,15 +16,21 @@ import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.Holder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingHealEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
+
+import java.util.List;
 
 public class CrystalHeartItem extends WearableRelicItem {
 
@@ -57,30 +63,72 @@ public class CrystalHeartItem extends WearableRelicItem {
                 .build();
     }
 
+    // From EntityUtils.findEquippedCurios() (Relics 1.21.1 by SSKirilSS)
+    // This method doesn't exist in 1.20.1 relics version
+    private static List<ItemStack> findEquippedCurios(Entity entity, Item item) {
+        if (!(entity instanceof Player player))
+            return List.of();
+
+        return CuriosApi.getCuriosInventory(player)
+                .map(inventory -> inventory.findCurios(item).stream()
+                        .map(SlotResult::stack)
+                        .toList())
+                .orElse(List.of());
+    }
 
     @Override
     public void wornTick(LivingEntity entity, ItemStack stack) {
         if (!(entity instanceof Player player) || !canUseAbility(stack, "heart"))
             return;
 
-        EntityUtils.applyAttribute(player, stack, Attributes.MAX_HEALTH, (float) getAbilityValue(stack, "heart", "amount"), AttributeModifier.Operation.ADDITION);
+        List<ItemStack> equippedHearts = findEquippedCurios(player, ModItems.CRYSTAL_HEART.get());
+
+        if (equippedHearts.isEmpty() || equippedHearts.get(0) != stack)
+            return;
+
+        float totalHealth = (float) equippedHearts.stream()
+                .filter(s -> s.getItem() instanceof CrystalHeartItem relic && relic.canUseAbility(s, "heart"))
+                .mapToDouble(s -> ((CrystalHeartItem) s.getItem()).getAbilityValue(s, "heart", "amount"))
+                .sum();
+
+        EntityUtils.applyAttribute(player, stack, Attributes.MAX_HEALTH, totalHealth, AttributeModifier.Operation.ADDITION);
     }
+
+    @Override
+    public void onEquip(LivingEntity entity, ItemStack stack) {
+        if (!(entity instanceof Player player))
+            return;
+
+        List<ItemStack> equippedHearts = findEquippedCurios(player, ModItems.CRYSTAL_HEART.get());
+
+        if (equippedHearts.size() > 1)
+            EntityUtils.removeAttribute(player, equippedHearts.get(0), Attributes.MAX_HEALTH, AttributeModifier.Operation.ADDITION);
+    }
+
 
     @Override
     public void onUnequip(LivingEntity entity, ItemStack stack) {
         if (!(entity instanceof Player player))
             return;
 
-        ItemStack currentStack = EntityUtils.findEquippedCurio(player, ModItems.CRYSTAL_HEART.get());
-
-        if (!currentStack.isEmpty())
-            return;
-
         EntityUtils.removeAttribute(player, stack, Attributes.MAX_HEALTH, AttributeModifier.Operation.ADDITION);
 
-        if (player.getHealth() > player.getMaxHealth()) {
-            player.setHealth(player.getMaxHealth());
+        List<ItemStack> equippedHearts = findEquippedCurios(player, ModItems.CRYSTAL_HEART.get()).stream()
+                .filter(s -> s != stack)
+                .toList();
+
+        if (!equippedHearts.isEmpty()) {
+            float totalHealth = (float) equippedHearts.stream()
+                    .filter(s -> s.getItem() instanceof CrystalHeartItem relic && relic.canUseAbility(s, "heart"))
+                    .mapToDouble(s -> ((CrystalHeartItem) s.getItem()).getAbilityValue(s, "heart", "amount"))
+                    .sum();
+
+            if (totalHealth > 0)
+                EntityUtils.applyAttribute(player, equippedHearts.get(0), Attributes.MAX_HEALTH, totalHealth, AttributeModifier.Operation.ADDITION);
         }
+
+        if (player.getHealth() > player.getMaxHealth())
+            player.setHealth(player.getMaxHealth());
     }
 
     @Mod.EventBusSubscriber
