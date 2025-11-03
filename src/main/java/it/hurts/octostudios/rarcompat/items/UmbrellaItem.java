@@ -2,6 +2,7 @@ package it.hurts.octostudios.rarcompat.items;
 
 import it.hurts.octostudios.rarcompat.network.packets.EntityMotionPacket;
 import it.hurts.octostudios.rarcompat.network.packets.RepulsionUmbrellaPacket;
+import it.hurts.sskirillss.relics.items.relics.base.RelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilitiesData;
 import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilityData;
@@ -42,8 +43,9 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
+import top.theillusivec4.curios.api.SlotContext;
 
-public class UmbrellaItem extends WearableRelicItem {
+public class UmbrellaItem extends RelicItem {
     @Override
     public RelicData constructDefaultRelicData() {
         return RelicData.builder()
@@ -143,6 +145,20 @@ public class UmbrellaItem extends WearableRelicItem {
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
         return slotChanged;
+    }
+
+    @Override
+    public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public ItemStack getDefaultInstance() {
+        ItemStack stack = super.getDefaultInstance();
+
+        setCharges(stack, getMaxCharges(stack));
+
+        return stack;
     }
 
     @Override
