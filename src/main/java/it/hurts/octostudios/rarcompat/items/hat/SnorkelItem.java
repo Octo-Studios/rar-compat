@@ -1,128 +1,186 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
 import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
-import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.FogType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
-
-import static it.hurts.sskirillss.relics.init.DataComponentRegistry.TOGGLED;
 
 public class SnorkelItem extends WearableRelicItem {
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("passive")
-                                .maxLevel(0)
-                                .build())
-                        .ability(AbilityData.builder("diving")
-                                .stat(StatData.builder("duration")
-                                        .initialValue(5D, 10D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.2D)
-                                        .formatValue(value -> (int) MathUtils.round(value, 1))
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("snorkeling")
+                                .rankModifier(1, "vision")
+                                .rankModifier(3, "reserve")
+                                .rankModifier(5, "resistance")
+                                .stat(AbilityStatTemplate.builder("water_depth")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
-                                .research(ResearchData.builder()
-                                        .star(0, 5, 11).star(1, 12, 11).star(2, 16, 15)
-                                        .star(3, 12, 20).star(4, 7, 20).star(5, 4, 16)
-                                        .star(6, 11, 25).star(7, 16, 24).star(8, 20, 9)
-                                        .link(0, 1).link(1, 2).link(2, 3).link(3, 4).link(4, 5).link(2, 8).link(2, 7)
-                                        .link(6, 7).link(4, 6).link(0, 5)
+                                .stat(AbilityStatTemplate.builder("reserve_duration")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(2D, 6D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
-                                .build())
-                        .build())
-                .style(StyleData.builder()
-                        .tooltip(TooltipData.builder()
-                                .borderTop(0xff22b818)
-                                .borderBottom(0xff00869c)
-                                .build())
-                        .beams(BeamsData.builder()
-                                .startColor(0xFF00a6b5)
-                                .endColor(0x00128b17)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .initialCost(100)
-                        .maxLevel(10)
-                        .step(100)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("diving")
-                                        .initialValue(1)
-                                        .gem(GemShape.SQUARE, GemColor.CYAN)
+                                .stat(AbilityStatTemplate.builder("drowning_resistance")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.2D, 0.4D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .build())
-                        .build())
-                .loot(LootData.builder()
-                        .entry(LootEntries.AQUATIC)
                         .build())
                 .build();
     }
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || player.tickCount % 10 != 0 || !canPlayerUseAbility(player, stack, "diving"))
+        var entity = slotContext.entity();
+
+        if (!(entity instanceof Player player) || player.level().isClientSide())
             return;
 
-        var toggled = stack.getOrDefault(TOGGLED, false);
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
 
-        if (player.isUnderWater()) {
-            if (!toggled) {
-                stack.set(TOGGLED, true);
+        if (!ability.canPlayerUse(player))
+            return;
 
-                var effect = player.getEffect(MobEffects.WATER_BREATHING);
+        var maxWaterDepth = Math.max(0, (int) MathUtils.round(ability.getStatData("water_depth").getValue(), 0));
+        var isSafeHeight = isSafeBreathingHeight(player, maxWaterDepth);
 
-                var currentDuration = effect != null ? effect.getDuration() : 0;
-                var resultDuration = (int) getStatValue(stack, "diving", "duration");
+        if (isSafeHeight) {
+            setReserveTriggered(stack, false);
 
-                if (resultDuration * 20 > currentDuration) {
-                    spreadRelicExperience(player, stack, (int) Math.abs(Math.ceil((resultDuration - currentDuration) / 20F)));
+            if (player.isEyeInFluid(FluidTags.WATER) && player.getAirSupply() < player.getMaxAirSupply())
+                player.setAirSupply(Math.min(player.getAirSupply() + 4, player.getMaxAirSupply()));
 
-                    player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, resultDuration * 20, 0, true, true));
-                }
-            }
-        } else if (toggled)
-            stack.set(TOGGLED, false);
+            return;
+        }
+
+        if (!ability.isRankModifierUnlocked("reserve") || isReserveTriggered(stack))
+            return;
+
+        var durationTicks = getReserveDurationTicks(player, stack);
+
+        if (durationTicks > 0)
+            player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, durationTicks, 0, false, false));
+
+        setReserveTriggered(stack, true);
     }
 
-    @EventBusSubscriber(value = Dist.CLIENT)
-    public static class SnorkelEvent {
-        @SubscribeEvent
-        public static void onFogRender(ViewportEvent.RenderFog event) {
-            Player player = Minecraft.getInstance().player;
+    private boolean isSafeBreathingHeight(Player player, int maxWaterDepth) {
+        if (!player.isEyeInFluid(FluidTags.WATER))
+            return true;
 
-            if (player == null)
+        var level = player.level();
+        var eyePos = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ());
+
+        for (var depth = 1; depth <= maxWaterDepth + 1; depth++) {
+            var pos = eyePos.above(depth);
+            var blockState = level.getBlockState(pos);
+
+            if (blockState.isAir())
+                return true;
+
+            if (!blockState.is(Blocks.WATER))
+                return false;
+        }
+
+        return false;
+    }
+
+    private int getReserveDurationTicks(Player player, ItemStack stack) {
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
+
+        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("reserve"))
+            return 0;
+
+        var seconds = Math.max(0D, ability.getStatData("reserve_duration").getValue());
+
+        return Math.max(0, (int) Math.round(seconds * 20D));
+    }
+
+    private boolean isReserveTriggered(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.SNORKEL_RESERVE_TRIGGERED.get(), false);
+    }
+
+    private void setReserveTriggered(ItemStack stack, boolean triggered) {
+        stack.set(DataComponentRegistry.SNORKEL_RESERVE_TRIGGERED.get(), triggered);
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || !event.getSource().is(DamageTypes.DROWN))
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.SNORKEL.value());
 
-            player.getCommandSenderWorld().getFluidState(BlockPos.containing(player.getEyePosition()));
-
-            if (!(stack.getItem() instanceof SnorkelItem) || !player.isInLiquid())
+            if (!(stack.getItem() instanceof SnorkelItem relic))
                 return;
 
-            event.scaleFarPlaneDistance(150);
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("resistance"))
+                return;
+
+            var reduction = Math.max(0D, Math.min(1D, ability.getStatData("drowning_resistance").getValue()));
+
+            if (reduction <= 0D)
+                return;
+
+            event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+        }
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID, value = Dist.CLIENT)
+    public static class ClientEvents {
+        @SubscribeEvent
+        public static void onRenderFog(ViewportEvent.RenderFog event) {
+            if (event.getType() != FogType.WATER || !(event.getCamera().getEntity() instanceof Player player))
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.SNORKEL.value());
+
+            if (!(stack.getItem() instanceof SnorkelItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("vision"))
+                return;
+
+            event.setNearPlaneDistance(-8F);
+            event.setFarPlaneDistance(Math.max(event.getFarPlaneDistance(), 512F));
             event.setCanceled(true);
         }
     }
 }
+

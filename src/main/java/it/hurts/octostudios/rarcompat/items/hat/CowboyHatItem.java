@@ -1,254 +1,267 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
 import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.init.DataComponentRegistry;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.CastData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastStage;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastType;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.PredicateType;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
-import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import it.hurts.sskirillss.relics.utils.ParticleUtils;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.FlyingMob;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ambient.AmbientCreature;
-import net.minecraft.world.entity.animal.FlyingAnimal;
-import net.minecraft.world.entity.animal.WaterAnimal;
-import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.entity.monster.ElderGuardian;
-import net.minecraft.world.entity.monster.warden.Warden;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.EntityMountEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
-import java.awt.*;
-
-import static it.hurts.sskirillss.relics.utils.EntityUtils.rayTraceEntity;
-
 public class CowboyHatItem extends WearableRelicItem {
+    private static final int NO_MOUNT = -1;
+
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("cowboy")
-                                .stat(StatData.builder("speed")
-                                        .initialValue(0.2D, 0.3D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("riding")
+                                .rankModifier(1, "taming")
+                                .rankModifier(3, "reach")
+                                .rankModifier(5, "absorption")
+                                .stat(AbilityStatTemplate.builder("amount")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
-                                .research(ResearchData.builder()
-                                        .star(0, 5, 8).star(1, 7, 22).star(2, 16, 22).star(3, 19, 18).star(4, 12, 17)
-                                        .link(4, 0).link(4, 1).link(4, 2).link(4, 3)
+                                .stat(AbilityStatTemplate.builder("reach")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(0.15D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
-                                .build())
-                        .ability(AbilityData.builder("overlord")
-                                .active(CastData.builder().type(CastType.INSTANTANEOUS)
-                                        .predicate("overlord", PredicateType.CAST, (player, stack) -> rayTraceEntity(player, entity -> entity instanceof Mob
-                                                && checkMob(entity, EnderDragon.class, WitherBoss.class, Warden.class, ElderGuardian.class)
-                                                && !player.isPassenger(), player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE).getValue()) != null)
-                                        .build())
-                                .requiredLevel(5)
-                                .stat(StatData.builder("time")
-                                        .initialValue(2D, 5D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.15D)
+                                .stat(AbilityStatTemplate.builder("absorption")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(4D, 10D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
-                                .research(ResearchData.builder()
-                                        .star(0, 9, 29).star(1, 16, 21).star(2, 15, 16)
-                                        .star(3, 9, 20).star(4, 3, 15).star(5, 9, 10)
-                                        .star(6, 14, 5).star(7, 19, 8).star(8, 19, 18)
-                                        .link(0, 1).link(1, 2).link(2, 3).link(3, 4).link(4, 5).link(5, 6).link(6, 7).link(2, 8).link(7, 2)
-                                        .build())
                                 .build())
-                        .build())
-                .style(StyleData.builder()
-                        .tooltip(TooltipData.builder()
-                                .borderTop(0xff572814)
-                                .borderBottom(0xff473626)
-                                .build())
-                        .beams(BeamsData.builder()
-                                .startColor(0xFF624d2e)
-                                .endColor(0x00481f14)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .initialCost(100)
-                        .maxLevel(15)
-                        .step(100)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("cowboy")
-                                        .initialValue(1)
-                                        .gem(GemShape.SQUARE, GemColor.ORANGE)
-                                        .build())
-                                .source(LevelingSourceData.abilityBuilder("overlord")
-                                        .initialValue(1)
-                                        .gem(GemShape.SQUARE, GemColor.BLUE)
-                                        .build())
-                                .build())
-                        .build())
-                .loot(LootData.builder()
-                        .entry(LootEntries.VILLAGE, LootEntries.SAVANNA)
                         .build())
                 .build();
     }
 
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || !(player.getRootVehicle() instanceof Mob beingMounted)
-                || !getToggled(stack) || !checkMob(player, EnderDragon.class, WitherBoss.class, Warden.class, ElderGuardian.class))
+        if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        if (isAbilityOnCooldown(stack, "overlord") || !isAbilityUnlocked(stack, "overlord"))
-            player.stopRiding();
-        else {
-            var random = player.getRandom();
-            var level = player.getCommandSenderWorld();
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding");
 
-            if (getTime(stack) >= getStatValue(stack, "overlord", "time") * 20) {
-                player.stopRiding();
-                player.playSound(SoundEvents.WOOL_HIT, 1.0F, 0.9F + player.getRandom().nextFloat() * 0.2F);
-
-                setTime(stack, 0);
-
-                for (int i = 0; i < 50; i++)
-                    level.addParticle(ParticleUtils.constructSimpleSpark(new Color(150 + random.nextInt(106), 50 + random.nextInt(100), 50 + random.nextInt(100)),
-                                    0.5F, 60, 0.95F),
-                            player.getX(), player.getY() + 1.0, player.getZ(),
-                            (random.nextDouble() - 0.5) * 3.0,
-                            random.nextDouble() * 1.5,
-                            (random.nextDouble() - 0.5) * 3.0);
-            } else {
-                if (level.isClientSide() && player instanceof LocalPlayer localPlayer && localPlayer.input.jumping && beingMounted.onGround()
-                        && !isWaterOrFlyingMob(beingMounted))
-                    beingMounted.addDeltaMovement(new Vec3(0, 0.8, 0));
-
-                var knownMovement = beingMounted.getKnownMovement();
-
-                if ((knownMovement.x != 0 || knownMovement.z != 0) && random.nextFloat() <= 0.25F && player.tickCount % 20 == 0)
-                    spreadRelicExperience(player, stack, 1);
-
-                if (isAbilityUnlocked(stack, "cowboy"))
-                    changeAttributes(beingMounted, stack, true, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
-
-                addTime(stack, 1);
-            }
+        if (!ability.canPlayerUse(player)) {
+            clearMountBuff(player, stack);
+            removeRiderReachBuff(player, stack);
+            removeRiderAbsorptionBonus(player, stack);
+            return;
         }
-    }
 
-    @Override
-    public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
-        if (player.getCommandSenderWorld().isClientSide() || !ability.equals("overlord"))
+        if (!(player.getVehicle() instanceof LivingEntity mounted)) {
+            clearMountBuff(player, stack);
+            removeRiderReachBuff(player, stack);
+            removeRiderAbsorptionBonus(player, stack);
             return;
+        }
 
-        EntityHitResult result = rayTraceEntity(player, entity -> entity instanceof Mob, player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE).getValue());
+        var amount = Math.max(0F, (float) ability.getStatData("amount").getValue());
 
-        if (result == null)
+        if (amount > 0F) {
+            syncMountedEntity(player, stack, mounted);
+            applyMountedBuff(stack, mounted, amount);
+        } else {
+            clearMountBuff(player, stack);
+        }
+
+        if (!ability.isRankModifierUnlocked("reach")) {
+            removeRiderReachBuff(player, stack);
+        } else {
+            var reach = Math.max(0F, (float) ability.getStatData("reach").getValue());
+
+            if (reach > 0F)
+                applyRiderReachBuff(player, stack, reach);
+            else
+                removeRiderReachBuff(player, stack);
+        }
+
+        if (!ability.isRankModifierUnlocked("absorption")) {
+            removeRiderAbsorptionBonus(player, stack);
             return;
+        }
 
-        setToggled(stack, true);
+        var absorption = Math.max(0D, ability.getStatData("absorption").getValue());
 
-        spreadRelicExperience(player, stack, 1);
-
-        player.startRiding(result.getEntity());
+        if (absorption > 0D)
+            applyRiderAbsorptionBonus(player, stack, absorption);
+        else
+            removeRiderAbsorptionBonus(player, stack);
     }
 
     @Override
     public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
-        if (!(slotContext.entity() instanceof Player player) || newStack.getItem() == stack.getItem()
-                || !(player.getRootVehicle() instanceof Mob mob))
+        if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide() || stack.getItem() == newStack.getItem())
             return;
 
-        changeAttributes(mob, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
-
-        if (!(player.getControlledVehicle() instanceof Mob))
-            player.stopRiding();
+        clearMountBuff(player, stack);
+        removeRiderReachBuff(player, stack);
+        removeRiderAbsorptionBonus(player, stack);
     }
 
-    @SafeVarargs
-    public final void changeAttributes(Mob beingMounted, ItemStack stack, boolean flag, Holder<Attribute>... attributeHolder) {
-        for (Holder<Attribute> attributes : attributeHolder)
-            if (flag)
-                EntityUtils.applyAttribute(beingMounted, stack, attributes, (float) getStatValue(stack, "cowboy", "speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-            else
-                EntityUtils.removeAttribute(beingMounted, stack, attributes, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+    private void syncMountedEntity(Player player, ItemStack stack, LivingEntity mounted) {
+        var lastMountId = getLastMountId(stack);
+
+        if (lastMountId == mounted.getId())
+            return;
+
+        removeMountBuffById(player, stack, lastMountId);
+        setLastMountId(stack, mounted.getId());
     }
 
-    @SafeVarargs
-    private boolean checkMob(Entity entity, Class<? extends Mob>... mobClasses) {
-        for (Class<? extends Mob> mobClass : mobClasses)
-            if (mobClass.isInstance(entity))
-                return false;
-
-        return true;
+    private void clearMountBuff(Player player, ItemStack stack) {
+        removeMountBuffById(player, stack, getLastMountId(stack));
+        setLastMountId(stack, NO_MOUNT);
     }
 
-    public boolean isWaterOrFlyingMob(Mob mounted) {
-        return mounted instanceof FlyingAnimal || mounted instanceof FlyingMob || mounted instanceof WaterAnimal || mounted instanceof AmbientCreature;
+    private void removeMountBuffById(Player player, ItemStack stack, int entityId) {
+        if (entityId == NO_MOUNT)
+            return;
+
+        if (player.level().getEntity(entityId) instanceof LivingEntity mounted)
+            removeMountedBuff(stack, mounted);
     }
 
-    public void addTime(ItemStack stack, int val) {
-        setTime(stack, getTime(stack) + val);
+    private void applyMountedBuff(ItemStack stack, LivingEntity mounted, float amount) {
+        resetLivingAttribute(mounted, stack, Attributes.MAX_HEALTH, amount);
+        resetLivingAttribute(mounted, stack, Attributes.MOVEMENT_SPEED, amount);
+        resetLivingAttribute(mounted, stack, Attributes.JUMP_STRENGTH, amount);
+        resetLivingAttribute(mounted, stack, Attributes.ATTACK_DAMAGE, amount);
+        resetLivingAttribute(mounted, stack, Attributes.ATTACK_KNOCKBACK, amount);
+        resetLivingAttribute(mounted, stack, Attributes.FLYING_SPEED, amount);
+        resetLivingAttribute(mounted, stack, Attributes.ARMOR, amount);
+        resetLivingAttribute(mounted, stack, Attributes.ARMOR_TOUGHNESS, amount);
+        resetLivingAttribute(mounted, stack, Attributes.KNOCKBACK_RESISTANCE, amount);
     }
 
-    public int getTime(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.TIME, 0);
+    private void removeMountedBuff(ItemStack stack, LivingEntity mounted) {
+        removeLivingAttribute(mounted, stack, Attributes.MAX_HEALTH);
+        removeLivingAttribute(mounted, stack, Attributes.MOVEMENT_SPEED);
+        removeLivingAttribute(mounted, stack, Attributes.JUMP_STRENGTH);
+        removeLivingAttribute(mounted, stack, Attributes.ATTACK_DAMAGE);
+        removeLivingAttribute(mounted, stack, Attributes.ATTACK_KNOCKBACK);
+        removeLivingAttribute(mounted, stack, Attributes.FLYING_SPEED);
+        removeLivingAttribute(mounted, stack, Attributes.ARMOR);
+        removeLivingAttribute(mounted, stack, Attributes.ARMOR_TOUGHNESS);
+        removeLivingAttribute(mounted, stack, Attributes.KNOCKBACK_RESISTANCE);
     }
 
-    public void setTime(ItemStack stack, int val) {
-        stack.set(DataComponentRegistry.TIME, Math.max(val, 0));
+    private void applyRiderReachBuff(Player player, ItemStack stack, float amount) {
+        resetLivingAttribute(player, stack, Attributes.ENTITY_INTERACTION_RANGE, amount);
+        resetLivingAttribute(player, stack, Attributes.BLOCK_INTERACTION_RANGE, amount);
     }
 
-    public void setToggled(ItemStack stack, boolean val) {
-        stack.set(DataComponentRegistry.TOGGLED, val);
+    private void removeRiderReachBuff(Player player, ItemStack stack) {
+        removeLivingAttribute(player, stack, Attributes.ENTITY_INTERACTION_RANGE);
+        removeLivingAttribute(player, stack, Attributes.BLOCK_INTERACTION_RANGE);
     }
 
-    public boolean getToggled(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.TOGGLED, false);
+    private void applyRiderAbsorptionBonus(Player player, ItemStack stack, double bonus) {
+        var remaining = getRiderAbsorptionRemaining(stack);
+
+        if (remaining <= 0D) {
+            player.setAbsorptionAmount((float) (Math.max(0D, player.getAbsorptionAmount()) + bonus));
+            setRiderAbsorptionRemaining(stack, bonus);
+            return;
+        }
+
+        var current = Math.max(0D, player.getAbsorptionAmount());
+
+        setRiderAbsorptionRemaining(stack, Math.min(remaining, current));
     }
 
-    @EventBusSubscriber
-    public static class CowboyEvent {
+    private void removeRiderAbsorptionBonus(Player player, ItemStack stack) {
+        var remaining = getRiderAbsorptionRemaining(stack);
+
+        if (remaining <= 0D)
+            return;
+
+        var current = Math.max(0D, player.getAbsorptionAmount());
+
+        player.setAbsorptionAmount((float) Math.max(0D, current - remaining));
+        setRiderAbsorptionRemaining(stack, 0D);
+    }
+
+    private void resetLivingAttribute(LivingEntity entity, ItemStack stack, Holder<Attribute> attribute, float amount) {
+        if (entity.getAttribute(attribute) != null)
+            EntityUtils.resetAttribute(entity, stack, attribute, amount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+    }
+
+    private void removeLivingAttribute(LivingEntity entity, ItemStack stack, Holder<Attribute> attribute) {
+        if (entity.getAttribute(attribute) != null)
+            EntityUtils.removeAttribute(entity, stack, attribute, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+    }
+
+    private int getLastMountId(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.COWBOY_HAT_LAST_MOUNT_ID.get(), NO_MOUNT);
+    }
+
+    private void setLastMountId(ItemStack stack, int id) {
+        stack.set(DataComponentRegistry.COWBOY_HAT_LAST_MOUNT_ID.get(), id);
+    }
+
+    private double getRiderAbsorptionRemaining(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.COWBOY_HAT_ABSORPTION_REMAINING.get(), 0D);
+    }
+
+    private void setRiderAbsorptionRemaining(ItemStack stack, double value) {
+        stack.set(DataComponentRegistry.COWBOY_HAT_ABSORPTION_REMAINING.get(), Math.max(0D, value));
+    }
+
+    public static boolean canUseTamingModifier(Player player) {
+        var stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
+
+        if (!(stack.getItem() instanceof CowboyHatItem relic))
+            return false;
+
+        return relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding").canPlayerUse(player)
+                && relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding").isRankModifierUnlocked("taming");
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
         @SubscribeEvent
-        public static void onEntityMount(EntityMountEvent event) {
-            if (!(event.getEntity() instanceof Player player))
+        public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+            tryInstantTame(event.getEntity(), event.getTarget());
+        }
+
+        @SubscribeEvent
+        public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+            tryInstantTame(event.getEntity(), event.getTarget());
+        }
+
+        private static void tryInstantTame(Player player, Entity target) {
+            if (player.level().isClientSide() || !(target instanceof AbstractHorse horse) || horse.isTamed())
                 return;
 
-            var stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
-
-            if (player.getCommandSenderWorld().isClientSide() || !(stack.getItem() instanceof CowboyHatItem relic) || !event.isDismounting()
-                    || !(event.getEntityBeingMounted() instanceof Mob mount) || !relic.getToggled(stack))
+            if (!CowboyHatItem.canUseTamingModifier(player))
                 return;
 
-            relic.addAbilityCooldown(stack, "overlord", 600);
-            relic.setTime(stack, 0);
-            relic.setToggled(stack, false);
-            relic.changeAttributes(mount, stack, false, Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.SAFE_FALL_DISTANCE);
+            horse.tameWithName(player);
         }
     }
 }

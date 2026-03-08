@@ -5,11 +5,9 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "rarcompat.refmap.json",
   "mixins": [
-    "AbstractHorseMixin",
-    "AbstractVillagerMixin",
-    "LivingEntityMixin",
-    "MobMixin",
     "RollLootTableModifierMixin",
+    "AbstractVillagerMixin",
+    "VillagerMixin",
     "config.ConfigManagerMixin",
     "config.ModConfigMixin",
     "init.ModItemsMixin"

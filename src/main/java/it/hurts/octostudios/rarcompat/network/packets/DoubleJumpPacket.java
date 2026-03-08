@@ -13,8 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import javax.annotation.Nonnull;
@@ -43,7 +41,6 @@ public class DoubleJumpPacket implements CustomPacketPayload {
                 return;
 
             relic.addCount(stack, 1);
-            relic.spreadRelicExperience(player, stack, 1);
 
             player.hasImpulse = true;
             player.fallDistance = 0;

@@ -1,82 +1,68 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
 import artifacts.registry.ModItems;
-import it.hurts.octostudios.rarcompat.init.SoundRegistry;
+import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.CastData;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastStage;
-import it.hurts.sskirillss.relics.items.relics.base.data.cast.misc.CastType;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
-import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LightLayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.Collection;
 
 public class NightVisionGogglesItem extends WearableRelicItem {
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("vision")
-                                .active(CastData.builder()
-                                        .type(CastType.TOGGLEABLE)
-                                        .build())
-                                .stat(StatData.builder("amount")
-                                        .initialValue(0.1D, 0.15)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.5D)
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("vision")
+                                .modes("enabled", "disabled")
+                                .rankModifier(1, "clarity")
+                                .rankModifier(3, "evasion")
+                                .rankModifier(5, "ambush")
+                                .stat(AbilityStatTemplate.builder("amount")
+                                        .initialValue(0.1D, 0.15D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.5667D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 1))
                                         .build())
-                                .research(ResearchData.builder()
-                                        .star(0, 16, 7).star(1, 19, 16).star(2, 17, 21).star(3, 8, 26)
-                                        .star(4, 3, 16).star(5, 6, 7).star(6, 9, 16).star(7, 11, 11)
-                                        .star(8, 13, 16)
-                                        .link(0, 1).link(1, 2).link(2, 3).link(3, 4).link(4, 5).link(5, 6).link(6, 7).link(7, 8).link(0, 8)
-                                        .link(4, 6).link(8, 1)
+                                .stat(AbilityStatTemplate.builder("miss_chance")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("damage_bonus")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(0.15D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .build())
                         .build())
-                .style(StyleData.builder()
-                        .tooltip(TooltipData.builder()
-                                .borderTop(0xff84fc40)
-                                .borderBottom(0xff00e03e)
-                                .build())
-                        .beams(BeamsData.builder()
-                                .startColor(0xFF84fc40)
-                                .endColor(0x000b222d)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
+                .leveling(LevelingTemplate.builder()
                         .initialCost(100)
-                        .maxLevel(10)
+                        .maxRank(10)
                         .step(100)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("vision")
-                                        .initialValue(1)
-                                        .gem(GemShape.SQUARE, GemColor.CYAN)
-                                        .build())
-                                .build())
                         .build())
-                .loot(LootData.builder()
+                .loot(LootTemplate.builder()
                         .entry(LootEntries.CAVE, LootEntries.MINESHAFT, LootEntries.SCULK)
                         .build())
                 .build();
@@ -87,24 +73,12 @@ public class NightVisionGogglesItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player))
             return;
 
-        if (isAbilityTicking(stack, "vision")) {
+        if (this.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision").getMode().equals("enabled")) {
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 10, 0, false, false));
-
-            var percent = (Math.abs(1 - (player.getCommandSenderWorld().getMaxLocalRawBrightness(player.blockPosition()) / 15.0F)));
-
-            if (player.getRandom().nextFloat() <= percent && player.tickCount % 60 == 0 && !(Math.abs(player.getKnownMovement().x) <= 0.01D
-                    || Math.abs(player.getKnownMovement().z) <= 0.01D))
-                spreadRelicExperience(player, stack, 1);
         } else {
             if (isNightVision(player.getActiveEffects()))
                 player.removeEffect(MobEffects.NIGHT_VISION);
         }
-    }
-
-    @Override
-    public void castActiveAbility(ItemStack stack, Player player, String ability, CastType type, CastStage stage) {
-        if (ability.equals("vision") && player.getCommandSenderWorld().isClientSide && stage == CastStage.START)
-            player.playSound(SoundRegistry.NIGHT_VISION_TOGGLE.get(), 1F, 0.75F + player.getRandom().nextFloat() * 0.5F);
     }
 
     public boolean isNightVision(Collection<MobEffectInstance> activeEffects) {
@@ -112,25 +86,107 @@ public class NightVisionGogglesItem extends WearableRelicItem {
                 && mobEffectInstance.getDuration() <= 10);
     }
 
-    @EventBusSubscriber(Dist.CLIENT)
-    public static class NightVisionGogglesEvent {
-        @SubscribeEvent
-        public static void onFogRender(ViewportEvent.RenderFog event) {
-            Player player = Minecraft.getInstance().player;
+    private static double getDarknessFactor(LivingEntity entity) {
+        var level = entity.getCommandSenderWorld();
+        var pos = entity.blockPosition();
 
-            if (player == null)
+        var blockBrightness = level.getBrightness(LightLayer.BLOCK, pos);
+        var skyBrightness = level.getBrightness(LightLayer.SKY, pos);
+        var maxBrightness = Math.max(1, level.getMaxLightLevel());
+        var skyDarken = level.getSkyDarken();
+        var maxSkyDarken = 11D;
+
+        var normalizedBlock = Math.max(0D, Math.min(1D, blockBrightness / (double) maxBrightness));
+        var normalizedSky = Math.max(0D, Math.min(1D, skyBrightness / (double) maxBrightness));
+        var skyFactor = Math.max(0D, Math.min(1D, 1D - (skyDarken / maxSkyDarken)));
+
+        // Any strong light source (sky or block) suppresses darkness effects.
+        var ambientBrightness = Math.max(normalizedBlock, normalizedSky * skyFactor);
+        var rawDarkness = Math.max(0D, Math.min(1D, 1D - ambientBrightness));
+
+        // Effects start only in genuinely dark places.
+        var activationThreshold = 0.5D;
+
+        if (rawDarkness <= activationThreshold)
+            return 0D;
+
+        return Math.max(0D, Math.min(1D, (rawDarkness - activationThreshold) / (1D - activationThreshold)));
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || !(event.getSource().getEntity() instanceof LivingEntity))
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.NIGHT_VISION_GOGGLES.value());
 
-            if (!(stack.getItem() instanceof NightVisionGogglesItem relic) || !relic.isAbilityTicking(stack, "vision")
-                    || !player.hasEffect(MobEffects.BLINDNESS) && !player.hasEffect(MobEffects.DARKNESS))
+            if (!(stack.getItem() instanceof NightVisionGogglesItem relic))
                 return;
 
-            var statValue = relic.getStatValue(stack, "vision", "amount") * (player.hasEffect(MobEffects.BLINDNESS) ? 9 : 1);
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
 
-            event.scaleFarPlaneDistance((float) (event.getFarPlaneDistance() * statValue));
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("evasion"))
+                return;
 
+            var baseChance = Math.max(0D, Math.min(1D, ability.getStatData("miss_chance").getValue()));
+
+            if (baseChance <= 0D)
+                return;
+
+            var chance = baseChance * getDarknessFactor(player);
+
+            if (chance > 0D && player.getRandom().nextDouble() <= chance)
+                event.setCanceled(true);
+        }
+
+        @SubscribeEvent
+        public static void onLivingIncomingDamageDealing(LivingIncomingDamageEvent event) {
+            if (!(event.getSource().getEntity() instanceof Player player) || player.level().isClientSide() || event.getEntity() == player)
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.NIGHT_VISION_GOGGLES.value());
+
+            if (!(stack.getItem() instanceof NightVisionGogglesItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
+
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("ambush"))
+                return;
+
+            var baseBonus = Math.max(0D, ability.getStatData("damage_bonus").getValue());
+
+            if (baseBonus <= 0D)
+                return;
+
+            var bonus = baseBonus * getDarknessFactor(player);
+
+            if (bonus > 0D)
+                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+        }
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID, value = Dist.CLIENT)
+    public static class ClientEvents {
+        @SubscribeEvent
+        public static void onRenderFog(ViewportEvent.RenderFog event) {
+            if (!(event.getCamera().getEntity() instanceof Player player))
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.NIGHT_VISION_GOGGLES.value());
+
+            if (!(stack.getItem() instanceof NightVisionGogglesItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
+
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("clarity"))
+                return;
+
+            event.setNearPlaneDistance(-8F);
+            event.setFarPlaneDistance(Math.max(event.getFarPlaneDistance(), 512F));
             event.setCanceled(true);
         }
     }

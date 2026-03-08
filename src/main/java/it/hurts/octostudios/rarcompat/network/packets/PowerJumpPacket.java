@@ -46,9 +46,6 @@ public class PowerJumpPacket implements CustomPacketPayload {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic))
                 return;
 
-            if (relic.getTime(stack) >= relic.getStatValue(stack, "hold", "duration") - 1)
-                relic.spreadRelicExperience(player, stack, 1);
-
             var countRelic = CuriosApi.getCuriosInventory(player).map(inventory -> inventory.findCurios(ModItems.BUNNY_HOPPERS.value()).stream()
                     .map(SlotResult::stack).toList()).orElse(List.of());
 

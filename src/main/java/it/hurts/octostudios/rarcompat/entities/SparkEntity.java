@@ -1,8 +1,8 @@
 package it.hurts.octostudios.rarcompat.entities;
 
 import it.hurts.octostudios.octolib.module.particle.trail.EntityTrailProvider;
+import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.entities.misc.ITargetableEntity;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import lombok.Getter;
@@ -84,9 +84,8 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         if (this.getOwner() instanceof Player player && !target.getStringUUID().equals(player.getStringUUID())) {
             target.invulnerableTime = 0;
 
-            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage()) && getRelicStack().getItem() instanceof IRelicItem relic) {
-                target.setRemainingFireTicks((int) relic.getStatValue(getRelicStack(), "caster", "duration"));
-                relic.spreadRelicExperience(player, getRelicStack(), 1);
+            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage()) && getRelicStack().getItem() instanceof WearableRelicItem relic) {
+
             }
         }
 

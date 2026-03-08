@@ -26,11 +26,6 @@ neoForge {
     }
     version = project.neoforge_version
 
-    parchment {
-        mappingsVersion = "2024.11.10"
-        minecraftVersion = project.minecraft_version
-    }
-
     runs {
         client {
             client()

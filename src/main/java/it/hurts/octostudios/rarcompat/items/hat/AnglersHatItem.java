@@ -2,17 +2,7 @@ package it.hurts.octostudios.rarcompat.items.hat;
 
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootData;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
-import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.server.level.ServerLevel;
@@ -30,52 +20,12 @@ import net.neoforged.neoforge.event.entity.player.ItemFishedEvent;
 
 public class AnglersHatItem extends WearableRelicItem {
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("catch")
-                                .stat(StatData.builder("chance")
-                                        .initialValue(0.1D, 0.2D)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.25)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100, 1))
-                                        .build())
-                                .research(ResearchData.builder()
-                                        .star(0, 16, 2).star(1, 12, 5).star(2, 5, 4)
-                                        .star(3, 10, 10).star(4, 6, 15).star(5, 5, 24)
-                                        .star(6, 16, 15).star(7, 18, 21)
-                                        .link(0, 1).link(1, 2).link(2, 3).link(3, 4).link(4, 5).link(3, 6).link(6, 7)
-                                        .build())
-                                .build())
-                        .build())
-                .style(StyleData.builder()
-                        .tooltip(TooltipData.builder()
-                                .borderTop(0xffa09088)
-                                .borderBottom(0xff524742)
-                                .build())
-                        .beams(BeamsData.builder()
-                                .startColor(0xFFc82f0f)
-                                .endColor(0x00433a36)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .initialCost(100)
-                        .maxLevel(10)
-                        .step(100)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("catch")
-                                        .initialValue(1)
-                                        .gem(GemShape.SQUARE, GemColor.BLUE)
-                                        .build())
-                                .build())
-                        .build())
-                .loot(LootData.builder()
-                        .entry(LootEntries.AQUATIC, LootEntries.VILLAGE)
-                        .build())
-                .build();
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder().build();
     }
 
     @EventBusSubscriber
-    public static class AnglersHatEvent {
+    public static class CommonEvents {
         @SubscribeEvent
         public static void onItemFished(ItemFishedEvent event) {
             var player = event.getEntity();
@@ -83,15 +33,12 @@ public class AnglersHatItem extends WearableRelicItem {
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.ANGLERS_HAT.value());
 
-            if (level.isClientSide() || !(stack.getItem() instanceof AnglersHatItem relic) || !relic.canPlayerUseAbility(player, stack, "catch"))
+            if (level.isClientSide() || !(stack.getItem() instanceof AnglersHatItem relic))
                 return;
 
             var serverLevel = (ServerLevel) level;
             var random = serverLevel.getRandom();
-            var rolls = MathUtils.multicast(random, relic.getStatValue(stack, "catch", "chance"));
-
-            if (rolls > 0)
-                relic.spreadRelicExperience(player, stack, random.nextInt(rolls) + 1);
+            var rolls = MathUtils.multicast(random, relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("catch").getStatData("chance").getValue());
 
             LootTable loottable = serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
 

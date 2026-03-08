@@ -1,7 +1,7 @@
 package it.hurts.octostudios.rarcompat.mixin;
 
 import artifacts.neoforge.loot.RollLootTableModifier;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
