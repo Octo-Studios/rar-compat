@@ -24,6 +24,12 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COWBOY_HAT_LAST_MOUNT_ID = construct("cowboy_hat/last_mount_id", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> COWBOY_HAT_ABSORPTION_REMAINING = construct("cowboy_hat/absorption_remaining", Codec.DOUBLE);
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SCARF_OF_INVISIBILITY_STATIONARY_TICKS = construct("scarf_of_invisibility/stationary_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SCARF_OF_INVISIBILITY_COOLDOWN = construct("scarf_of_invisibility/cooldown", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SCARF_OF_INVISIBILITY_ACTIVE = construct("scarf_of_invisibility/active", Codec.BOOL);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SCARF_OF_INVISIBILITY_NEEDS_OUT_OF_SIGHT = construct("scarf_of_invisibility/needs_out_of_sight", Codec.BOOL);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SCARF_OF_INVISIBILITY_STRIKE_TICKS = construct("scarf_of_invisibility/strike_ticks", Codec.INT);
+
     public static <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> construct(String name, Codec<T> codec) {
         return DATA_COMPONENTS.register(name, () -> DataComponentType.<T>builder().persistent(codec).build());
     }
