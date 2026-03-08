@@ -35,7 +35,7 @@ public class CowboyHatItem extends WearableRelicItem {
                         .ability(AbilityTemplate.builder("riding")
                                 .rankModifier(1, "taming")
                                 .rankModifier(3, "reach")
-                                .rankModifier(5, "absorption")
+                                .rankModifier(5, "mounted_absorption")
                                 .stat(AbilityStatTemplate.builder("amount")
                                         .thresholdValue(0D, Double.MAX_VALUE)
                                         .initialValue(0.1D, 0.25D)
@@ -100,7 +100,7 @@ public class CowboyHatItem extends WearableRelicItem {
                 removeRiderReachBuff(player, stack);
         }
 
-        if (!ability.isRankModifierUnlocked("absorption")) {
+        if (!ability.isRankModifierUnlocked("mounted_absorption") && !ability.isRankModifierUnlocked("absorption")) {
             removeRiderAbsorptionBonus(player, stack);
             return;
         }
@@ -181,6 +181,8 @@ public class CowboyHatItem extends WearableRelicItem {
     }
 
     private void applyRiderAbsorptionBonus(Player player, ItemStack stack, double bonus) {
+        setRiderMaxAbsorption(player, stack, bonus);
+
         var remaining = getRiderAbsorptionRemaining(stack);
 
         if (remaining <= 0D) {
@@ -196,14 +198,24 @@ public class CowboyHatItem extends WearableRelicItem {
 
     private void removeRiderAbsorptionBonus(Player player, ItemStack stack) {
         var remaining = getRiderAbsorptionRemaining(stack);
-
-        if (remaining <= 0D)
-            return;
-
         var current = Math.max(0D, player.getAbsorptionAmount());
 
-        player.setAbsorptionAmount((float) Math.max(0D, current - remaining));
+        removeRiderMaxAbsorption(player, stack);
+
+        if (remaining > 0D)
+            player.setAbsorptionAmount((float) Math.max(0D, current - remaining));
+
         setRiderAbsorptionRemaining(stack, 0D);
+    }
+
+    private void setRiderMaxAbsorption(Player player, ItemStack stack, double value) {
+        if (player.getAttribute(Attributes.MAX_ABSORPTION) != null)
+            EntityUtils.resetAttribute(player, stack, Attributes.MAX_ABSORPTION, (float) Math.max(0D, value), AttributeModifier.Operation.ADD_VALUE);
+    }
+
+    private void removeRiderMaxAbsorption(Player player, ItemStack stack) {
+        if (player.getAttribute(Attributes.MAX_ABSORPTION) != null)
+            EntityUtils.removeAttribute(player, stack, Attributes.MAX_ABSORPTION, AttributeModifier.Operation.ADD_VALUE);
     }
 
     private void resetLivingAttribute(LivingEntity entity, ItemStack stack, Holder<Attribute> attribute, float amount) {
