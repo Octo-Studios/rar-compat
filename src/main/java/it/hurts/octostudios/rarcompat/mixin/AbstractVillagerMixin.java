@@ -4,49 +4,44 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.items.hat.VillagerHatItem;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraft.world.item.trading.MerchantOffers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(AbstractVillager.class)
-abstract class AbstractVillagerMixin {
+public abstract class AbstractVillagerMixin {
     @Shadow
     private Player tradingPlayer;
 
-    @Shadow
-    protected MerchantOffers offers;
+    @Redirect(method = "notifyTrade", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/trading/MerchantOffer;increaseUses()V"))
+    private void rarcompat$preserveTradeUse(MerchantOffer offer) {
+        var player = this.tradingPlayer;
 
-    @Inject(method = "notifyTrade ", at = @At(value = "HEAD"))
-    private void notifyTrade(MerchantOffer offer, CallbackInfo ci) {
-        ItemStack relicStack = EntityUtils.findEquippedCurio(tradingPlayer, ModItems.VILLAGER_HAT.value());
-
-        if (!(relicStack.getItem() instanceof VillagerHatItem relic) || offers == null || !relic.isAbilityUnlocked(relicStack, "discount"))
+        if (player == null || player.level().isClientSide()) {
+            offer.increaseUses();
             return;
-
-        int newPrice = (int) Math.round(offer.getItemCostA().count() * relic.getStatValue(relicStack, "discount", "multiplier"));
-
-        if (newPrice > 1)
-            relic.spreadRelicExperience(tradingPlayer, relicStack, 1 + tradingPlayer.getRandom().nextInt(newPrice) + 1);
-    }
-
-    @Inject(method = "getOffers", at = @At(value = "HEAD"))
-    private void getOffers(CallbackInfoReturnable<MerchantOffers> cir) {
-        ItemStack relicStack = EntityUtils.findEquippedCurio(tradingPlayer, ModItems.VILLAGER_HAT.value());
-
-        if (!(relicStack.getItem() instanceof VillagerHatItem relic) || offers == null || !relic.isAbilityUnlocked(relicStack, "discount"))
-            return;
-
-        for (MerchantOffer offer : offers) {
-            int newPrice = (int) Math.round(offer.getItemCostA().count() * relic.getStatValue(relicStack, "discount", "multiplier") / 100);
-
-            offer.setSpecialPriceDiff(-newPrice);
         }
+
+        var stack = EntityUtils.findEquippedCurio(player, ModItems.VILLAGER_HAT.value());
+
+        if (!(stack.getItem() instanceof VillagerHatItem relic)) {
+            offer.increaseUses();
+            return;
+        }
+
+        if (!relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").canPlayerUse(player)
+                || !relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").isRankModifierUnlocked("preserve")) {
+            offer.increaseUses();
+            return;
+        }
+
+        var chance = Math.max(0D, Math.min(1D, relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").getStatData("preserve_chance").getValue()));
+
+        if (chance <= 0D || player.getRandom().nextDouble() >= chance)
+            offer.increaseUses();
     }
 }
