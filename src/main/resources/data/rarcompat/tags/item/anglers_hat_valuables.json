@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#c:ingots", "required": false },
+    { "id": "#c:gems", "required": false },
+    { "id": "#c:nuggets", "required": false },
+    { "id": "#c:raw_materials", "required": false },
+    "minecraft:amethyst_shard",
+    "minecraft:echo_shard",
+    "minecraft:prismarine_crystals",
+    "minecraft:nautilus_shell",
+    "minecraft:heart_of_the_sea"
+  ]
+}
