@@ -21,6 +21,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfSinkingItem extends WearableRelicItem {
@@ -162,6 +165,43 @@ public class CharmOfSinkingItem extends WearableRelicItem {
 
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+            var player = event.getEntity();
+
+            if (player.level().isClientSide())
+                return;
+
+            resetImmobilityOnAction(player);
+        }
+
+        @SubscribeEvent
+        public static void onAttackEntity(AttackEntityEvent event) {
+            var player = event.getEntity();
+
+            if (player.level().isClientSide())
+                return;
+
+            resetImmobilityOnAction(player);
+        }
+
+        @SubscribeEvent
+        public static void onBlockBreakAttempt(PlayerEvent.BreakSpeed event) {
+            var player = event.getEntity();
+
+            if (player.level().isClientSide())
+                return;
+
+            resetImmobilityOnAction(player);
+        }
+
+        private static void resetImmobilityOnAction(Player player) {
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHARM_OF_SINKING.value())) {
+                if (stack.getItem() instanceof CharmOfSinkingItem relic)
+                    relic.resetImmobilityState(player, stack);
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F || !player.isInWaterOrBubble())
