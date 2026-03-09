@@ -1,11 +1,196 @@
 package it.hurts.octostudios.rarcompat.items.necklace;
 
+import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsMobEffects;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
+import it.hurts.sskirillss.relics.utils.MathUtils;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfSinkingItem extends WearableRelicItem {
+    private static final double STILL_THRESHOLD = 1.0E-4D;
+    private static final int MAX_WATER_DEPTH_SCAN = 64;
+
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
-        return RelicTemplate.builder().build();
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("sinking")
+                                .rankModifier(1, "fluid_collision")
+                                .rankModifier(3, "resistance")
+                                .rankModifier(5, "immortality")
+                                .stat(AbilityStatTemplate.builder("resistance_per_block")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.01D, 0.03D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("immortality_delay")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(2D, 6D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .build())
+                        .build())
+                .build();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
+            return;
+
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("sinking");
+
+        if (!ability.canPlayerUse(player)) {
+            resetImmobilityState(player, stack);
+            return;
+        }
+
+        var onBottom = isStandingOnBottomUnderWater(player);
+
+        if (onBottom && player.getAirSupply() < player.getMaxAirSupply())
+            player.setAirSupply(Math.min(player.getMaxAirSupply(), player.getAirSupply() + 2));
+
+        if (ability.isRankModifierUnlocked("fluid_collision") && player.isInWaterOrBubble())
+            player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 10, 0, false, false));
+
+        if (!ability.isRankModifierUnlocked("immortality")) {
+            resetImmobilityState(player, stack);
+            return;
+        }
+
+        if (!onBottom || player.getDeltaMovement().lengthSqr() > STILL_THRESHOLD) {
+            resetImmobilityState(player, stack);
+            return;
+        }
+
+        addStationaryTicks(stack, 1);
+
+        if (getStationaryTicks(stack) < getImmobilityDelayTicks(player, stack))
+            return;
+
+        player.addEffect(new MobEffectInstance(RelicsMobEffects.IMMORTALITY, 10, 0, false, false));
+        setImmortalityActive(stack, true);
+    }
+
+    @Override
+    public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
+        super.onUnequip(slotContext, newStack, stack);
+
+        if (stack.getItem() == newStack.getItem() || !(slotContext.entity() instanceof Player player) || player.level().isClientSide())
+            return;
+
+        resetImmobilityState(player, stack);
+    }
+
+    private void resetImmobilityState(Player player, ItemStack stack) {
+        if (isImmortalityActive(stack))
+            player.removeEffect(RelicsMobEffects.IMMORTALITY);
+
+        setImmortalityActive(stack, false);
+        setStationaryTicks(stack, 0);
+    }
+
+    private static boolean isStandingOnBottomUnderWater(Player player) {
+        return player.isInWaterOrBubble() && player.isEyeInFluid(FluidTags.WATER) && player.onGround();
+    }
+
+    private static int countContinuousWaterAboveHead(Player player) {
+        if (!player.isInWaterOrBubble() || !player.isEyeInFluid(FluidTags.WATER))
+            return 0;
+
+        var level = player.level();
+        var start = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()).above();
+        var depth = 0;
+
+        for (var i = 0; i < MAX_WATER_DEPTH_SCAN && start.getY() + i < level.getMaxBuildHeight(); i++) {
+            var pos = start.above(i);
+
+            if (!level.getFluidState(pos).is(FluidTags.WATER))
+                break;
+
+            depth++;
+        }
+
+        return depth;
+    }
+
+    private int getImmobilityDelayTicks(Player player, ItemStack stack) {
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("sinking");
+        var seconds = Math.max(0D, ability.getStatData("immortality_delay").getValue());
+
+        return Math.max(1, (int) Math.round(seconds * 20D));
+    }
+
+    private int getStationaryTicks(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.CHARM_OF_SINKING_STATIONARY_TICKS.get(), 0);
+    }
+
+    private void setStationaryTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.CHARM_OF_SINKING_STATIONARY_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private void addStationaryTicks(ItemStack stack, int ticks) {
+        setStationaryTicks(stack, getStationaryTicks(stack) + ticks);
+    }
+
+    private boolean isImmortalityActive(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.CHARM_OF_SINKING_IMMORTALITY_ACTIVE.get(), false);
+    }
+
+    private void setImmortalityActive(ItemStack stack, boolean active) {
+        stack.set(DataComponentRegistry.CHARM_OF_SINKING_IMMORTALITY_ACTIVE.get(), active);
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F || !player.isInWaterOrBubble())
+                return;
+
+            var waterDepth = countContinuousWaterAboveHead(player);
+
+            if (waterDepth <= 0)
+                return;
+
+            var reduction = 0D;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHARM_OF_SINKING.value())) {
+                if (!(stack.getItem() instanceof CharmOfSinkingItem relic))
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("sinking");
+
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("resistance"))
+                    continue;
+
+                var perBlock = Math.max(0D, Math.min(1D, ability.getStatData("resistance_per_block").getValue()));
+                var value = Math.min(1D, perBlock * waterDepth);
+
+                reduction = Math.max(reduction, value);
+            }
+
+            if (reduction > 0D)
+                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+        }
     }
 }
