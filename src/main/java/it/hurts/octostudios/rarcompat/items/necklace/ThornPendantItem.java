@@ -106,12 +106,14 @@ public class ThornPendantItem extends WearableRelicItem {
                 var seconds = Math.max(0D, ability.getStatData("poison_duration").getValue());
                 var ticks = Math.max(1, (int) Math.round(seconds * 20D));
 
-                if (ticks > 0)
-                    attacker.addEffect(new MobEffectInstance(MobEffects.POISON, ticks, 0, false, true));
+                attacker.addEffect(new MobEffectInstance(MobEffects.POISON, ticks, 0, false, true));
             }
 
-            if (poisonImmune)
+            if (poisonImmune) {
                 event.setAmount(0F);
+
+                event.setCanceled(true);
+            }
         }
 
         @SubscribeEvent

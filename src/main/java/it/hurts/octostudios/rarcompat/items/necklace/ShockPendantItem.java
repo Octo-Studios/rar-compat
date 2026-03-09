@@ -139,8 +139,11 @@ public class ShockPendantItem extends WearableRelicItem {
                 }
             }
 
-            if (lightningDamage && lightningImmune)
+            if (lightningDamage && lightningImmune) {
                 event.setAmount(0F);
+
+                event.setCanceled(true);
+            }
 
             if (attacker != null && tremorChance > 0D && tremorDuration > 0D && entity.getRandom().nextDouble() <= tremorChance) {
                 var durationTicks = Math.max(1, (int) Math.round(tremorDuration * 20D));

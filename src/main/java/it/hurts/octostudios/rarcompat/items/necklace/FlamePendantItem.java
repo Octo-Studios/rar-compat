@@ -115,8 +115,11 @@ public class FlamePendantItem extends WearableRelicItem {
                     attacker.igniteForSeconds(duration);
             }
 
-            if (fireImmune && event.getSource().is(DamageTypeTags.IS_FIRE))
+            if (fireImmune && event.getSource().is(DamageTypeTags.IS_FIRE)) {
                 event.setAmount(0F);
+
+                event.setCanceled(true);
+            }
         }
 
         @SubscribeEvent
