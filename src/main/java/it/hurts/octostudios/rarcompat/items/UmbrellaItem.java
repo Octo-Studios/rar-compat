@@ -1,5 +1,6 @@
 package it.hurts.octostudios.rarcompat.items;
 
+import artifacts.network.NetworkHandler;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.network.packets.UmbrellaBouncePacket;
@@ -186,7 +187,7 @@ public class UmbrellaItem extends WearableRelicItem {
     }
 
     private boolean tryBounce(Player player, ItemStack stack, Vec3 look, float yaw) {
-        if (player.level().isClientSide() || !isFalling(player) || !canUseBounce(player, stack) || !hasBounceCharges(player, stack) || player.getCooldowns().isOnCooldown(stack.getItem()))
+        if (player.level().isClientSide() || !canUseBounce(player, stack) || !hasBounceCharges(player, stack) || player.getCooldowns().isOnCooldown(stack.getItem()))
             return false;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
@@ -583,7 +584,7 @@ public class UmbrellaItem extends WearableRelicItem {
             var look = player.getLookAngle();
             var yaw = player.getYRot();
 
-            PacketDistributor.sendToServer(new UmbrellaBouncePacket(look, yaw));
+            NetworkHandler.sendToServer(new UmbrellaBouncePacket(look, yaw));
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
             var force = Math.max(0D, ability.getStatData("strength").getValue()) * 1.5D;
