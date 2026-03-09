@@ -80,13 +80,13 @@ public class CowboyHatItem extends WearableRelicItem {
             return;
         }
 
+        var mountedChanged = syncMountedEntity(player, stack, mounted);
         var amount = Math.max(0F, (float) ability.getStatData("amount").getValue());
 
         if (amount > 0F) {
-            syncMountedEntity(player, stack, mounted);
             applyMountedBuff(stack, mounted, amount);
         } else {
-            clearMountBuff(player, stack);
+            removeMountedBuff(stack, mounted);
         }
 
         if (!ability.isRankModifierUnlocked("reach")) {
@@ -100,7 +100,7 @@ public class CowboyHatItem extends WearableRelicItem {
                 removeRiderReachBuff(player, stack);
         }
 
-        if (!ability.isRankModifierUnlocked("mounted_absorption") && !ability.isRankModifierUnlocked("absorption")) {
+        if (!ability.isRankModifierUnlocked("mounted_absorption")) {
             removeRiderAbsorptionBonus(player, stack);
             return;
         }
@@ -108,7 +108,7 @@ public class CowboyHatItem extends WearableRelicItem {
         var absorption = Math.max(0D, ability.getStatData("absorption").getValue());
 
         if (absorption > 0D)
-            applyRiderAbsorptionBonus(player, stack, absorption);
+            applyRiderAbsorptionBonus(player, stack, absorption, mountedChanged);
         else
             removeRiderAbsorptionBonus(player, stack);
     }
@@ -123,14 +123,15 @@ public class CowboyHatItem extends WearableRelicItem {
         removeRiderAbsorptionBonus(player, stack);
     }
 
-    private void syncMountedEntity(Player player, ItemStack stack, LivingEntity mounted) {
+    private boolean syncMountedEntity(Player player, ItemStack stack, LivingEntity mounted) {
         var lastMountId = getLastMountId(stack);
 
         if (lastMountId == mounted.getId())
-            return;
+            return false;
 
         removeMountBuffById(player, stack, lastMountId);
         setLastMountId(stack, mounted.getId());
+        return true;
     }
 
     private void clearMountBuff(Player player, ItemStack stack) {
@@ -180,17 +181,15 @@ public class CowboyHatItem extends WearableRelicItem {
         removeLivingAttribute(player, stack, Attributes.BLOCK_INTERACTION_RANGE);
     }
 
-    private void applyRiderAbsorptionBonus(Player player, ItemStack stack, double bonus) {
+    private void applyRiderAbsorptionBonus(Player player, ItemStack stack, double bonus, boolean grantOnMount) {
         setRiderMaxAbsorption(player, stack, bonus);
 
-        var remaining = getRiderAbsorptionRemaining(stack);
-
-        if (remaining <= 0D) {
+        if (grantOnMount) {
             player.setAbsorptionAmount((float) (Math.max(0D, player.getAbsorptionAmount()) + bonus));
-            setRiderAbsorptionRemaining(stack, bonus);
-            return;
+            setRiderAbsorptionRemaining(stack, getRiderAbsorptionRemaining(stack) + bonus);
         }
 
+        var remaining = getRiderAbsorptionRemaining(stack);
         var current = Math.max(0D, player.getAbsorptionAmount());
 
         setRiderAbsorptionRemaining(stack, Math.min(remaining, current));
