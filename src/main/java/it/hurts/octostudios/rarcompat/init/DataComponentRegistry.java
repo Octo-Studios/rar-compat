@@ -53,6 +53,11 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ONION_RING_FOOD_BOOST_TICKS = construct("onion_ring/food_boost_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_USED_MAX_DURATION = construct("bunny_hoppers/used_max_duration", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> BUNNY_HOPPERS_LANDING_STRIKE_TICKS = construct("bunny_hoppers/landing_strike_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> KITTY_SLIPPERS_DODGE_READY = construct("kitty_slippers/dodge_ready", Codec.BOOL);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> RUNNING_SHOES_CHARGE = construct("running_shoes/charge", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SNOWSHOES_LINGER_TICKS = construct("snowshoes/linger_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_COOLDOWN_TICKS = construct("rooted_boots/cooldown_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_BONEMEAL_TICKS = construct("rooted_boots/bonemeal_ticks", Codec.INT);
 
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CHARM_OF_SHRINKING_CURRENT_SCALE = construct("charm_of_shrinking/current_scale", Codec.DOUBLE);
@@ -87,3 +92,4 @@ public class DataComponentRegistry {
         DATA_COMPONENTS.register(bus);
     }
 }
+

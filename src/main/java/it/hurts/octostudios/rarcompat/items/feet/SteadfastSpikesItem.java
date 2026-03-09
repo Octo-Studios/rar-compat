@@ -1,11 +1,141 @@
 package it.hurts.octostudios.rarcompat.items.feet;
 
+import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
+import it.hurts.sskirillss.relics.api.events.common.LivingSlippingEvent;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.network.NetworkHandler;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
+import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import top.theillusivec4.curios.api.SlotContext;
+
+import java.awt.*;
 
 public class SteadfastSpikesItem extends WearableRelicItem {
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
-        return RelicTemplate.builder().build();
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("resistance")
+                                .rankModifier(1, "crouch")
+                                .rankModifier(3, "anchor")
+                                .rankModifier(5, "wall_slide")
+                                .stat(AbilityStatTemplate.builder("modifier")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.1D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .build())
+                        .build())
+                .build();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        if (!(slotContext.entity() instanceof Player player))
+            return;
+
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
+
+        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide") || !player.level().isClientSide()
+                || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1D)
+            return;
+
+        NetworkHandler.sendToServer(new SteadfastSpikesPacket());
+
+        player.setDeltaMovement(player.getDeltaMovement().x, -0.05D, player.getDeltaMovement().z);
+        player.level().addParticle(ParticleUtils.constructSimpleSpark(new Color(50, 20 + player.getRandom().nextInt(50), 0), 0.5F, 50, 0.9F),
+                player.getX(), player.getY(), player.getZ(), 0D, 0D, 0D);
+    }
+
+    private static boolean isStandingStill(Player player) {
+        return player.onGround() && player.getDeltaMovement().horizontalDistanceSqr() <= 1.0E-4D;
+    }
+
+    private static double getEffectiveResistance(Player player, double baseResistance, boolean crouchUnlocked, boolean anchorUnlocked) {
+        var resistance = Math.max(0D, Math.min(1D, baseResistance));
+
+        if (crouchUnlocked && player.isCrouching())
+            resistance = Math.min(1D, resistance * 2D);
+
+        if (anchorUnlocked && isStandingStill(player))
+            resistance = 1D;
+
+        return resistance;
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class SteadfastSpikesEvent {
+        @SubscribeEvent
+        public static void onLivingKnockBack(LivingKnockBackEvent event) {
+            if (!(event.getEntity() instanceof Player player))
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
+
+            if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
+
+            if (!ability.canPlayerUse(player))
+                return;
+
+            var resistance = getEffectiveResistance(player,
+                    ability.getStatData("modifier").getValue(),
+                    ability.isRankModifierUnlocked("crouch"),
+                    ability.isRankModifierUnlocked("anchor"));
+
+            if (resistance <= 0D)
+                return;
+
+            event.setStrength((float) Math.max(0D, event.getStrength() * (1D - resistance)));
+
+            if (resistance >= 0.999D)
+                event.setCanceled(true);
+        }
+
+        @SubscribeEvent
+        public static void onLivingSlipping(LivingSlippingEvent event) {
+            if (event.getFriction() <= 0.6F || !(event.getEntity() instanceof Player player)
+                    || player.isInWater() || player.isInLava())
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
+
+            if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
+
+            if (!ability.canPlayerUse(player))
+                return;
+
+            var resistance = getEffectiveResistance(player,
+                    ability.getStatData("modifier").getValue(),
+                    ability.isRankModifierUnlocked("crouch"),
+                    ability.isRankModifierUnlocked("anchor"));
+
+            if (resistance <= 0D)
+                return;
+
+            var currentFriction = event.getFriction();
+            var targetFriction = currentFriction - (currentFriction - 0.6F) * resistance;
+
+            event.setFriction((float) Math.max(0.6D, targetFriction));
+        }
     }
 }
