@@ -28,6 +28,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class ScarfOfInvisibilityItem extends WearableRelicItem {
+    private static final double STILL_HORIZONTAL_THRESHOLD = 1.0E-4D;
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
@@ -115,7 +116,7 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
             return;
         }
 
-        if (getInvisibilityCooldown(stack) > 0 || needsOutOfSight(stack)) {
+        if (needsOutOfSight(stack)) {
             setStationaryTicks(stack, 0);
             return;
         }
@@ -126,6 +127,9 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
         }
 
         addStationaryTicks(stack, 1);
+
+        if (getInvisibilityCooldown(stack) > 0)
+            return;
 
         if (getStationaryTicks(stack) < getDelayTicks(entity, stack))
             return;
@@ -162,14 +166,14 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
     }
 
     private int getConfiguredCooldownTicks(LivingEntity entity, ItemStack stack) {
-        var ability = this.getRelicData(entity, stack).getAbilitiesData().getAbilityData("invisibility");
-        var seconds = Math.max(0D, ability.getStatData("cooldown").getValue());
-
-        return Math.max(0, (int) Math.round(seconds * 20D));
+        return getDelayTicks(entity, stack);
     }
 
     private static boolean isStandingStill(LivingEntity entity) {
-        return entity.getDeltaMovement().lengthSqr() <= 1.0E-4D;
+        if (!entity.onGround())
+            return false;
+
+        return entity.getDeltaMovement().horizontalDistanceSqr() <= STILL_HORIZONTAL_THRESHOLD;
     }
 
     private static boolean isTrackedByVisibleTargets(LivingEntity entity) {
