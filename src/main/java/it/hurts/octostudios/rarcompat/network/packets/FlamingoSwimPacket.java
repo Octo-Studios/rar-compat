@@ -28,21 +28,18 @@ public class FlamingoSwimPacket implements CustomPacketPayload {
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             var player = ctx.player();
-
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
             if (!(stack.getItem() instanceof HeliumFlamingoItem relic))
                 return;
 
-            if (toggled) {
-                player.setSprinting(true);
+            if (!relic.trySetHovering(player, stack, toggled))
+                return;
 
-                relic.setToggled(stack, true);
-            } else {
-                player.setSprinting(false);
-
-                //relic.setTime(stack, (int) relic.getStatValue(stack, "flying", "time") + 10);
-                relic.setToggled(stack, false);
+            if (toggled && !player.isInLiquid()) {
+                player.setDeltaMovement(player.getDeltaMovement().add(player.getLookAngle().scale(0.6F)));
+                player.hasImpulse = true;
+                player.fallDistance = 0F;
             }
         });
     }

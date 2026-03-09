@@ -40,13 +40,10 @@ public class DoubleJumpPacket implements CustomPacketPayload {
             if (!(stack.getItem() instanceof CloudInBottleItem relic))
                 return;
 
-            relic.addCount(stack, 1);
+            if (!relic.performAirJump(player, stack))
+                return;
 
-            player.hasImpulse = true;
-            player.fallDistance = 0;
             player.awardStat(Stats.JUMP);
-
-            player.jumpFromGround();
 
             Level level = player.getCommandSenderWorld();
 

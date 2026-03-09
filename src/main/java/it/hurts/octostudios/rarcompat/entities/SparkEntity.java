@@ -1,7 +1,7 @@
 package it.hurts.octostudios.rarcompat.entities;
 
 import it.hurts.octostudios.octolib.module.particle.trail.EntityTrailProvider;
-import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.octostudios.rarcompat.items.hands.FireGauntletItem;
 import it.hurts.sskirillss.relics.entities.misc.ITargetableEntity;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
@@ -28,6 +28,7 @@ import java.awt.*;
 
 public class SparkEntity extends ThrowableProjectile implements ITargetableEntity {
     private static final EntityDataAccessor<Float> DAMAGE = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> FIRE_DURATION = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ItemStack> RELIC_STACK = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.ITEM_STACK);
 
     @Getter
@@ -84,8 +85,18 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         if (this.getOwner() instanceof Player player && !target.getStringUUID().equals(player.getStringUUID())) {
             target.invulnerableTime = 0;
 
-            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage()) && getRelicStack().getItem() instanceof WearableRelicItem relic) {
+            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage())) {
+                var fireDuration = Math.max(0F, getFireDuration());
 
+                if (fireDuration <= 0F && getRelicStack().getItem() instanceof FireGauntletItem relic) {
+                    var ability = relic.getRelicData(player, getRelicStack()).getAbilitiesData().getAbilityData("flame");
+
+                    if (ability.canPlayerUse(player))
+                        fireDuration = (float) Math.max(0D, ability.getStatData("spark_fire_duration").getValue());
+                }
+
+                if (fireDuration > 0F)
+                    FireGauntletItem.igniteFromGauntlet(target, player, fireDuration);
             }
         }
 
@@ -98,6 +109,14 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
 
     public float getDamage() {
         return this.getEntityData().get(DAMAGE);
+    }
+
+    public void setFireDuration(float duration) {
+        this.getEntityData().set(FIRE_DURATION, Math.max(0F, duration));
+    }
+
+    public float getFireDuration() {
+        return this.getEntityData().get(FIRE_DURATION);
     }
 
     @Override
@@ -124,6 +143,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
 
         tag.put("relic_stack", getRelicStack().save(this.registryAccess()));
         tag.putFloat("damage", getDamage());
+        tag.putFloat("fire_duration", getFireDuration());
     }
 
     @Override
@@ -132,11 +152,13 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
 
         setRelicStack(ItemStack.parseOptional(this.registryAccess(), tag.getCompound("relic_stack")));
         setDamage(tag.getFloat("damage"));
+        setFireDuration(tag.getFloat("fire_duration"));
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(DAMAGE, 1F);
+        builder.define(FIRE_DURATION, 0F);
         builder.define(RELIC_STACK, ItemStack.EMPTY);
     }
 

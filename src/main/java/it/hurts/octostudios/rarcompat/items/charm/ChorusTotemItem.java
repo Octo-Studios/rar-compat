@@ -1,11 +1,247 @@
 package it.hurts.octostudios.rarcompat.items.charm;
 
+import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsMobEffects;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
+import it.hurts.sskirillss.relics.utils.MathUtils;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
+import top.theillusivec4.curios.api.SlotContext;
 
 public class ChorusTotemItem extends WearableRelicItem {
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
-        return RelicTemplate.builder().build();
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("chorus")
+                                .rankModifier(1, "recovery")
+                                .rankModifier(3, "disorient")
+                                .rankModifier(5, "vanishing")
+                                .stat(AbilityStatTemplate.builder("cooldown")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(80D, 40D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("regen_boost")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.15D, 0.4D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("regen_boost_duration")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(3D, 8D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("blind_radius")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(4D, 10D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("blind_duration")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(2D, 6D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("vanishing_duration")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(2D, 6D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .build())
+                        .build())
+                .build();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
+            return;
+
+        if (getCooldownTicks(stack) > 0)
+            setCooldownTicks(stack, getCooldownTicks(stack) - 1);
+
+        if (getRegenBoostTicks(stack) > 0)
+            setRegenBoostTicks(stack, getRegenBoostTicks(stack) - 1);
+    }
+
+    private int getCooldownTicks(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.CHORUS_TOTEM_COOLDOWN_TICKS.get(), 0));
+    }
+
+    private void setCooldownTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.CHORUS_TOTEM_COOLDOWN_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private int getRegenBoostTicks(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.CHORUS_TOTEM_REGEN_BOOST_TICKS.get(), 0));
+    }
+
+    private void setRegenBoostTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.CHORUS_TOTEM_REGEN_BOOST_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private static long secondsToTicks(double seconds) {
+        return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
+    }
+
+    private boolean teleportToSafeLocation(Player player, Vec3 origin) {
+        var level = player.level();
+        var random = player.getRandom();
+        var minY = level.getMinBuildHeight() + 1;
+        var maxY = level.getMaxBuildHeight() - 2;
+
+        for (var attempt = 0; attempt < 40; attempt++) {
+            var angle = random.nextDouble() * Math.PI * 2D;
+            var distance = 32D * (0.35D + random.nextDouble() * 0.65D);
+            var x = origin.x + Math.cos(angle) * distance;
+            var z = origin.z + Math.sin(angle) * distance;
+            var surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+            var y = Math.max(minY, Math.min(maxY, surfaceY + 1D));
+
+            if (player.randomTeleport(x + 0.5D, y, z + 0.5D, true)) {
+                player.fallDistance = 0F;
+                return true;
+            }
+        }
+
+        var fallbackY = Math.max(minY, Math.min(maxY, origin.y + 1D));
+
+        if (player.randomTeleport(origin.x, fallbackY, origin.z, true)) {
+            player.fallDistance = 0F;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void applyBlindnessAndForget(Player player, Vec3 center, double radius, int durationTicks) {
+        if (radius <= 0D || durationTicks <= 0)
+            return;
+
+        var box = new AABB(center, center).inflate(radius);
+        var maxDistanceSq = radius * radius;
+
+        for (var entity : player.level().getEntitiesOfClass(LivingEntity.class, box, entity -> entity.isAlive() && entity != player)) {
+            if (entity.distanceToSqr(center) > maxDistanceSq)
+                continue;
+
+            entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, 0, false, true));
+
+            if (entity instanceof Mob mob && mob.getTarget() == player)
+                mob.setTarget(null);
+        }
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getNewDamage() <= 0F)
+                return;
+
+            var lethalThreshold = player.getHealth() + player.getAbsorptionAmount();
+
+            if (event.getNewDamage() < lethalThreshold)
+                return;
+
+            var triggerPos = player.position();
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHORUS_TOTEM.value())) {
+                if (!(stack.getItem() instanceof ChorusTotemItem relic))
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("chorus");
+
+                if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0)
+                    continue;
+
+                if (ability.isRankModifierUnlocked("disorient")) {
+                    var radius = Math.max(0D, ability.getStatData("blind_radius").getValue());
+                    var durationTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("blind_duration").getValue()));
+
+                    applyBlindnessAndForget(player, triggerPos, radius, durationTicks);
+                }
+
+                var safeDamage = Math.max(0F, lethalThreshold - 1F);
+
+                event.setNewDamage(Math.min(event.getNewDamage(), safeDamage));
+                relic.teleportToSafeLocation(player, triggerPos);
+
+                var cooldownTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("cooldown").getValue()));
+
+                if (cooldownTicks > 0)
+                    relic.setCooldownTicks(stack, cooldownTicks);
+
+                if (ability.isRankModifierUnlocked("recovery")) {
+                    var regenBoostTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("regen_boost_duration").getValue()));
+
+                    relic.setRegenBoostTicks(stack, regenBoostTicks);
+                } else {
+                    relic.setRegenBoostTicks(stack, 0);
+                }
+
+                if (ability.isRankModifierUnlocked("vanishing")) {
+                    var vanishingTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("vanishing_duration").getValue()));
+
+                    if (vanishingTicks > 0)
+                        player.addEffect(new MobEffectInstance(RelicsMobEffects.VANISHING, vanishingTicks, 0, false, false));
+                }
+
+                break;
+            }
+        }
+
+        @SubscribeEvent
+        public static void onLivingHeal(LivingHealEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
+                return;
+
+            var bonus = 0D;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHORUS_TOTEM.value())) {
+                if (!(stack.getItem() instanceof ChorusTotemItem relic))
+                    continue;
+
+                if (relic.getRegenBoostTicks(stack) <= 0)
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("chorus");
+
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("recovery"))
+                    continue;
+
+                var value = Math.max(0D, ability.getStatData("regen_boost").getValue());
+                bonus = Math.max(bonus, value);
+            }
+
+            if (bonus > 0D)
+                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+        }
     }
 }

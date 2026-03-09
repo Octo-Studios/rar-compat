@@ -28,7 +28,6 @@ import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfSinkingItem extends WearableRelicItem {
     private static final double STILL_THRESHOLD = 1.0E-4D;
-    private static final int MAX_WATER_DEPTH_SCAN = 64;
 
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
@@ -124,7 +123,7 @@ public class CharmOfSinkingItem extends WearableRelicItem {
         var start = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()).above();
         var depth = 0;
 
-        for (var i = 0; i < MAX_WATER_DEPTH_SCAN && start.getY() + i < level.getMaxBuildHeight(); i++) {
+        for (var i = 0; i < 64 && start.getY() + i < level.getMaxBuildHeight(); i++) {
             var pos = start.above(i);
 
             if (!level.getFluidState(pos).is(FluidTags.WATER))
