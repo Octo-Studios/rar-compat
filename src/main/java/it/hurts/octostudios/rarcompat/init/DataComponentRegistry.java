@@ -30,6 +30,8 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SCARF_OF_INVISIBILITY_NEEDS_OUT_OF_SIGHT = construct("scarf_of_invisibility/needs_out_of_sight", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SCARF_OF_INVISIBILITY_STRIKE_TICKS = construct("scarf_of_invisibility/strike_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> PANIC_NECKLACE_SPEED_BONUS = construct("panic_necklace/speed_bonus", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARM_OF_SINKING_STATIONARY_TICKS = construct("charm_of_sinking/stationary_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> CHARM_OF_SINKING_IMMORTALITY_ACTIVE = construct("charm_of_sinking/immortality_active", Codec.BOOL);
 
     public static <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> construct(String name, Codec<T> codec) {
         return DATA_COMPONENTS.register(name, () -> DataComponentType.<T>builder().persistent(codec).build());
@@ -39,4 +41,3 @@ public class DataComponentRegistry {
         DATA_COMPONENTS.register(bus);
     }
 }
-
