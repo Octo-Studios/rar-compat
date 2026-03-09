@@ -53,12 +53,6 @@ public class ShockPendantItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
-                                .stat(AbilityStatTemplate.builder("lightning_resistance")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.2D, 0.45D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
-                                        .build())
                                 .stat(AbilityStatTemplate.builder("damage_modifier")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.1D, 0.35D)
@@ -92,7 +86,8 @@ public class ShockPendantItem extends WearableRelicItem {
                 return;
 
             var attacker = event.getSource().getEntity() instanceof LivingEntity living && living != entity ? living : null;
-            var lightningReduction = 0D;
+            var lightningDamage = event.getSource().is(DamageTypes.LIGHTNING_BOLT);
+            var lightningImmune = false;
             var tremorChance = 0D;
             var tremorDuration = 0D;
 
@@ -106,10 +101,8 @@ public class ShockPendantItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (event.getSource().is(DamageTypes.LIGHTNING_BOLT) && ability.isRankModifierUnlocked("resistance")) {
-                    var value = Math.max(0D, Math.min(1D, ability.getStatData("lightning_resistance").getValue()));
-                    lightningReduction = Math.max(lightningReduction, value);
-                }
+                if (lightningDamage && ability.isRankModifierUnlocked("resistance"))
+                    lightningImmune = true;
 
                 if (attacker == null)
                     continue;
@@ -146,8 +139,8 @@ public class ShockPendantItem extends WearableRelicItem {
                 }
             }
 
-            if (lightningReduction > 0D)
-                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - lightningReduction)));
+            if (lightningDamage && lightningImmune)
+                event.setAmount(0F);
 
             if (attacker != null && tremorChance > 0D && tremorDuration > 0D && entity.getRandom().nextDouble() <= tremorChance) {
                 var durationTicks = Math.max(1, (int) Math.round(tremorDuration * 20D));
