@@ -70,22 +70,21 @@ public class ModItemsMixin {
             case "chorus_totem" -> register(name, ChorusTotemItem::new);
             case "running_shoes" -> register(name, RunningShoesItem::new);
             case "flippers" -> register(name, FlippersItem::new);
+            case "strider_shoes" -> register(name, StriderShoes::new);
+            case "aqua_dashers" -> register(name, AquaDashers::new);
             default -> wearableItem(name, builderConsumer);
         };
     }
 
     @Redirect(method = "<clinit>", at = @At(value = "INVOKE", target = "Lartifacts/registry/ModItems;register(Ljava/lang/String;Ljava/util/function/Supplier;)Lnet/minecraft/core/Holder;"))
     private static Holder<Item> redirectRegister(String name, Supplier<? extends Item> supplier) {
-        if (name.equals("umbrella"))
-            return register(name, UmbrellaItem::new);
+        return switch (name) {
+            case "umbrella" -> register(name, UmbrellaItem::new);
+            case "everlasting_beef" -> register(name, EverlastingBeefItem::new);
+            case "eternal_steak" -> register(name, EternalSteakItem::new);
+            default -> register(name, supplier);
+        };
 
-        if (name.equals("everlasting_beef"))
-            return register(name, EverlastingBeefItem::new);
-
-        if (name.equals("eternal_steak"))
-            return register(name, EternalSteakItem::new);
-
-        return register(name, supplier);
     }
 
     @Shadow
