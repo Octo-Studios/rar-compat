@@ -113,10 +113,10 @@ public class AntidoteVesselItem extends WearableRelicItem {
         var replacements = new ArrayList<MobEffectInstance>();
 
         for (var effect : player.getActiveEffects()) {
-            if (!isNegative(effect) || effect.getAmplifier() <= 1)
+            if (!isNegative(effect) || effect.getAmplifier() <= 0)
                 continue;
 
-            replacements.add(copyEffectWithAdjustedValues(effect, effect.getDuration(), 1));
+            replacements.add(copyEffectWithAdjustedValues(effect, effect.getDuration(), 0));
         }
 
         if (replacements.isEmpty())
