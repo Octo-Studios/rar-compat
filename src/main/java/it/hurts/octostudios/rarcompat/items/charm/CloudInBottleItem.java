@@ -14,8 +14,6 @@ import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
@@ -65,6 +63,7 @@ public class CloudInBottleItem extends WearableRelicItem {
 
         if (player.onGround()) {
             setCount(stack, 0);
+            setSlowFallTicks(stack, 0);
             return;
         }
 
@@ -72,14 +71,17 @@ public class CloudInBottleItem extends WearableRelicItem {
 
         if (!ability.canPlayerUse(player)) {
             setCount(stack, 0);
+            setSlowFallTicks(stack, 0);
             return;
         }
 
-        if (ability.isRankModifierUnlocked("slow_fall") && getCount(stack) > 0 && player.isShiftKeyDown() && !player.onGround() && !player.isInFluidType() && player.hasEffect(MobEffects.SLOW_FALLING)) {
-            var motion = player.getDeltaMovement();
-
-            if (motion.y < -0.01D)
-                player.setDeltaMovement(motion.x, Math.min(motion.y, -0.15D), motion.z);
+        if (ability.isRankModifierUnlocked("slow_fall")) {
+            if (getSlowFallTicks(stack) > 0) {
+                applySlowFall(player);
+                addSlowFallTicks(stack, -1);
+            }
+        } else if (getSlowFallTicks(stack) > 0) {
+            setSlowFallTicks(stack, 0);
         }
 
         var maxJumps = getMaxJumps(player, stack);
@@ -122,12 +124,8 @@ public class CloudInBottleItem extends WearableRelicItem {
                 player.setDeltaMovement(currentMotion.x, previousY + jumpImpulse * (1D + bonus), currentMotion.z);
         }
 
-        if (!player.level().isClientSide() && ability.isRankModifierUnlocked("slow_fall")) {
-            var slowFallTicks = secondsToTicks(ability.getStatData("slow_fall_duration").getValue());
-
-            if (slowFallTicks > 0)
-                player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, slowFallTicks, 0, false, false));
-        }
+        if (ability.isRankModifierUnlocked("slow_fall"))
+            setSlowFallTicks(stack, secondsToTicks(ability.getStatData("slow_fall_duration").getValue()));
 
         return true;
     }
@@ -152,6 +150,28 @@ public class CloudInBottleItem extends WearableRelicItem {
 
     public void setCount(ItemStack stack, int val) {
         stack.set(DataComponentRegistry.COUNT, Math.max(val, 0));
+    }
+
+    public int getSlowFallTicks(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.CLOUD_IN_BOTTLE_SLOW_FALL_TICKS.get(), 0));
+    }
+
+    public void setSlowFallTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.CLOUD_IN_BOTTLE_SLOW_FALL_TICKS.get(), Math.max(0, ticks));
+    }
+
+    public void addSlowFallTicks(ItemStack stack, int ticks) {
+        setSlowFallTicks(stack, getSlowFallTicks(stack) + ticks);
+    }
+
+    private void applySlowFall(Player player) {
+        if (player.isInFluidType() || player.getDeltaMovement().y > 0D || player.isShiftKeyDown())
+            return;
+
+        var motion = player.getDeltaMovement();
+
+        player.setDeltaMovement(motion.x, -0.15D, motion.z);
+        player.fallDistance = 0F;
     }
 
     private static int secondsToTicks(double seconds) {

@@ -27,7 +27,7 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COUNT = construct("count", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> TIME = construct("time", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> TOGGLED = construct("toggled", Codec.BOOL);
-
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CLOUD_IN_BOTTLE_SLOW_FALL_TICKS = construct("cloud_in_bottle/slow_fall_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COWBOY_HAT_LAST_MOUNT_ID = construct("cowboy_hat/last_mount_id", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> COWBOY_HAT_ABSORPTION_REMAINING = construct("cowboy_hat/absorption_remaining", Codec.DOUBLE);
 
