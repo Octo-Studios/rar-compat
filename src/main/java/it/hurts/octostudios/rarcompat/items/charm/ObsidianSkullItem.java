@@ -182,7 +182,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
                 return;
 
             if (event.getSource().is(DamageTypes.LAVA) || event.getSource().is(DamageTypes.IN_FIRE) || event.getSource().is(DamageTypes.ON_FIRE)) {
-                event.setAmount(0F);
+                event.setCanceled(true);
+
                 return;
             }
 
