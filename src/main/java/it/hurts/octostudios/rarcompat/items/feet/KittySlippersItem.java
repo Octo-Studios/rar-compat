@@ -12,6 +12,7 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -149,11 +150,20 @@ public class KittySlippersItem extends WearableRelicItem {
         }
     }
 
-    private static void makeMobAvoidPlayer(PathfinderMob mob, Player player) {
+    private static void makeMobAvoidPlayer(Mob mob, Player player) {
         if (mob.getTarget() == player)
             mob.setTarget(null);
 
-        var awayPos = DefaultRandomPos.getPosAway(mob, 16, 7, player.position());
+        var awayPos = mob instanceof PathfinderMob pathfinderMob
+                ? DefaultRandomPos.getPosAway(pathfinderMob, 16, 7, player.position())
+                : null;
+
+        if (awayPos == null) {
+            var awayDirection = mob.position().subtract(player.position());
+
+            if (awayDirection.lengthSqr() > 1.0E-6D)
+                awayPos = mob.position().add(awayDirection.normalize().scale(8D));
+        }
 
         if (awayPos != null)
             mob.getNavigation().moveTo(awayPos.x, awayPos.y, awayPos.z, 1.25D);

@@ -2,6 +2,8 @@ package it.hurts.octostudios.rarcompat.mixin.init;
 
 import artifacts.item.WearableArtifactItem;
 import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.items.EternalSteakItem;
+import it.hurts.octostudios.rarcompat.items.EverlastingBeefItem;
 import it.hurts.octostudios.rarcompat.items.UmbrellaItem;
 import it.hurts.octostudios.rarcompat.items.bracelet.OnionRingItem;
 import it.hurts.octostudios.rarcompat.items.bracelet.WitheredBraceletItem;
@@ -76,6 +78,12 @@ public class ModItemsMixin {
     private static Holder<Item> redirectRegister(String name, Supplier<? extends Item> supplier) {
         if (name.equals("umbrella"))
             return register(name, UmbrellaItem::new);
+
+        if (name.equals("everlasting_beef"))
+            return register(name, EverlastingBeefItem::new);
+
+        if (name.equals("eternal_steak"))
+            return register(name, EternalSteakItem::new);
 
         return register(name, supplier);
     }

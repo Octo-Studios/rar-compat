@@ -59,6 +59,8 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_COOLDOWN_TICKS = construct("rooted_boots/cooldown_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_BONEMEAL_TICKS = construct("rooted_boots/bonemeal_ticks", Codec.INT);
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> EVERLASTING_FOOD_REGEN_TICKS = construct("everlasting_food/regen_ticks", Codec.INT);
+
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CHARM_OF_SHRINKING_CURRENT_SCALE = construct("charm_of_shrinking/current_scale", Codec.DOUBLE);
 

@@ -6,6 +6,7 @@
   "refmap": "rarcompat.refmap.json",
   "mixins": [
     "RollLootTableModifierMixin",
+    "AbstractFurnaceBlockEntityMixin",
     "AbstractVillagerMixin",
     "VillagerMixin",
     "config.ConfigManagerMixin",

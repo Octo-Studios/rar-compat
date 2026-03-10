@@ -119,7 +119,7 @@ public class SnowshoesItem extends WearableRelicItem {
         var level = player.level();
         var feetPos = player.blockPosition();
 
-        return player.isInPowderSnow()
+        return player.isInPowderSnow
                 || level.getBlockState(feetPos).is(BlockTags.SNOW)
                 || level.getBlockState(feetPos.below()).is(BlockTags.SNOW);
     }
