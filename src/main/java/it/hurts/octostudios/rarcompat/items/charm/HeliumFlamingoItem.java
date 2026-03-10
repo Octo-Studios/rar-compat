@@ -221,6 +221,10 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     @EventBusSubscriber(value = Dist.CLIENT)
     public static class HeliumFlamingoClientEvent {
+        private static final int STOP_DOUBLE_PRESS_WINDOW_TICKS = 10;
+        private static boolean waitingStopPress = false;
+        private static int lastStopPressTick = -1000;
+
         @SubscribeEvent
         public static void onClientTick(InputEvent.Key event) {
             var minecraft = Minecraft.getInstance();
@@ -235,22 +239,39 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                     || event.getKey() != minecraft.options.keyJump.getKey().getValue())
                 return;
 
-            if (player.onGround() || player.isInLiquid() || player.getAbilities().flying)
+            if (player.onGround() || player.isInLiquid() || player.getAbilities().flying) {
+                waitingStopPress = false;
                 return;
+            }
 
             if (player.mayFly()) {
                 if (relic.getToggled(stack))
                     NetworkHandler.sendToServer(new FlamingoSwimPacket(false));
 
+                waitingStopPress = false;
                 return;
             }
 
-            var targetState = !relic.getToggled(stack);
+            if (relic.getToggled(stack)) {
+                var ticksSinceLastPress = player.tickCount - lastStopPressTick;
 
-            if (targetState && relic.getTime(stack) >= relic.getMaxHoverSeconds(player, stack))
+                if (waitingStopPress && ticksSinceLastPress <= STOP_DOUBLE_PRESS_WINDOW_TICKS) {
+                    waitingStopPress = false;
+                    NetworkHandler.sendToServer(new FlamingoSwimPacket(false));
+                } else {
+                    waitingStopPress = true;
+                    lastStopPressTick = player.tickCount;
+                }
+
+                return;
+            }
+
+            waitingStopPress = false;
+
+            if (relic.getTime(stack) >= relic.getMaxHoverSeconds(player, stack))
                 return;
 
-            NetworkHandler.sendToServer(new FlamingoSwimPacket(targetState));
+            NetworkHandler.sendToServer(new FlamingoSwimPacket(true));
         }
     }
 
