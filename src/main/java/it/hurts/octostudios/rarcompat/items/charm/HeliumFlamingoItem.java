@@ -131,7 +131,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
         if (!toggled) {
             setToggled(stack, false);
-            player.setSprinting(false);
+
             return true;
         }
 
@@ -139,7 +139,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             return false;
 
         setToggled(stack, true);
-        player.setSprinting(true);
+
         player.fallDistance = 0F;
 
         return true;
@@ -180,7 +180,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (resetTime)
             setTime(stack, 0);
 
-        player.setSprinting(false);
         EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
@@ -286,7 +285,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             }
 
             event.setResult(EventResult.SUCCESS);
-            player.setSprinting(true);
 
             var speedBonus = Math.max(0D, ability.getStatData("speed_bonus").getValue());
             EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
