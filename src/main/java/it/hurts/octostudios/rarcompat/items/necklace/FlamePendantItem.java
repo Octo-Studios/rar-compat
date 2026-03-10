@@ -11,6 +11,7 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -115,7 +116,7 @@ public class FlamePendantItem extends WearableRelicItem {
                     attacker.igniteForSeconds(duration);
             }
 
-            if (fireImmune && event.getSource().is(DamageTypeTags.IS_FIRE)) {
+            if (fireImmune && event.getSource().is(DamageTypeTags.IS_FIRE) && !event.getSource().is(DamageTypes.LAVA)) {
                 event.setAmount(0F);
 
                 event.setCanceled(true);
