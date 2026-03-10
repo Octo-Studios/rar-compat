@@ -13,28 +13,30 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
-public class StriderShoes extends WearableRelicItem {
+public class AquaDashersItem extends WearableRelicItem {
+
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
                 .abilities(AbilitiesTemplate.builder()
-                        .ability(AbilityTemplate.builder("lava_stride")
-                                .rankModifier(1, "lava_jump")
-                                .rankModifier(3, "free_stride")
-                                .rankModifier(5, "fire_immunity")
+                        .ability(AbilityTemplate.builder("water_dash")
+                                .rankModifier(1, "water_jump")
+                                .rankModifier(3, "free_dash")
+                                .rankModifier(5, "projectile_phase")
                                 .stat(AbilityStatTemplate.builder("speed_penalty")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.2D, 0.45D)
@@ -63,17 +65,15 @@ public class StriderShoes extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
 
         if (!ability.canPlayerUse(player)) {
-            resetStrideState(player, stack);
+            resetDashState(player, stack);
             return;
         }
 
-        var freeStride = ability.isRankModifierUnlocked("free_stride");
-
-        if (!isStrideActive(player, freeStride)) {
-            resetStrideState(player, stack);
+        if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash"))) {
+            resetDashState(player, stack);
             return;
         }
 
@@ -98,33 +98,39 @@ public class StriderShoes extends WearableRelicItem {
         if (stack.getItem() == newStack.getItem() || !(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        resetStrideState(player, stack);
+        resetDashState(player, stack);
     }
 
-    private void resetStrideState(Player player, ItemStack stack) {
+    private void resetDashState(Player player, ItemStack stack) {
         setRecoveryTicks(stack, 0);
         EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     private int getRecoveryTicks(ItemStack stack) {
-        return Math.max(0, stack.getOrDefault(DataComponentRegistry.STRIDER_SHOES_RECOVERY_TICKS.get(), 0));
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.AQUA_DASHERS_RECOVERY_TICKS.get(), 0));
     }
 
     private void setRecoveryTicks(ItemStack stack, int ticks) {
-        stack.set(DataComponentRegistry.STRIDER_SHOES_RECOVERY_TICKS.get(), Math.max(0, ticks));
+        stack.set(DataComponentRegistry.AQUA_DASHERS_RECOVERY_TICKS.get(), Math.max(0, ticks));
     }
 
-    private static boolean isStrideActive(Player player, boolean freeStride) {
+    private static boolean isRunning(Player player) {
+        return player.isSprinting()
+                && !player.isFallFlying()
+                && player.getKnownMovement().multiply(1D, 0D, 1D).length() > 1.0E-4D;
+    }
+
+    private static boolean isDashActive(Player player, boolean freeDash) {
         if (player.isSpectator() || player.getAbilities().flying || player.isFallFlying())
             return false;
 
-        if (!freeStride && !player.isShiftKeyDown())
+        if (!freeDash && !isRunning(player))
             return false;
 
         if (player.isInFluidType())
             return false;
 
-        var surfaceY = getLavaSurfaceY(player);
+        var surfaceY = getWaterSurfaceY(player);
 
         if (Double.isNaN(surfaceY))
             return false;
@@ -134,16 +140,16 @@ public class StriderShoes extends WearableRelicItem {
         return minY >= surfaceY - 1.25D && minY <= surfaceY + 0.5D;
     }
 
-    private static double getLavaSurfaceY(Player player) {
+    private static double getWaterSurfaceY(Player player) {
         var level = player.level();
         var probe = BlockPos.containing(player.getX(), player.getBoundingBox().minY - 0.05D, player.getZ());
 
-        if (level.getFluidState(probe).is(FluidTags.LAVA))
+        if (level.getFluidState(probe).is(FluidTags.WATER))
             return probe.getY() + 1D;
 
         var below = probe.below();
 
-        if (level.getFluidState(below).is(FluidTags.LAVA))
+        if (level.getFluidState(below).is(FluidTags.WATER))
             return below.getY() + 1D;
 
         return Double.NaN;
@@ -153,29 +159,24 @@ public class StriderShoes extends WearableRelicItem {
     public static class CommonEvents {
         @SubscribeEvent
         public static void onFluidCollision(FluidCollisionEvent event) {
-            LivingEntity entity = event.getEntity();
+            var entity = event.getEntity();
 
             if (!(entity instanceof Player player) || player.level().isClientSide())
                 return;
 
-            if (!event.getFluid().is(FluidTags.LAVA) || entity.isInFluidType())
+            if (!event.getFluid().is(FluidTags.WATER) || entity.isInFluidType())
                 return;
 
-            for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.STRIDER_SHOES.value())) {
-                if (!(stack.getItem() instanceof StriderShoes relic))
+            for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.AQUA_DASHERS.value())) {
+                if (!(stack.getItem() instanceof AquaDashersItem relic))
                     continue;
 
-                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("lava_stride");
+                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("water_dash");
 
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                var freeStride = ability.isRankModifierUnlocked("free_stride");
-
-                if (!freeStride && !entity.isShiftKeyDown())
-                    continue;
-
-                if (!isStrideActive(player, freeStride))
+                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
                     continue;
 
                 event.setCanceled(true);
@@ -190,16 +191,16 @@ public class StriderShoes extends WearableRelicItem {
 
             var jumpBonus = 0D;
 
-            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STRIDER_SHOES.value())) {
-                if (!(stack.getItem() instanceof StriderShoes relic))
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.AQUA_DASHERS.value())) {
+                if (!(stack.getItem() instanceof AquaDashersItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_jump"))
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("water_jump"))
                     continue;
 
-                if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
+                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue()));
@@ -214,29 +215,45 @@ public class StriderShoes extends WearableRelicItem {
         }
 
         @SubscribeEvent
-        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
+        public static void onProjectileImpact(ProjectileImpactEvent event) {
+            if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult) || !(hitResult.getEntity() instanceof Player player) || player.level().isClientSide())
                 return;
 
-            if (!event.getSource().is(DamageTypeTags.IS_FIRE))
+            var projectile = event.getProjectile();
+
+            if (!isEnemyProjectile(projectile, player))
                 return;
 
-            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STRIDER_SHOES.value())) {
-                if (!(stack.getItem() instanceof StriderShoes relic))
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.AQUA_DASHERS.value())) {
+                if (!(stack.getItem() instanceof AquaDashersItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("fire_immunity"))
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("projectile_phase"))
                     continue;
 
-                if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
+                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
                     continue;
 
-                event.setAmount(0F);
                 event.setCanceled(true);
                 return;
             }
+        }
+
+        private static boolean isEnemyProjectile(Projectile projectile, Player player) {
+            var owner = projectile.getOwner();
+
+            if (owner == null)
+                return true;
+
+            if (owner == player)
+                return false;
+
+            if (owner instanceof LivingEntity living && living.isAlliedTo(player))
+                return false;
+
+            return true;
         }
     }
 }
