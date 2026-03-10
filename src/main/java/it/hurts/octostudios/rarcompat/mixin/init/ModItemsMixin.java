@@ -70,8 +70,8 @@ public class ModItemsMixin {
             case "chorus_totem" -> register(name, ChorusTotemItem::new);
             case "running_shoes" -> register(name, RunningShoesItem::new);
             case "flippers" -> register(name, FlippersItem::new);
-            case "strider_shoes" -> register(name, StriderShoes::new);
-            case "aqua_dashers" -> register(name, AquaDashers::new);
+            case "strider_shoes" -> register(name, StriderShoesItem::new);
+            case "aqua_dashers" -> register(name, AquaDashersItem::new);
             default -> wearableItem(name, builderConsumer);
         };
     }
