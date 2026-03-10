@@ -75,6 +75,13 @@ public class CloudInBottleItem extends WearableRelicItem {
             return;
         }
 
+        if (ability.isRankModifierUnlocked("slow_fall") && getCount(stack) > 0 && player.isShiftKeyDown() && !player.onGround() && !player.isInFluidType() && player.hasEffect(MobEffects.SLOW_FALLING)) {
+            var motion = player.getDeltaMovement();
+
+            if (motion.y < -0.01D)
+                player.setDeltaMovement(motion.x, Math.min(motion.y, -0.15D), motion.z);
+        }
+
         var maxJumps = getMaxJumps(player, stack);
 
         if (getCount(stack) > maxJumps)
