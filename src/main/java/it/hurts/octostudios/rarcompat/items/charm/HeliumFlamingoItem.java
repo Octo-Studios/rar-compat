@@ -75,10 +75,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player))
             return;
 
-        if (player.level().isClientSide()) {
-            HeliumFlamingoClientEvent.tickDoubleJumpWindow();
+        if (player.level().isClientSide())
             return;
-        }
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
 
@@ -205,22 +203,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     @EventBusSubscriber(value = Dist.CLIENT)
     public static class HeliumFlamingoClientEvent {
-        private static final int DOUBLE_JUMP_WINDOW_TICKS = 10;
-        private static boolean waitingSecondJump = false;
-        private static int doubleJumpTicks = 0;
-
-        private static void tickDoubleJumpWindow() {
-            if (!waitingSecondJump)
-                return;
-
-            doubleJumpTicks++;
-
-            if (doubleJumpTicks >= DOUBLE_JUMP_WINDOW_TICKS) {
-                waitingSecondJump = false;
-                doubleJumpTicks = 0;
-            }
-        }
-
         @SubscribeEvent
         public static void onClientTick(InputEvent.Key event) {
             var minecraft = Minecraft.getInstance();
@@ -235,20 +217,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                     || event.getKey() != minecraft.options.keyJump.getKey().getValue())
                 return;
 
-            if (player.onGround() || player.isInLiquid() || player.getAbilities().flying) {
-                waitingSecondJump = false;
-                doubleJumpTicks = 0;
+            if (player.onGround() || player.isInLiquid() || player.getAbilities().flying)
                 return;
-            }
-
-            if (!waitingSecondJump) {
-                waitingSecondJump = true;
-                doubleJumpTicks = 0;
-                return;
-            }
-
-            waitingSecondJump = false;
-            doubleJumpTicks = 0;
 
             if (player.mayFly()) {
                 if (relic.getToggled(stack))
