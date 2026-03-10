@@ -54,17 +54,17 @@ public class UniversalAttractorItem extends WearableRelicItem {
             return;
 
         var radius = Math.max(1D, ability.getStatData("radius").getValue());
-        var teleportItems = ability.isRankModifierUnlocked("teleport");
         var pull = "pull".equals(mode);
+        var teleportPullItems = pull && ability.isRankModifierUnlocked("teleport");
 
         var items = player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
-        if (teleportItems) {
+        if (teleportPullItems) {
             for (var item : items) {
                 if (shouldDelayItemManipulation(player, item))
                     continue;
 
-                teleportItem(player, item, radius, pull);
+                teleportItem(player, item);
             }
         } else {
             for (var item : items) {
@@ -102,23 +102,8 @@ public class UniversalAttractorItem extends WearableRelicItem {
         return !owner.isAlliedTo(player);
     }
 
-    private static void teleportItem(Player player, ItemEntity item, double radius, boolean pull) {
-        Vec3 target;
-
-        if (pull) {
-            target = player.position().add(0D, 0.3D, 0D);
-        } else {
-            var fromPlayer = item.position().subtract(player.position());
-            var horizontal = new Vec3(fromPlayer.x, 0D, fromPlayer.z);
-            var direction = horizontal.lengthSqr() > 1.0E-6D ? horizontal.normalize() : horizontalMotionDirection(item);
-
-            if (direction.lengthSqr() <= 1.0E-6D)
-                return;
-
-            target = new Vec3(player.getX() + direction.x * Math.max(1D, radius), item.getY(), player.getZ() + direction.z * Math.max(1D, radius));
-        }
-
-        item.teleportTo(target.x(), target.y(), target.z());
+    private static void teleportItem(Player player, ItemEntity item) {
+        item.teleportTo(player.getX(), player.getY() + 0.3D, player.getZ());
         item.setDeltaMovement(Vec3.ZERO);
         item.hasImpulse = true;
     }
