@@ -173,7 +173,13 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
         if (!entity.onGround())
             return false;
 
-        return entity.getDeltaMovement().horizontalDistanceSqr() <= STILL_HORIZONTAL_THRESHOLD;
+        if (entity.getKnownMovement().multiply(1D, 0D, 1D).length() > STILL_HORIZONTAL_THRESHOLD)
+            return false;
+
+        var deltaX = entity.getX() - entity.xOld;
+        var deltaZ = entity.getZ() - entity.zOld;
+
+        return deltaX * deltaX + deltaZ * deltaZ <= STILL_HORIZONTAL_THRESHOLD;
     }
 
     private static boolean isTrackedByVisibleTargets(LivingEntity entity) {
@@ -249,8 +255,13 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                 var relic = (ScarfOfInvisibilityItem) stack.getItem();
                 var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("invisibility");
 
-                if (!ability.canPlayerUse(entity) || !relic.isInvisibilityActive(stack))
+                if (!ability.canPlayerUse(entity))
                     continue;
+
+                if (!relic.isInvisibilityActive(stack)) {
+                    relic.setStationaryTicks(stack, 0);
+                    continue;
+                }
 
                 if (prepareStrike && (ability.isRankModifierUnlocked("strike") || ability.isRankModifierUnlocked("stun")))
                     relic.setStrikeTicks(stack, 2);
