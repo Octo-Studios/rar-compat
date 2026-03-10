@@ -7,12 +7,14 @@
   "mixins": [
     "RollLootTableModifierMixin",
     "AbstractFurnaceBlockEntityMixin",
+    "CampfireBlockEntityMixin",
     "AbstractVillagerMixin",
     "LivingEntityMixin",
     "VillagerMixin",
     "config.ConfigManagerMixin",
     "config.ModConfigMixin",
-    "init.ModItemsMixin"
+    "init.ModItemsMixin",
+    "accessor.CampfireBlockEntityAccessor"
   ],
   "client": [
     "render.BeltModelMixin",
