@@ -67,7 +67,6 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CHARM_OF_SHRINKING_CURRENT_SCALE = construct("charm_of_shrinking/current_scale", Codec.DOUBLE);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> OBSIDIAN_SKULL_LAVA_TICKS = construct("obsidian_skull/lava_ticks", Codec.INT);
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> OBSIDIAN_SKULL_FALL_PROTECTION = construct("obsidian_skull/fall_protection", Codec.BOOL);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CRYSTAL_HEART_COOLDOWN_TICKS = construct("crystal_heart/cooldown_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CRYSTAL_HEART_LAST_HEALTH = construct("crystal_heart/last_health", Codec.DOUBLE);

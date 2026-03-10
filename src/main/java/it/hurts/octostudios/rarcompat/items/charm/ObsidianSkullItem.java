@@ -11,12 +11,14 @@ import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
@@ -27,8 +29,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
         return RelicTemplate.builder()
                 .abilities(AbilitiesTemplate.builder()
                         .ability(AbilityTemplate.builder("lava")
-                                .rankModifier(1, "heat_surge")
-                                .rankModifier(3, "lava_launch")
+                                .rankModifier(1, "lava_launch")
+                                .rankModifier(3, "heat_surge")
                                 .rankModifier(5, "obsidian_skin")
                                 .stat(AbilityStatTemplate.builder("duration")
                                         .thresholdValue(1D, Double.MAX_VALUE)
@@ -66,11 +68,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
 
-        if (!ability.canPlayerUse(player)) {
-            setFallProtectionActive(stack, false);
-
+        if (!ability.canPlayerUse(player))
             return;
-        }
 
         var maxLavaTicks = getMaxLavaTicks(ability.getStatData("duration").getValue());
 
@@ -78,9 +77,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
             setLavaTicks(stack, maxLavaTicks);
 
         var lavaTicks = Math.max(0, Math.min(maxLavaTicks, getLavaTicks(stack)));
-        var inLava = player.isInLava();
 
-        if (inLava) {
+        if (player.isInLava()) {
             if (lavaTicks > 0) {
                 lavaTicks--;
                 player.clearFire();
@@ -90,19 +88,6 @@ public class ObsidianSkullItem extends WearableRelicItem {
         }
 
         setLavaTicks(stack, lavaTicks);
-
-        if (isFallProtectionActive(stack) && player.onGround())
-            setFallProtectionActive(stack, false);
-    }
-
-    @Override
-    public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
-        super.onUnequip(slotContext, newStack, stack);
-
-        if (stack.getItem() == newStack.getItem())
-            return;
-
-        setFallProtectionActive(stack, false);
     }
 
     private int getMaxLavaTicks(double seconds) {
@@ -115,14 +100,6 @@ public class ObsidianSkullItem extends WearableRelicItem {
 
     private void setLavaTicks(ItemStack stack, int ticks) {
         stack.set(DataComponentRegistry.OBSIDIAN_SKULL_LAVA_TICKS.get(), Math.max(0, ticks));
-    }
-
-    private boolean isFallProtectionActive(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.OBSIDIAN_SKULL_FALL_PROTECTION.get(), false);
-    }
-
-    private void setFallProtectionActive(ItemStack stack, boolean active) {
-        stack.set(DataComponentRegistry.OBSIDIAN_SKULL_FALL_PROTECTION.get(), active);
     }
 
     public static double getHeatSurgeLavaSpeedBonus(Player player) {
@@ -147,6 +124,30 @@ public class ObsidianSkullItem extends WearableRelicItem {
             return 0D;
 
         return Math.max(0D, ability.getStatData("low_reserve_speed_bonus").getValue());
+    }
+
+    private static boolean isLandingInLava(Player player) {
+        if (player.isInLava())
+            return true;
+
+        var level = player.level();
+        var box = player.getBoundingBox();
+        var y = Mth.floor(box.minY - 0.05D);
+        var minX = Mth.floor(box.minX + 1.0E-4D);
+        var maxX = Mth.floor(box.maxX - 1.0E-4D);
+        var minZ = Mth.floor(box.minZ + 1.0E-4D);
+        var maxZ = Mth.floor(box.maxZ - 1.0E-4D);
+
+        for (var x = minX; x <= maxX; x++) {
+            for (var z = minZ; z <= maxZ; z++) {
+                if (level.getFluidState(new BlockPos(x, y, z)).is(FluidTags.LAVA))
+                    return true;
+            }
+        }
+
+        var feetPos = player.blockPosition();
+
+        return level.getFluidState(feetPos).is(FluidTags.LAVA) || level.getFluidState(feetPos.below()).is(FluidTags.LAVA);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -184,8 +185,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
         }
 
         @SubscribeEvent
-        public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || !player.isInLava())
+        public static void onLivingFall(LivingFallEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getDistance() <= 0F)
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.OBSIDIAN_SKULL.value());
@@ -198,29 +199,8 @@ public class ObsidianSkullItem extends WearableRelicItem {
             if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_launch") || relic.getLavaTicks(stack) <= 0)
                 return;
 
-            var jumpBoost = Math.max(0D, ability.getStatData("jump_boost").getValue());
-
-            if (jumpBoost > 0D)
-                player.setDeltaMovement(player.getDeltaMovement().x, player.getDeltaMovement().y + jumpBoost, player.getDeltaMovement().z);
-
-            relic.setFallProtectionActive(stack, true);
-        }
-
-        @SubscribeEvent
-        public static void onLivingFall(LivingFallEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
-                return;
-
-            var stack = EntityUtils.findEquippedCurio(player, ModItems.OBSIDIAN_SKULL.value());
-
-            if (!(stack.getItem() instanceof ObsidianSkullItem relic))
-                return;
-
-            if (!relic.isFallProtectionActive(stack))
-                return;
-
-            event.setCanceled(true);
-            relic.setFallProtectionActive(stack, false);
+            if (isLandingInLava(player))
+                event.setCanceled(true);
         }
     }
 }
