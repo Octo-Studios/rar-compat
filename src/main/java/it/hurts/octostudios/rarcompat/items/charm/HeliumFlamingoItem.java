@@ -18,6 +18,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
@@ -32,6 +33,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     private static final double STATIONARY_HORIZONTAL_SPEED_SQR = 0.0016D;
     private static final double STATIONARY_VERTICAL_SPEED = 0.04D;
+    private static final double STATIONARY_POSITION_DELTA_SQR = 1.0E-6D;
 
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
@@ -90,14 +92,17 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             return;
         }
 
-        if (!getToggled(stack))
+        if (!getToggled(stack)) {
+            EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
             return;
+        }
 
         if (getTime(stack) >= getMaxHoverSeconds(player, stack)) {
             disableHover(player, stack, false);
             return;
         }
 
+        EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         player.fallDistance = 0F;
 
         if (!shouldConsumeHoverTime(player, ability.isRankModifierUnlocked("efficient_hover")) || player.tickCount % 20 != 0)
@@ -129,6 +134,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
         if (!toggled) {
             setToggled(stack, false);
+            EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
             return true;
         }
@@ -137,7 +143,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             return false;
 
         setToggled(stack, true);
-
+        EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         player.fallDistance = 0F;
 
         return true;
@@ -162,10 +168,21 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (!efficientHoverUnlocked)
             return true;
 
-        var movement = player.getDeltaMovement();
-        var almostStill = movement.horizontalDistanceSqr() <= STATIONARY_HORIZONTAL_SPEED_SQR && Math.abs(movement.y) <= STATIONARY_VERTICAL_SPEED;
+        var knownMovement = player.getKnownMovement();
 
-        return !almostStill;
+        if (knownMovement.lengthSqr() > STATIONARY_HORIZONTAL_SPEED_SQR)
+            return true;
+
+        var velocity = player.getDeltaMovement();
+
+        if (velocity.horizontalDistanceSqr() > STATIONARY_HORIZONTAL_SPEED_SQR || Math.abs(velocity.y) > STATIONARY_VERTICAL_SPEED)
+            return true;
+
+        var deltaX = player.getX() - player.xOld;
+        var deltaY = player.getY() - player.yOld;
+        var deltaZ = player.getZ() - player.zOld;
+
+        return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > STATIONARY_POSITION_DELTA_SQR;
     }
 
     private static boolean isHoverResetState(Player player) {
@@ -178,6 +195,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (resetTime)
             setTime(stack, 0);
 
+        EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
@@ -251,6 +269,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             if (!ability.canPlayerUse(player) || !relic.isHovering(player, stack)) {
                 event.setResult(EventResult.PASS);
                 EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
                 return;
             }
 
