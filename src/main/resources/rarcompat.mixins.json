@@ -8,6 +8,7 @@
     "RollLootTableModifierMixin",
     "AbstractFurnaceBlockEntityMixin",
     "AbstractVillagerMixin",
+    "LivingEntityMixin",
     "VillagerMixin",
     "config.ConfigManagerMixin",
     "config.ModConfigMixin",

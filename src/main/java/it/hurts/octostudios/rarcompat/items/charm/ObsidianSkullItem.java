@@ -11,10 +11,7 @@ import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,8 +22,6 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class ObsidianSkullItem extends WearableRelicItem {
-    private static final ResourceLocation LAVA_SPEED_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "obsidian_skull_lava_speed");
-
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
@@ -72,7 +67,6 @@ public class ObsidianSkullItem extends WearableRelicItem {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
 
         if (!ability.canPlayerUse(player)) {
-            removeLavaSpeedModifier(player);
             setFallProtectionActive(stack, false);
 
             return;
@@ -97,15 +91,6 @@ public class ObsidianSkullItem extends WearableRelicItem {
 
         setLavaTicks(stack, lavaTicks);
 
-        var isLowReserve = inLava && lavaTicks > 0 && lavaTicks <= Math.max(1, maxLavaTicks / 4);
-
-        if (ability.isRankModifierUnlocked("heat_surge") && isLowReserve) {
-            var speedBonus = Math.max(0D, ability.getStatData("low_reserve_speed_bonus").getValue());
-            applyLavaSpeedModifier(player, speedBonus);
-        } else {
-            removeLavaSpeedModifier(player);
-        }
-
         if (isFallProtectionActive(stack) && player.onGround())
             setFallProtectionActive(stack, false);
     }
@@ -116,9 +101,6 @@ public class ObsidianSkullItem extends WearableRelicItem {
 
         if (stack.getItem() == newStack.getItem())
             return;
-
-        if (slotContext.entity() instanceof Player player && !player.level().isClientSide())
-            removeLavaSpeedModifier(player);
 
         setFallProtectionActive(stack, false);
     }
@@ -143,22 +125,28 @@ public class ObsidianSkullItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.OBSIDIAN_SKULL_FALL_PROTECTION.get(), active);
     }
 
-    private void applyLavaSpeedModifier(Player player, double bonus) {
-        var attribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
+    public static double getHeatSurgeLavaSpeedBonus(Player player) {
+        if (player == null || !player.isInLava())
+            return 0D;
 
-        if (attribute == null)
-            return;
+        var stack = EntityUtils.findEquippedCurio(player, ModItems.OBSIDIAN_SKULL.value());
 
-        attribute.addOrUpdateTransientModifier(new AttributeModifier(LAVA_SPEED_MODIFIER_ID, Math.max(0D, bonus), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-    }
+        if (!(stack.getItem() instanceof ObsidianSkullItem relic))
+            return 0D;
 
-    private void removeLavaSpeedModifier(Player player) {
-        var attribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
+        var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
 
-        if (attribute == null)
-            return;
+        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("heat_surge"))
+            return 0D;
 
-        attribute.removeModifier(new AttributeModifier(LAVA_SPEED_MODIFIER_ID, 0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        var maxLavaTicks = relic.getMaxLavaTicks(ability.getStatData("duration").getValue());
+        var lavaTicks = Math.max(0, Math.min(maxLavaTicks, relic.getLavaTicks(stack)));
+        var isLowReserve = lavaTicks > 0 && lavaTicks <= Math.max(1, maxLavaTicks / 4);
+
+        if (!isLowReserve)
+            return 0D;
+
+        return Math.max(0D, ability.getStatData("low_reserve_speed_bonus").getValue());
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -236,4 +224,3 @@ public class ObsidianSkullItem extends WearableRelicItem {
         }
     }
 }
-
