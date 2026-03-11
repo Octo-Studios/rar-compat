@@ -57,6 +57,7 @@ public class SnowshoesItem extends WearableRelicItem {
 
         if (!ability.canPlayerUse(player)) {
             setLingerTicks(stack, 0);
+            setSpeedCharge(stack, 0D);
             EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
             return;
@@ -86,7 +87,17 @@ public class SnowshoesItem extends WearableRelicItem {
         if (ability.isRankModifierUnlocked("frost_immunity") && player.getTicksFrozen() > 0)
             player.setTicksFrozen(0);
 
-        var speedBonus = active ? Math.max(0D, ability.getStatData("speed_bonus").getValue()) : 0D;
+        var targetCharge = active ? 1D : 0D;
+        var speedCharge = getSpeedCharge(stack);
+
+        if (speedCharge < targetCharge)
+            speedCharge = Math.min(targetCharge, speedCharge + 0.05D);
+        else if (speedCharge > targetCharge)
+            speedCharge = Math.max(targetCharge, speedCharge - 0.05D);
+
+        setSpeedCharge(stack, speedCharge);
+
+        var speedBonus = Math.max(0D, ability.getStatData("speed_bonus").getValue()) * speedCharge;
 
         if (speedBonus <= 0D)
             EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -112,6 +123,7 @@ public class SnowshoesItem extends WearableRelicItem {
             return;
 
         setLingerTicks(stack, 0);
+        setSpeedCharge(stack, 0D);
         EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
@@ -134,6 +146,14 @@ public class SnowshoesItem extends WearableRelicItem {
 
     private void setLingerTicks(ItemStack stack, int ticks) {
         stack.set(DataComponentRegistry.SNOWSHOES_LINGER_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private double getSpeedCharge(ItemStack stack) {
+        return Math.max(0D, Math.min(1D, stack.getOrDefault(DataComponentRegistry.SNOWSHOES_SPEED_CHARGE.get(), 0D)));
+    }
+
+    private void setSpeedCharge(ItemStack stack, double charge) {
+        stack.set(DataComponentRegistry.SNOWSHOES_SPEED_CHARGE.get(), Math.max(0D, Math.min(1D, charge)));
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)

@@ -60,6 +60,7 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_JUMP_LOCKED = construct("bunny_hoppers/jump_locked", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> KITTY_SLIPPERS_DODGE_READY = construct("kitty_slippers/dodge_ready", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> RUNNING_SHOES_CHARGE = construct("running_shoes/charge", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> SNOWSHOES_SPEED_CHARGE = construct("snowshoes/speed_charge", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> STRIDER_SHOES_RECOVERY_TICKS = construct("strider_shoes/recovery_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> AQUA_DASHERS_RECOVERY_TICKS = construct("aqua_dashers/recovery_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SNOWSHOES_LINGER_TICKS = construct("snowshoes/linger_ticks", Codec.INT);
