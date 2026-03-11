@@ -3,6 +3,7 @@ package it.hurts.octostudios.rarcompat.items.feet;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.octostudios.rarcompat.items.charm.HeliumFlamingoItem;
 import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
 import it.hurts.sskirillss.relics.api.events.common.LivingSlippingEvent;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -128,7 +129,7 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         @SubscribeEvent
         public static void onLivingSlipping(LivingSlippingEvent event) {
             if (event.getFriction() <= 0.6F || !(event.getEntity() instanceof Player player)
-                    || player.isInWater() || player.isInLava())
+                    || player.isInWater() || player.isInLava() || player.isSwimming())
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
