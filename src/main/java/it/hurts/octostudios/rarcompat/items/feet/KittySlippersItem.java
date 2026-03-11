@@ -33,26 +33,26 @@ public class KittySlippersItem extends WearableRelicItem {
         return RelicTemplate.builder()
                 .abilities(AbilitiesTemplate.builder()
                         .ability(AbilityTemplate.builder("feline_aura")
+                                .rankModifier(1, "crouch_speed")
                                 .stat(AbilityStatTemplate.builder("radius")
                                         .thresholdValue(1D, Double.MAX_VALUE)
                                         .initialValue(8D, 16D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("crouch_speed_bonus")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.12D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
                                 .build())
                         .ability(AbilityTemplate.builder("nine_lives")
-                                .rankModifier(1, "crouch_speed")
                                 .rankModifier(3, "soft_landing")
                                 .rankModifier(5, "evasion")
                                 .stat(AbilityStatTemplate.builder("survival_chance")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.08D, 0.2D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("crouch_speed_bonus")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.12D, 0.35D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
@@ -87,24 +87,22 @@ public class KittySlippersItem extends WearableRelicItem {
                 applyFelineAura(player, radius);
         }
 
+        if (aura.canPlayerUse(player) && aura.isRankModifierUnlocked("crouch_speed")) {
+            var bonus = Math.max(0D, aura.getStatData("crouch_speed_bonus").getValue());
+
+            if (bonus > 0D)
+                EntityUtils.resetAttribute(player, stack, Attributes.SNEAKING_SPEED, (float) (bonus * 0.3D), AttributeModifier.Operation.ADD_VALUE);
+            else
+                EntityUtils.removeAttribute(player, stack, Attributes.SNEAKING_SPEED, AttributeModifier.Operation.ADD_VALUE);
+        } else {
+            EntityUtils.removeAttribute(player, stack, Attributes.SNEAKING_SPEED, AttributeModifier.Operation.ADD_VALUE);
+        }
+
         var nineLives = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("nine_lives");
 
         if (!nineLives.canPlayerUse(player)) {
             setDodgeReady(stack, false);
-            EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-
             return;
-        }
-
-        if (nineLives.isRankModifierUnlocked("crouch_speed") && player.isCrouching()) {
-            var bonus = Math.max(0D, nineLives.getStatData("crouch_speed_bonus").getValue());
-
-            if (bonus > 0D)
-                EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) bonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-            else
-                EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        } else {
-            EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
 
         if (!nineLives.isRankModifierUnlocked("evasion"))
@@ -119,7 +117,7 @@ public class KittySlippersItem extends WearableRelicItem {
             return;
 
         setDodgeReady(stack, false);
-        EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, Attributes.SNEAKING_SPEED, AttributeModifier.Operation.ADD_VALUE);
     }
 
     private boolean isDodgeReady(ItemStack stack) {
@@ -150,7 +148,6 @@ public class KittySlippersItem extends WearableRelicItem {
         }
     }
 
-
     public static boolean shouldSuppressCreeperExplosion(Creeper creeper) {
         if (creeper == null || !creeper.isAlive() || creeper.level().isClientSide())
             return false;
@@ -179,6 +176,7 @@ public class KittySlippersItem extends WearableRelicItem {
 
         return false;
     }
+
     private static void makeMobAvoidPlayer(Mob mob, Player player) {
         if (mob.getTarget() == player)
             mob.setTarget(null);
