@@ -40,6 +40,12 @@ public class ThornPendantItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("poison_level")
+                                        .thresholdValue(1D, Double.MAX_VALUE)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
                                 .stat(AbilityStatTemplate.builder("poisoned_damage_bonus")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.1D, 0.35D)
@@ -105,8 +111,9 @@ public class ThornPendantItem extends WearableRelicItem {
 
                 var seconds = Math.max(0D, ability.getStatData("poison_duration").getValue());
                 var ticks = Math.max(1, (int) Math.round(seconds * 20D));
+                var level = Math.max(1, (int) MathUtils.round(ability.getStatData("poison_level").getValue(), 0));
 
-                attacker.addEffect(new MobEffectInstance(MobEffects.POISON, ticks, 0, false, true));
+                attacker.addEffect(new MobEffectInstance(MobEffects.POISON, ticks, level - 1, false, true));
             }
 
             if (poisonImmune) {
