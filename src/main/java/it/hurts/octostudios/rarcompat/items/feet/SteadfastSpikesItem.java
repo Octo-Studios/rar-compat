@@ -61,8 +61,25 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                 player.getX(), player.getY(), player.getZ(), 0D, 0D, 0D);
     }
 
-    private static boolean isStandingStill(Player player) {
-        return player.onGround() && player.getDeltaMovement().horizontalDistanceSqr() <= 1.0E-4D;
+    public static boolean isStandingStill(Player player) {
+        if (!player.onGround() && !player.isInFluidType())
+            return false;
+
+        if (player.getKnownMovement().horizontalDistanceSqr() > 1.0E-6D)
+            return false;
+
+        return player.getDeltaMovement().horizontalDistanceSqr() <= 1.0E-4D;
+    }
+
+    public static boolean isAnchorActive(Player player) {
+        var stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
+
+        if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+            return false;
+
+        var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
+
+        return ability.canPlayerUse(player) && ability.isRankModifierUnlocked("anchor") && isStandingStill(player);
     }
 
     private static double getEffectiveResistance(Player player, double baseResistance, boolean crouchUnlocked, boolean anchorUnlocked) {

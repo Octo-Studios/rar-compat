@@ -9,6 +9,7 @@
     "AbstractFurnaceBlockEntityMixin",
     "CampfireBlockEntityMixin",
     "AbstractVillagerMixin",
+    "EntityMixin",
     "LivingEntityMixin",
     "CreeperMixin",
     "VillagerMixin",
