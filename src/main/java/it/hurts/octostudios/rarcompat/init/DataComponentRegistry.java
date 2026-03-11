@@ -41,6 +41,8 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> DIGGING_CLAWS_STREAK_COUNT = construct("digging_claws/streak_count", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> DIGGING_CLAWS_LAST_BREAK_TICK = construct("digging_claws/last_break_tick", Codec.LONG);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PICKAXE_HEATER_SMELT_PITY_STACKS = construct("pickaxe_heater/smelt_pity_stacks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PICKAXE_HEATER_PENDING_SMELT_RESULT = construct("pickaxe_heater/pending_smelt_result", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PICKAXE_HEATER_PENDING_FORTUNE_BONUS = construct("pickaxe_heater/pending_fortune_bonus", Codec.INT);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> FERAL_CLAWS_CHARGES = construct("feral_claws/charges", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> FERAL_CLAWS_TIMEOUT_TICKS = construct("feral_claws/timeout_ticks", Codec.INT);

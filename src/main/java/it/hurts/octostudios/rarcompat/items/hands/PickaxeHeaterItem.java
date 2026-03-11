@@ -11,7 +11,6 @@ import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PickaxeItem;
@@ -78,6 +77,7 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             return;
 
         setSmeltPityStacks(stack, 0);
+        clearPendingSmeltRoll(stack);
     }
 
     @Override
@@ -88,22 +88,51 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             return baseFortune;
 
         var blockState = lootContext.getParamOrNull(LootContextParams.BLOCK_STATE);
+        var tool = lootContext.getParamOrNull(LootContextParams.TOOL);
 
-        if (blockState == null || !blockState.is(Tags.Blocks.ORES))
+        if (blockState == null || !blockState.is(Tags.Blocks.ORES) || tool == null || !(tool.getItem() instanceof PickaxeItem))
             return baseFortune;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("heating");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("molten_luck"))
+        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("molten_luck")) {
+            clearPendingSmeltRoll(stack);
             return baseFortune;
+        }
+
+        var pendingSmeltResult = getPendingSmeltResult(stack);
+        var pendingFortuneBonus = getPendingFortuneBonus(stack);
+
+        if (pendingSmeltResult >= 0 && pendingFortuneBonus >= 0)
+            return pendingSmeltResult == 1 ? baseFortune + pendingFortuneBonus : baseFortune;
+
+        var smeltChance = Math.max(0D, Math.min(1D, ability.getStatData("smelt_chance").getValue()));
+
+        if (ability.isRankModifierUnlocked("overheat"))
+            smeltChance = Math.max(0D, Math.min(1D, smeltChance + getSmeltPityStacks(stack) * Math.max(0D, ability.getStatData("stack_bonus").getValue())));
+        else
+            setSmeltPityStacks(stack, 0);
+
+        var smeltSuccess = player.getRandom().nextDouble() <= smeltChance;
+
+        if (!smeltSuccess) {
+            if (ability.isRankModifierUnlocked("overheat"))
+                setSmeltPityStacks(stack, getSmeltPityStacks(stack) + 1);
+
+            setPendingSmeltResult(stack, 0);
+            setPendingFortuneBonus(stack, 0);
+            return baseFortune;
+        }
+
+        if (ability.isRankModifierUnlocked("overheat"))
+            setSmeltPityStacks(stack, 0);
 
         var chance = Math.max(0D, Math.min(1D, ability.getStatData("fortune_chance").getValue()));
         var maxCasts = Math.max(0, (int) MathUtils.round(ability.getStatData("fortune_max_casts").getValue(), 0));
+        var procs = chance <= 0D || maxCasts <= 0 ? 0 : MathUtils.multicast(player.getRandom(), chance, maxCasts);
 
-        if (chance <= 0D || maxCasts <= 0)
-            return baseFortune;
-
-        var procs = MathUtils.multicast(player.getRandom(), chance, maxCasts);
+        setPendingSmeltResult(stack, 1);
+        setPendingFortuneBonus(stack, Math.max(0, procs));
 
         if (procs <= 0)
             return baseFortune;
@@ -117,6 +146,27 @@ public class PickaxeHeaterItem extends WearableRelicItem {
 
     private void setSmeltPityStacks(ItemStack stack, int value) {
         stack.set(DataComponentRegistry.PICKAXE_HEATER_SMELT_PITY_STACKS.get(), Math.max(0, value));
+    }
+
+    private int getPendingSmeltResult(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.PICKAXE_HEATER_PENDING_SMELT_RESULT.get(), -1);
+    }
+
+    private void setPendingSmeltResult(ItemStack stack, int value) {
+        stack.set(DataComponentRegistry.PICKAXE_HEATER_PENDING_SMELT_RESULT.get(), value);
+    }
+
+    private int getPendingFortuneBonus(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.PICKAXE_HEATER_PENDING_FORTUNE_BONUS.get(), -1);
+    }
+
+    private void setPendingFortuneBonus(ItemStack stack, int value) {
+        stack.set(DataComponentRegistry.PICKAXE_HEATER_PENDING_FORTUNE_BONUS.get(), value);
+    }
+
+    private void clearPendingSmeltRoll(ItemStack stack) {
+        setPendingSmeltResult(stack, -1);
+        setPendingFortuneBonus(stack, -1);
     }
 
     private ItemStack getSmeltingResult(BlockDropsEvent event, ItemStack dropStack) {
@@ -163,27 +213,39 @@ public class PickaxeHeaterItem extends WearableRelicItem {
 
             if (!ability.canPlayerUse(player)) {
                 relic.setSmeltPityStacks(relicStack, 0);
+                relic.clearPendingSmeltRoll(relicStack);
                 return;
             }
 
-            var chance = Math.max(0D, Math.min(1D, ability.getStatData("smelt_chance").getValue()));
+            var pendingSmeltResult = relic.getPendingSmeltResult(relicStack);
+            boolean success;
 
-            if (ability.isRankModifierUnlocked("overheat"))
-                chance = Math.max(0D, Math.min(1D, chance + relic.getSmeltPityStacks(relicStack) * Math.max(0D, ability.getStatData("stack_bonus").getValue())));
-            else
-                relic.setSmeltPityStacks(relicStack, 0);
+            if (pendingSmeltResult >= 0) {
+                success = pendingSmeltResult == 1;
+                relic.clearPendingSmeltRoll(relicStack);
+            } else {
+                var chance = Math.max(0D, Math.min(1D, ability.getStatData("smelt_chance").getValue()));
 
-            var success = player.getRandom().nextDouble() <= chance;
-
-            if (!success) {
                 if (ability.isRankModifierUnlocked("overheat"))
-                    relic.setSmeltPityStacks(relicStack, relic.getSmeltPityStacks(relicStack) + 1);
+                    chance = Math.max(0D, Math.min(1D, chance + relic.getSmeltPityStacks(relicStack) * Math.max(0D, ability.getStatData("stack_bonus").getValue())));
+                else
+                    relic.setSmeltPityStacks(relicStack, 0);
 
-                return;
+                success = player.getRandom().nextDouble() <= chance;
+
+                if (!success) {
+                    if (ability.isRankModifierUnlocked("overheat"))
+                        relic.setSmeltPityStacks(relicStack, relic.getSmeltPityStacks(relicStack) + 1);
+
+                    return;
+                }
+
+                if (ability.isRankModifierUnlocked("overheat"))
+                    relic.setSmeltPityStacks(relicStack, 0);
             }
 
-            if (ability.isRankModifierUnlocked("overheat"))
-                relic.setSmeltPityStacks(relicStack, 0);
+            if (!success)
+                return;
 
             for (var dropEntity : event.getDrops()) {
                 var smelted = relic.getSmeltingResult(event, dropEntity.getItem());
