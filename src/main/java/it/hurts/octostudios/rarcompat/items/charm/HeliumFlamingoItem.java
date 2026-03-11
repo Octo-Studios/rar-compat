@@ -164,6 +164,12 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         return ability.canPlayerUse(player) && !isHoverResetState(player) && getTime(stack) < getMaxHoverSeconds(player, stack);
     }
 
+    public static boolean shouldForceSwimPose(Player player) {
+        var stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
+
+        return stack.getItem() instanceof HeliumFlamingoItem relic && relic.isHovering(player, stack);
+    }
+
     private boolean shouldConsumeHoverTime(Player player, boolean efficientHoverUnlocked) {
         if (!efficientHoverUnlocked)
             return true;
