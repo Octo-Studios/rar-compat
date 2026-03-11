@@ -203,6 +203,9 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             if (!(player.getMainHandItem().getItem() instanceof PickaxeItem))
                 return;
 
+            if (player.getAttackStrengthScale(0.5F) < 1F)
+                return;
+
             var igniteDuration = 0D;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.PICKAXE_HEATER.value())) {
