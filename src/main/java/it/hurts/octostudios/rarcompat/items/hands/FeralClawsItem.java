@@ -197,6 +197,9 @@ public class FeralClawsItem extends WearableRelicItem {
             if (!(event.getSource().getEntity() instanceof Player player) || event.getSource().getDirectEntity() != player || player.level().isClientSide() || event.getEntity() == player || event.getAmount() <= 0F)
                 return;
 
+            if (player.getAttackStrengthScale(0.5F) < 1F)
+                return;
+
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.FERAL_CLAWS.value())) {
                 if (stack.getItem() instanceof FeralClawsItem relic)
                     relic.registerAttack(player, stack);
