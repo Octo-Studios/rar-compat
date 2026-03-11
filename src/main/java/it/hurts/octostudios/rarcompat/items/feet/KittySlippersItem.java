@@ -150,6 +150,35 @@ public class KittySlippersItem extends WearableRelicItem {
         }
     }
 
+
+    public static boolean shouldSuppressCreeperExplosion(Creeper creeper) {
+        if (creeper == null || !creeper.isAlive() || creeper.level().isClientSide())
+            return false;
+
+        var level = creeper.level();
+
+        for (var player : level.players()) {
+            if (!player.isAlive() || player.isSpectator())
+                continue;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.KITTY_SLIPPERS.value())) {
+                if (!(stack.getItem() instanceof KittySlippersItem relic))
+                    continue;
+
+                var aura = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("feline_aura");
+
+                if (!aura.canPlayerUse(player))
+                    continue;
+
+                var radius = Math.max(0D, aura.getStatData("radius").getValue());
+
+                if (radius > 0D && creeper.distanceToSqr(player) <= radius * radius)
+                    return true;
+            }
+        }
+
+        return false;
+    }
     private static void makeMobAvoidPlayer(Mob mob, Player player) {
         if (mob.getTarget() == player)
             mob.setTarget(null);

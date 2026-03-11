@@ -10,6 +10,7 @@
     "CampfireBlockEntityMixin",
     "AbstractVillagerMixin",
     "LivingEntityMixin",
+    "CreeperMixin",
     "VillagerMixin",
     "config.ConfigManagerMixin",
     "config.ModConfigMixin",
