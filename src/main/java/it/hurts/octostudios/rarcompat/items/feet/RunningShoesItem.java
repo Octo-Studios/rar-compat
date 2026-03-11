@@ -114,8 +114,9 @@ public class RunningShoesItem extends WearableRelicItem {
     }
 
     private boolean isRunning(Player player) {
-        return player.isSprinting() && !player.isFallFlying() && player.getDeltaMovement().horizontalDistanceSqr() > 1.0E-4D;
+        return player.isSprinting() && !player.isFallFlying();
     }
+
 
     private double getCharge(ItemStack stack) {
         return Math.max(0D, Math.min(1D, stack.getOrDefault(DataComponentRegistry.RUNNING_SHOES_CHARGE.get(), 0D)));
