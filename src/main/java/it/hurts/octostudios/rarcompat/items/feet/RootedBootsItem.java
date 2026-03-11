@@ -12,11 +12,13 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BoneMealItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -164,12 +166,33 @@ public class RootedBootsItem extends WearableRelicItem {
 
     private void applyBonemealAtFeet(Player player) {
         var level = player.level();
-        var targetPos = player.blockPosition();
+        var targetPos = findBonemealTargetPos(player);
+
+        if (targetPos == null)
+            return;
 
         if (!BoneMealItem.applyBonemeal(new ItemStack(Items.BONE_MEAL), level, targetPos, player))
             return;
 
         level.levelEvent(1505, targetPos, 15);
+    }
+
+    private BlockPos findBonemealTargetPos(Player player) {
+        var level = player.level();
+        var basePos = player.blockPosition();
+        var minY = Mth.floor(player.getBoundingBox().minY);
+        var maxY = Mth.floor(player.getBoundingBox().maxY) + 1;
+
+        for (var y = minY; y <= maxY; y++) {
+            var candidate = new BlockPos(basePos.getX(), y, basePos.getZ());
+            var state = level.getBlockState(candidate);
+
+            if (state.getBlock() instanceof BonemealableBlock bonemealable
+                    && bonemealable.isValidBonemealTarget(level, candidate, state))
+                return candidate;
+        }
+
+        return null;
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
