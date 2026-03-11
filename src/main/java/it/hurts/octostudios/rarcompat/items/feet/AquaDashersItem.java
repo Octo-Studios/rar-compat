@@ -24,7 +24,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class AquaDashersItem extends WearableRelicItem {
@@ -66,14 +65,30 @@ public class AquaDashersItem extends WearableRelicItem {
             return;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
+        var freeDash = ability.isRankModifierUnlocked("free_dash");
+        var jumpBonus = ability.isRankModifierUnlocked("water_jump") ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
 
         if (!ability.canPlayerUse(player)) {
             resetDashState(player, stack);
             return;
         }
 
-        if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash"))) {
-            resetDashState(player, stack);
+        var active = isDashActive(player, freeDash);
+        var keepSafeFall = jumpBonus > 0D
+                && getRecoveryTicks(stack) > 0
+                && (!player.onGround() || player.fallDistance > 0F);
+
+        if (!active) {
+            EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+            if (keepSafeFall)
+                EntityUtils.resetAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            else {
+                setRecoveryTicks(stack, 0);
+                EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            }
+
             return;
         }
 
@@ -89,6 +104,14 @@ public class AquaDashersItem extends WearableRelicItem {
             EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) -currentPenalty, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         else
             EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+        if (jumpBonus > 0D) {
+            EntityUtils.resetAttribute(player, stack, Attributes.JUMP_STRENGTH, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.resetAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        } else {
+            EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
     }
 
     @Override
@@ -104,6 +127,8 @@ public class AquaDashersItem extends WearableRelicItem {
     private void resetDashState(Player player, ItemStack stack) {
         setRecoveryTicks(stack, 0);
         EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     private int getRecoveryTicks(ItemStack stack) {
@@ -127,17 +152,12 @@ public class AquaDashersItem extends WearableRelicItem {
         if (!freeDash && !isRunning(player))
             return false;
 
-        if (player.isInFluidType())
-            return false;
-
         var surfaceY = getWaterSurfaceY(player);
 
         if (Double.isNaN(surfaceY))
             return false;
 
-        var minY = player.getBoundingBox().minY;
-
-        return minY >= surfaceY - 1.25D && minY <= surfaceY + 0.5D;
+        return true;
     }
 
     private static double getWaterSurfaceY(Player player) {
@@ -161,10 +181,10 @@ public class AquaDashersItem extends WearableRelicItem {
         public static void onFluidCollision(FluidCollisionEvent event) {
             var entity = event.getEntity();
 
-            if (!(entity instanceof Player player) || player.level().isClientSide())
+            if (!(entity instanceof Player player))
                 return;
 
-            if (!event.getFluid().is(FluidTags.WATER) || entity.isInFluidType())
+            if (!event.getFluid().is(FluidTags.WATER))
                 return;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.AQUA_DASHERS.value())) {
@@ -183,40 +203,9 @@ public class AquaDashersItem extends WearableRelicItem {
                 return;
             }
         }
-
-        @SubscribeEvent
-        public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
-                return;
-
-            var jumpBonus = 0D;
-
-            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.AQUA_DASHERS.value())) {
-                if (!(stack.getItem() instanceof AquaDashersItem relic))
-                    continue;
-
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
-
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("water_jump"))
-                    continue;
-
-                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
-                    continue;
-
-                var value = Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue()));
-                jumpBonus = Math.max(jumpBonus, value);
-            }
-
-            if (jumpBonus <= 0D)
-                return;
-
-            var motion = player.getDeltaMovement();
-            player.setDeltaMovement(motion.x, motion.y * (1D + jumpBonus), motion.z);
-        }
-
         @SubscribeEvent
         public static void onProjectileImpact(ProjectileImpactEvent event) {
-            if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult) || !(hitResult.getEntity() instanceof Player player) || player.level().isClientSide())
+            if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult) || !(hitResult.getEntity() instanceof Player player))
                 return;
 
             var projectile = event.getProjectile();
