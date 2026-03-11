@@ -122,14 +122,22 @@ public class RootedBootsItem extends WearableRelicItem {
         if (!level.getBlockState(targetPos).is(Blocks.GRASS_BLOCK))
             return;
 
-        level.setBlock(targetPos, Blocks.DIRT.defaultBlockState(), 3);
-
         var hungerRestore = Math.max(0, (int) Math.round(Math.max(0D, ability.getStatData("hunger_restore").getValue())));
         var saturationRestore = (float) Math.max(0D, ability.getStatData("saturation_restore").getValue());
         var foodData = player.getFoodData();
 
-        foodData.setFoodLevel(Math.min(20, foodData.getFoodLevel() + hungerRestore));
-        foodData.setSaturation(Math.min((float) foodData.getFoodLevel(), foodData.getSaturationLevel() + saturationRestore));
+        var currentFood = foodData.getFoodLevel();
+        var currentSaturation = foodData.getSaturationLevel();
+        var targetFood = Math.min(20, currentFood + hungerRestore);
+        var targetSaturation = Math.min((float) targetFood, currentSaturation + saturationRestore);
+
+        if (targetFood <= currentFood && targetSaturation <= currentSaturation + 1.0E-4F)
+            return;
+
+        level.setBlock(targetPos, Blocks.DIRT.defaultBlockState(), 3);
+
+        foodData.setFoodLevel(targetFood);
+        foodData.setSaturation(targetSaturation);
 
         if (ability.isRankModifierUnlocked("healing")) {
             var healAmount = Math.max(0D, ability.getStatData("healing").getValue());
