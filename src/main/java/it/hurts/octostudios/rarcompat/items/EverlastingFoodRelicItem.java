@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EverlastingFoodRelicItem extends RelicItem {
+    private final double durabilityInitial;
+    private final double durabilityFinal;
     private final double regenerationInitial;
     private final double regenerationFinal;
     private final double healingInitial;
@@ -42,7 +44,7 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
     private final double consumeSpeedInitial;
     private final double consumeSpeedFinal;
 
-    protected EverlastingFoodRelicItem(FoodProperties foodProperties, int maxDurability,
+    protected EverlastingFoodRelicItem(FoodProperties foodProperties, double durabilityInitial, double durabilityFinal,
                                        double regenerationInitial, double regenerationFinal,
                                        double healingInitial, double healingFinal,
                                        double preservationChanceInitial, double preservationChanceFinal,
@@ -50,9 +52,11 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
         super(new Item.Properties()
                 .rarity(Rarity.EPIC)
                 .food(foodProperties)
-                .durability(maxDurability)
+                .durability(Math.max(1, (int) Math.round(Math.max(durabilityInitial, durabilityFinal))))
                 .setNoRepair());
 
+        this.durabilityInitial = durabilityInitial;
+        this.durabilityFinal = durabilityFinal;
         this.regenerationInitial = regenerationInitial;
         this.regenerationFinal = regenerationFinal;
         this.healingInitial = healingInitial;
@@ -95,6 +99,12 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("durability")
+                                        .thresholdValue(1D, Double.MAX_VALUE)
+                                        .initialValue(this.durabilityInitial, this.durabilityFinal)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> Math.max(1, (int) Math.round(value)))
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -129,7 +139,7 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         var stack = player.getItemInHand(hand);
 
-        if (isExhausted(stack))
+        if (isExhausted(player, stack))
             return InteractionResultHolder.fail(stack);
 
         if (!player.canEat(stack.getFoodProperties(player).canAlwaysEat()))
@@ -144,6 +154,9 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
         if (stack.has(DataComponents.FOOD))
             livingEntity.eat(level, stack.copy());
+
+        if (!level.isClientSide)
+            syncDurability(livingEntity, stack);
 
         if (level.isClientSide || !stack.isDamageableItem())
             return stack;
@@ -184,13 +197,15 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
         if (level.isClientSide || !stack.isDamageableItem())
             return;
 
+        if (!(entity instanceof LivingEntity livingEntity))
+            return;
+
+        syncDurability(livingEntity, stack);
+
         if (stack.getDamageValue() <= 0) {
             stack.set(DataComponentRegistry.EVERLASTING_FOOD_REGEN_TICKS.get(), 0);
             return;
         }
-
-        if (!(entity instanceof LivingEntity livingEntity))
-            return;
 
         var regenerationTicks = getRegenerationTicks(livingEntity, stack);
         var timer = Math.max(0, stack.getOrDefault(DataComponentRegistry.EVERLASTING_FOOD_REGEN_TICKS.get(), regenerationTicks));
@@ -212,11 +227,35 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
         return stack.isDamageableItem() && stack.getDamageValue() >= stack.getMaxDamage();
     }
 
+    protected boolean isExhausted(LivingEntity livingEntity, ItemStack stack) {
+        syncDurability(livingEntity, stack);
+
+        return isExhausted(stack);
+    }
+
     private int getRegenerationTicks(LivingEntity livingEntity, ItemStack stack) {
         var ability = this.getRelicData(livingEntity, stack).getAbilitiesData().getAbilityData("meal");
         var regenerationSeconds = Math.max(0.05D, ability.getStatData("regeneration").getValue());
 
         return Math.max(1, (int) Math.round(regenerationSeconds * 20D));
+    }
+
+    private int getMaxDurability(LivingEntity livingEntity, ItemStack stack) {
+        var ability = this.getRelicData(livingEntity, stack).getAbilitiesData().getAbilityData("meal");
+        var durability = Math.max(1D, ability.getStatData("durability").getValue());
+
+        return Math.max(1, (int) Math.round(durability));
+    }
+
+    private void syncDurability(LivingEntity livingEntity, ItemStack stack) {
+        if (!stack.isDamageableItem())
+            return;
+
+        var maxDurability = getMaxDurability(livingEntity, stack);
+        stack.set(DataComponents.MAX_DAMAGE, maxDurability);
+
+        if (stack.getDamageValue() > maxDurability)
+            stack.setDamageValue(maxDurability);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -228,7 +267,7 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
 
             var stack = event.getItem();
 
-            if (!(stack.getItem() instanceof EverlastingFoodRelicItem relic) || relic.isExhausted(stack))
+            if (!(stack.getItem() instanceof EverlastingFoodRelicItem relic) || relic.isExhausted(event.getEntity(), stack))
                 return;
 
             var ability = relic.getRelicData(event.getEntity(), stack).getAbilitiesData().getAbilityData("meal");

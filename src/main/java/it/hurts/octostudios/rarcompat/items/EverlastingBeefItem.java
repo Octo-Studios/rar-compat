@@ -8,7 +8,7 @@ public class EverlastingBeefItem extends EverlastingFoodRelicItem {
                         .nutrition(3)
                         .saturationModifier(0.3F)
                         .build(),
-                64,
+                64D, 96D,
                 12D, 5D,
                 1D, 3D,
                 0.08D, 0.3D,
