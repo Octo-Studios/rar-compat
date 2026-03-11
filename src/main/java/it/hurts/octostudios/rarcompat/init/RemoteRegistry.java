@@ -20,5 +20,6 @@ public class RemoteRegistry {
     @SubscribeEvent
     public static void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(EntityRegistry.SPARK.get(), NullRenderer::new);
+        event.registerEntityRenderer(EntityRegistry.WHOOPEE_CLOUD.get(), NullRenderer::new);
     }
 }

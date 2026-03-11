@@ -5,11 +5,17 @@ import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.items.feet.BunnyHoppersItem;
+import it.hurts.octostudios.rarcompat.items.hat.WhoopeeCushionItem;
 import it.hurts.octostudios.rarcompat.network.packets.DoubleJumpPacket;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.SynergyTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditionTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.conditions.RelicConditionTemplate;
+import it.hurts.sskirillss.relics.init.RelicsRelicContainers;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -51,6 +57,16 @@ public class CloudInBottleItem extends WearableRelicItem {
                                         .initialValue(0.1D, 0.35D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .build())
+                        .synergy(SynergyTemplate.builder("cloud_burst")
+                                .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.CLOUD_IN_A_BOTTLE.value())
+                                        .container(RelicsRelicContainers.CURIOS.get())
+                                        .condition(AbilityConditionTemplate.builder("jump").build())
+                                        .build())
+                                .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.WHOOPEE_CUSHION.value())
+                                        .container(RelicsRelicContainers.CURIOS.get())
+                                        .condition(AbilityConditionTemplate.builder("push").build())
                                         .build())
                                 .build())
                         .build())
@@ -132,6 +148,18 @@ public class CloudInBottleItem extends WearableRelicItem {
 
         if (bunnyStack.getItem() instanceof BunnyHoppersItem bunny)
             bunny.armHighJumpFromCloudSynergy(player, bunnyStack);
+
+        if (!player.level().isClientSide()) {
+            var abilities = this.getRelicData(player, stack).getAbilitiesData();
+            var synergy = abilities.getSynergyData("cloud_burst");
+
+            if (synergy.isUnlocked() && synergy.isEnabled()) {
+                var whoopeeStack = EntityUtils.findEquippedCurio(player, ModItems.WHOOPEE_CUSHION.value());
+
+                if (whoopeeStack.getItem() instanceof WhoopeeCushionItem whoopee)
+                    whoopee.activateFromCloudSynergy(player, whoopeeStack);
+            }
+        }
 
         return true;
     }
