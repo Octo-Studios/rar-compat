@@ -111,13 +111,8 @@ public class FlippersItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F || !player.isInWaterOrBubble())
                 return;
 
-            var attacker = event.getSource().getEntity();
-
-            if (attacker == null || attacker == player)
-                return;
-
             var missChance = 0D;
-            var underwaterSpeed = player.getDeltaMovement().horizontalDistance() * 20D;
+            var underwaterSpeed = player.getKnownMovement().multiply(1,0,1).length();
 
             if (underwaterSpeed <= 0D)
                 return;
@@ -140,7 +135,6 @@ public class FlippersItem extends WearableRelicItem {
             if (missChance <= 0D || player.getRandom().nextDouble() > missChance)
                 return;
 
-            event.setAmount(0F);
             event.setCanceled(true);
         }
     }
