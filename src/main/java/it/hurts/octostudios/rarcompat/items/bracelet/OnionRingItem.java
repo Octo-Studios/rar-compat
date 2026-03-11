@@ -105,7 +105,7 @@ public class OnionRingItem extends WearableRelicItem {
         public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
             var player = event.getEntity();
 
-            if (player.level().isClientSide() || event.getNewSpeed() <= 0F)
+            if (event.getNewSpeed() <= 0F)
                 return;
 
             var hunger = Math.max(0, player.getFoodData().getFoodLevel());
