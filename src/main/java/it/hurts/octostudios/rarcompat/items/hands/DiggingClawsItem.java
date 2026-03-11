@@ -127,13 +127,14 @@ public class DiggingClawsItem extends WearableRelicItem {
     }
 
     private static boolean canHarvestWithTierBonus(ItemStack heldItem, BlockState state) {
-        if (!heldItem.has(DataComponents.TOOL))
-            return false;
+        var toolLevel = 0;
 
-        var toolLevel = getToolTierLevel(heldItem);
+        if (heldItem.has(DataComponents.TOOL)) {
+            toolLevel = getToolTierLevel(heldItem);
 
-        if (toolLevel < 0)
-            return false;
+            if (toolLevel < 0)
+                return false;
+        }
 
         return toolLevel + 1 >= getRequiredTierLevel(state);
     }
