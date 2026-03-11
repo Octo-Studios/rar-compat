@@ -4,6 +4,7 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.octostudios.rarcompat.items.feet.BunnyHoppersItem;
 import it.hurts.octostudios.rarcompat.network.packets.DoubleJumpPacket;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
@@ -127,6 +128,11 @@ public class CloudInBottleItem extends WearableRelicItem {
         if (ability.isRankModifierUnlocked("slow_fall"))
             setSlowFallTicks(stack, secondsToTicks(ability.getStatData("slow_fall_duration").getValue()));
 
+        var bunnyStack = EntityUtils.findEquippedCurio(player, ModItems.BUNNY_HOPPERS.value());
+
+        if (bunnyStack.getItem() instanceof BunnyHoppersItem bunny)
+            bunny.armHighJumpFromCloudSynergy(player, bunnyStack);
+
         return true;
     }
 
@@ -229,5 +235,3 @@ public class CloudInBottleItem extends WearableRelicItem {
         }
     }
 }
-
-

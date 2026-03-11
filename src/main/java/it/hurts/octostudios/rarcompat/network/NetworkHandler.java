@@ -1,6 +1,7 @@
 package it.hurts.octostudios.rarcompat.network;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.network.packets.BunnyJumpReleasePacket;
 import it.hurts.octostudios.rarcompat.network.packets.DoubleJumpPacket;
 import it.hurts.octostudios.rarcompat.network.packets.FlamingoSwimPacket;
 import it.hurts.octostudios.rarcompat.network.packets.PowerJumpPacket;
@@ -20,6 +21,7 @@ public class NetworkHandler {
                 .optional();
 
         registrar.playToServer(DoubleJumpPacket.TYPE, DoubleJumpPacket.STREAM_CODEC, DoubleJumpPacket::handle);
+        registrar.playToServer(BunnyJumpReleasePacket.TYPE, BunnyJumpReleasePacket.STREAM_CODEC, BunnyJumpReleasePacket::handle);
         registrar.playToServer(PowerJumpPacket.TYPE, PowerJumpPacket.STREAM_CODEC, PowerJumpPacket::handle);
         registrar.playToServer(FlamingoSwimPacket.TYPE, FlamingoSwimPacket.STREAM_CODEC, FlamingoSwimPacket::handle);
         registrar.playToServer(SteadfastSpikesPacket.TYPE, SteadfastSpikesPacket.STREAM_CODEC, SteadfastSpikesPacket::handle);

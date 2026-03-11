@@ -55,6 +55,9 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ONION_RING_FOOD_BOOST_TICKS = construct("onion_ring/food_boost_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_USED_MAX_DURATION = construct("bunny_hoppers/used_max_duration", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> BUNNY_HOPPERS_LANDING_STRIKE_TICKS = construct("bunny_hoppers/landing_strike_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> BUNNY_HOPPERS_JUMP_START_Y = construct("bunny_hoppers/jump_start_y", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> BUNNY_HOPPERS_JUMP_PEAK_Y = construct("bunny_hoppers/jump_peak_y", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_JUMP_LOCKED = construct("bunny_hoppers/jump_locked", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> KITTY_SLIPPERS_DODGE_READY = construct("kitty_slippers/dodge_ready", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> RUNNING_SHOES_CHARGE = construct("running_shoes/charge", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> STRIDER_SHOES_RECOVERY_TICKS = construct("strider_shoes/recovery_ticks", Codec.INT);
