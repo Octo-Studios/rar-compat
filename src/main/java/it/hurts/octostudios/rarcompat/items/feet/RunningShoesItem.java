@@ -41,7 +41,7 @@ public class RunningShoesItem extends WearableRelicItem {
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.12D, 0.45D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("jump_charge_bonus")
                                         .thresholdValue(0D, 1D)
@@ -90,9 +90,9 @@ public class RunningShoesItem extends WearableRelicItem {
             var stepBonus = Math.max(0D, ability.getStatData("max_step_bonus").getValue()) * charge;
 
             if (stepBonus <= 0D)
-                EntityUtils.removeAttribute(player, stack, Attributes.STEP_HEIGHT, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                EntityUtils.removeAttribute(player, stack, Attributes.STEP_HEIGHT, AttributeModifier.Operation.ADD_VALUE);
             else
-                EntityUtils.resetAttribute(player, stack, Attributes.STEP_HEIGHT, (float) stepBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                EntityUtils.resetAttribute(player, stack, Attributes.STEP_HEIGHT, (float) stepBonus, AttributeModifier.Operation.ADD_VALUE);
         } else {
             EntityUtils.removeAttribute(player, stack, Attributes.STEP_HEIGHT, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
