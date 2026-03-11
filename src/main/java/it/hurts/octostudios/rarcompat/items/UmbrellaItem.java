@@ -164,12 +164,15 @@ public class UmbrellaItem extends WearableRelicItem {
     private void applySlowFall(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
 
-        if (!ability.canPlayerUse(player) || player.isInLiquid() || player.getDeltaMovement().y > 0 || player.isShiftKeyDown() || isUsingShield(player, stack))
+        if (!ability.canPlayerUse(player) || player.isInLiquid() || player.getDeltaMovement().y > 0)
             return;
 
-        var motion = player.getDeltaMovement();
+        if (!player.isShiftKeyDown() && !isUsingShield(player, stack)) {
+            var motion = player.getDeltaMovement();
 
-        player.setDeltaMovement(motion.x(), -0.15D, motion.z());
+            player.setDeltaMovement(motion.x(), -0.15D, motion.z());
+        }
+
         player.fallDistance = 0;
     }
 

@@ -171,12 +171,15 @@ public class CloudInBottleItem extends WearableRelicItem {
     }
 
     private void applySlowFall(Player player) {
-        if (player.isInFluidType() || player.getDeltaMovement().y > 0D || player.isShiftKeyDown())
+        if (player.isInFluidType() || player.getDeltaMovement().y > 0D)
             return;
 
-        var motion = player.getDeltaMovement();
+        if (!player.isShiftKeyDown()) {
+            var motion = player.getDeltaMovement();
 
-        player.setDeltaMovement(motion.x, -0.15D, motion.z);
+            player.setDeltaMovement(motion.x, -0.15D, motion.z);
+        }
+
         player.fallDistance = 0F;
     }
 
