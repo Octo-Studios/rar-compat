@@ -100,6 +100,7 @@ public class PowerGloveItem extends WearableRelicItem {
             if (!(event.getSource().getEntity() instanceof Player player) || event.getSource().getDirectEntity() != player || player.level().isClientSide() || event.getEntity() == player || event.getAmount() <= 0F)
                 return;
 
+            var fullyCharged = player.getAttackStrengthScale(0.5F) >= 1F;
             var damageBonus = 0D;
             var armorIgnore = 0D;
             var hasPowerStrike = false;
@@ -116,6 +117,9 @@ public class PowerGloveItem extends WearableRelicItem {
                     relic.clearState(stack);
                     continue;
                 }
+
+                if (!fullyCharged)
+                    continue;
 
                 var hitsRequired = Math.max(1, (int) MathUtils.round(ability.getStatData("hits_required").getValue(), 0));
                 var powerStrike = relic.getForceNext(stack);
