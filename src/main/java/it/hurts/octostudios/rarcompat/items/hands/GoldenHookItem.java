@@ -11,15 +11,15 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.EntityInvulnerabilityCheckEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public class GoldenHookItem extends WearableRelicItem {
     @Override
@@ -82,8 +82,57 @@ public class GoldenHookItem extends WearableRelicItem {
             player.drop(stolen, false);
     }
 
+    private static double getAutoPickupRadius(Player player) {
+        var radius = 0D;
+
+        for (var stack : EntityUtils.findEquippedCurios(player, ModItems.GOLDEN_HOOK.value())) {
+            if (!(stack.getItem() instanceof GoldenHookItem relic))
+                continue;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("hook");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("boat_guard"))
+                continue;
+
+            radius = Math.max(radius, Math.max(0D, ability.getStatData("pull_radius").getValue()));
+        }
+
+        return radius;
+    }
+
+    private static void tryAutoPickupExperience(Player player) {
+        var radius = getAutoPickupRadius(player);
+
+        if (radius <= 0D)
+            return;
+
+        var radiusSq = radius * radius;
+
+        for (var orb : player.level().getEntitiesOfClass(ExperienceOrb.class, player.getBoundingBox().inflate(radius), entity -> entity.isAlive())) {
+            if (orb.distanceToSqr(player) > radiusSq)
+                continue;
+
+            orb.playerTouch(player);
+        }
+    }
+
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLevelTickPost(LevelTickEvent.Post event) {
+            var level = event.getLevel();
+
+            if (level.isClientSide())
+                return;
+
+            for (var player : level.players()) {
+                if (!player.isAlive() || player.isSpectator())
+                    continue;
+
+                tryAutoPickupExperience(player);
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingExperienceDrop(LivingExperienceDropEvent event) {
             var player = event.getAttackingPlayer();
@@ -111,30 +160,6 @@ public class GoldenHookItem extends WearableRelicItem {
                 return;
 
             event.setDroppedExperience(Math.max(0, (int) Math.round(event.getDroppedExperience() * (1D + bonus))));
-        }
-
-        @SubscribeEvent
-        public static void onEntityInvulnerabilityCheck(EntityInvulnerabilityCheckEvent event) {
-            if (!(event.getEntity() instanceof Boat boat))
-                return;
-
-            for (var passenger : boat.getPassengers()) {
-                if (!(passenger instanceof Player player))
-                    continue;
-
-                for (var stack : EntityUtils.findEquippedCurios(player, ModItems.GOLDEN_HOOK.value())) {
-                    if (!(stack.getItem() instanceof GoldenHookItem relic))
-                        continue;
-
-                    var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("hook");
-
-                    if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("boat_guard"))
-                        continue;
-
-                    event.setInvulnerable(true);
-                    return;
-                }
-            }
         }
 
         @SubscribeEvent
