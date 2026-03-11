@@ -1,6 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
 import artifacts.registry.ModItems;
+import artifacts.registry.ModSoundEvents;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
@@ -117,7 +118,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
         var level = player.level();
 
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 1F,
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSoundEvents.FART, SoundSource.PLAYERS, 1F,
                 0.9F + player.getRandom().nextFloat() * 0.2F);
 
         var maxDistanceSq = distance * distance;
