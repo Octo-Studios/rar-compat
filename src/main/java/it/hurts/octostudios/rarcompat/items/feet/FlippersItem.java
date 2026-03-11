@@ -61,7 +61,7 @@ public class FlippersItem extends WearableRelicItem {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("swim");
 
         if (!ability.canPlayerUse(player)) {
-            EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
             EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
             return;
         }
@@ -72,11 +72,11 @@ public class FlippersItem extends WearableRelicItem {
             var speedBonus = Math.max(0D, ability.getStatData("speed").getValue());
 
             if (speedBonus <= 0D)
-                EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
             else
-                EntityUtils.resetAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_VALUE);
         } else {
-            EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
         }
 
         if (inWater && ability.isRankModifierUnlocked("buoyancy"))
@@ -100,7 +100,7 @@ public class FlippersItem extends WearableRelicItem {
         if (stack.getItem() == newStack.getItem() || !(slotContext.entity() instanceof Player player))
             return;
 
-        EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
         EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
