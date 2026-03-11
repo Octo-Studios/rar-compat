@@ -22,7 +22,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
@@ -64,16 +63,30 @@ public class StriderShoesItem extends WearableRelicItem {
             return;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
+        var freeStride = ability.isRankModifierUnlocked("free_stride");
+        var jumpBonus = ability.isRankModifierUnlocked("lava_jump") ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
 
         if (!ability.canPlayerUse(player)) {
             resetStrideState(player, stack);
             return;
         }
 
-        var freeStride = ability.isRankModifierUnlocked("free_stride");
+        var active = isStrideActive(player, freeStride);
+        var keepSafeFall = jumpBonus > 0D
+                && getRecoveryTicks(stack) > 0
+                && (!player.onGround() || player.fallDistance > 0F);
 
-        if (!isStrideActive(player, freeStride)) {
-            resetStrideState(player, stack);
+        if (!active) {
+            EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+            if (keepSafeFall)
+                EntityUtils.resetAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            else {
+                setRecoveryTicks(stack, 0);
+                EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            }
+
             return;
         }
 
@@ -89,6 +102,14 @@ public class StriderShoesItem extends WearableRelicItem {
             EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) -currentPenalty, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         else
             EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+        if (jumpBonus > 0D) {
+            EntityUtils.resetAttribute(player, stack, Attributes.JUMP_STRENGTH, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.resetAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        } else {
+            EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
     }
 
     @Override
@@ -104,6 +125,8 @@ public class StriderShoesItem extends WearableRelicItem {
     private void resetStrideState(Player player, ItemStack stack) {
         setRecoveryTicks(stack, 0);
         EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     private int getRecoveryTicks(ItemStack stack) {
@@ -121,17 +144,12 @@ public class StriderShoesItem extends WearableRelicItem {
         if (!freeStride && !player.isShiftKeyDown())
             return false;
 
-        if (player.isInFluidType())
-            return false;
-
         var surfaceY = getLavaSurfaceY(player);
 
         if (Double.isNaN(surfaceY))
             return false;
 
-        var minY = player.getBoundingBox().minY;
-
-        return minY >= surfaceY - 1.25D && minY <= surfaceY + 0.5D;
+        return true;
     }
 
     private static double getLavaSurfaceY(Player player) {
@@ -155,10 +173,10 @@ public class StriderShoesItem extends WearableRelicItem {
         public static void onFluidCollision(FluidCollisionEvent event) {
             LivingEntity entity = event.getEntity();
 
-            if (!(entity instanceof Player player) || player.level().isClientSide())
+            if (!(entity instanceof Player player))
                 return;
 
-            if (!event.getFluid().is(FluidTags.LAVA) || entity.isInFluidType())
+            if (!event.getFluid().is(FluidTags.LAVA))
                 return;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.STRIDER_SHOES.value())) {
@@ -182,37 +200,6 @@ public class StriderShoesItem extends WearableRelicItem {
                 return;
             }
         }
-
-        @SubscribeEvent
-        public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
-                return;
-
-            var jumpBonus = 0D;
-
-            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STRIDER_SHOES.value())) {
-                if (!(stack.getItem() instanceof StriderShoesItem relic))
-                    continue;
-
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
-
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_jump"))
-                    continue;
-
-                if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
-                    continue;
-
-                var value = Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue()));
-                jumpBonus = Math.max(jumpBonus, value);
-            }
-
-            if (jumpBonus <= 0D)
-                return;
-
-            var motion = player.getDeltaMovement();
-            player.setDeltaMovement(motion.x, motion.y * (1D + jumpBonus), motion.z);
-        }
-
         @SubscribeEvent
         public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
