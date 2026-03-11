@@ -190,6 +190,9 @@ public class DiggingClawsItem extends WearableRelicItem {
             if (player.level().isClientSide() || event.isCanceled())
                 return;
 
+            if (event.getState().getDestroySpeed(player.level(), event.getPos()) <= 0F)
+                return;
+
             var relicStack = EntityUtils.findEquippedCurio(player, ModItems.DIGGING_CLAWS.value());
 
             if (!(relicStack.getItem() instanceof DiggingClawsItem relic))
