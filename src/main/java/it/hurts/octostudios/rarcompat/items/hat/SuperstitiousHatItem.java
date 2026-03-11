@@ -117,7 +117,7 @@ public class SuperstitiousHatItem extends WearableRelicItem {
             var firstKillBonus = Math.max(0D, ability.getStatData("first_kill_bonus").getValue());
 
             if (firstWindowTicks <= 0L || ticksSinceLastKill > firstWindowTicks)
-                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + baseChance * firstKillBonus));
+                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + firstKillBonus));
         }
 
         if (ability.isRankModifierUnlocked("beast_hunter") && mob instanceof Animal) {
