@@ -13,7 +13,6 @@ import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.Tiers;
@@ -51,6 +50,12 @@ public class DiggingClawsItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("momentum_window")
+                                        .thresholdValue(0.1D, Double.MAX_VALUE)
+                                        .initialValue(3D, 6D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -81,6 +86,10 @@ public class DiggingClawsItem extends WearableRelicItem {
 
     private void setLastBreakTick(ItemStack stack, long tick) {
         stack.set(DataComponentRegistry.DIGGING_CLAWS_LAST_BREAK_TICK.get(), Math.max(-1L, tick));
+    }
+
+    private static long secondsToTicks(double seconds) {
+        return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
     }
 
     private static int getToolTierLevel(ItemStack stack) {
@@ -150,8 +159,9 @@ public class DiggingClawsItem extends WearableRelicItem {
 
             var gameTime = player.level().getGameTime();
             var lastBreakTick = relic.getLastBreakTick(relicStack);
+            var windowTicks = secondsToTicks(ability.getStatData("momentum_window").getValue());
 
-            if (lastBreakTick < 0L || gameTime - lastBreakTick > 60L)
+            if (lastBreakTick < 0L || gameTime - lastBreakTick > windowTicks)
                 relic.setStreakCount(relicStack, 0);
 
             var speedMultiplier = 1D + Math.max(0D, ability.getStatData("speed").getValue());
@@ -196,7 +206,8 @@ public class DiggingClawsItem extends WearableRelicItem {
 
             var gameTime = player.level().getGameTime();
             var lastBreakTick = relic.getLastBreakTick(relicStack);
-            var streak = lastBreakTick >= 0L && gameTime - lastBreakTick <= 60L ? relic.getStreakCount(relicStack) + 1 : 1;
+            var windowTicks = secondsToTicks(ability.getStatData("momentum_window").getValue());
+            var streak = lastBreakTick >= 0L && gameTime - lastBreakTick <= windowTicks ? relic.getStreakCount(relicStack) + 1 : 1;
 
             relic.setStreakCount(relicStack, streak);
             relic.setLastBreakTick(relicStack, gameTime);
