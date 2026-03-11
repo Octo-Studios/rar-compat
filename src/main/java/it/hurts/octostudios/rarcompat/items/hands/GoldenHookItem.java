@@ -190,7 +190,9 @@ public class GoldenHookItem extends WearableRelicItem {
                 }
             }
 
-            if (pullRadius > 0D) {
+            var fullyChargedAttack = player.getAttackStrengthScale(0.5F) > 0.9F;
+
+            if (pullRadius > 0D && fullyChargedAttack) {
                 var center = event.getEntity();
                 var centerPos = center.position().add(0D, center.getBbHeight() * 0.5D, 0D);
                 var maxDistanceSq = pullRadius * pullRadius;
