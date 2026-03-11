@@ -43,6 +43,12 @@ public class WitheredBraceletItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("wither_level")
+                                        .thresholdValue(1D, Double.MAX_VALUE)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
                                 .stat(AbilityStatTemplate.builder("spread_duration")
                                         .thresholdValue(0D, Double.MAX_VALUE)
                                         .initialValue(1D, 4D)
@@ -72,11 +78,11 @@ public class WitheredBraceletItem extends WearableRelicItem {
         return event.getSource().is(DamageTypes.WITHER) || event.getSource().is(DamageTypes.WITHER_SKULL);
     }
 
-    private static void applyWitherFromBracelet(LivingEntity target, Player owner, int ticks) {
+    private static void applyWitherFromBracelet(LivingEntity target, Player owner, int ticks, int amplifier) {
         if (ticks <= 0)
             return;
 
-        target.addEffect(new MobEffectInstance(MobEffects.WITHER, ticks, 0, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.WITHER, ticks, Math.max(0, amplifier), false, true));
 
         var data = target.getPersistentData();
         var expireTick = owner.level().getGameTime() + Math.max(1L, ticks);
@@ -182,7 +188,9 @@ public class WitheredBraceletItem extends WearableRelicItem {
                 if (durationTicks <= 0)
                     continue;
 
-                applyWitherFromBracelet(target, player, durationTicks);
+                var witherLevel = Math.max(1, (int) MathUtils.round(ability.getStatData("wither_level").getValue(), 0));
+
+                applyWitherFromBracelet(target, player, durationTicks, witherLevel - 1);
             }
         }
 
@@ -201,6 +209,7 @@ public class WitheredBraceletItem extends WearableRelicItem {
 
             var spreadDuration = 0;
             var spreadRadius = 0D;
+            var spreadAmplifier = 0;
 
             for (var stack : EntityUtils.findEquippedCurios(owner, ModItems.WITHERED_BRACELET.value())) {
                 if (!(stack.getItem() instanceof WitheredBraceletItem relic))
@@ -213,6 +222,7 @@ public class WitheredBraceletItem extends WearableRelicItem {
 
                 spreadDuration = Math.max(spreadDuration, secondsToTicks(ability.getStatData("spread_duration").getValue()));
                 spreadRadius = Math.max(spreadRadius, Math.max(0D, ability.getStatData("spread_radius").getValue()));
+                spreadAmplifier = Math.max(spreadAmplifier, Math.max(0, (int) MathUtils.round(ability.getStatData("wither_level").getValue(), 0) - 1));
             }
 
             if (spreadDuration <= 0 || spreadRadius <= 0D)
@@ -224,7 +234,7 @@ public class WitheredBraceletItem extends WearableRelicItem {
                 if (nearby.distanceToSqr(entity) > radiusSq)
                     continue;
 
-                applyWitherFromBracelet(nearby, owner, spreadDuration);
+                applyWitherFromBracelet(nearby, owner, spreadDuration, spreadAmplifier);
             }
         }
 
