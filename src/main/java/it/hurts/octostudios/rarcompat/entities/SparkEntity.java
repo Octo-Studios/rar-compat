@@ -43,6 +43,11 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     public void tick() {
         super.tick();
 
+        if (this.isInWaterRainOrBubble()) {
+            this.discard();
+            return;
+        }
+
         var level = getCommandSenderWorld();
         var particleCenter = this.getPosition(1).add(0, 0.5, 0);
 
