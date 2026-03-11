@@ -108,7 +108,9 @@ public class CrystalHeartItem extends WearableRelicItem {
         if (lastHealth < 0F)
             lastHealth = currentHealth;
 
-        if (currentHealth < lastHealth && currentHealth < bonusHealth) {
+        var baseHealthThreshold = (float) Math.max(0D, player.getMaxHealth() - bonusHealth);
+
+        if (currentHealth < lastHealth && currentHealth <= baseHealthThreshold + 1.0E-3F) {
             var cooldownTicks = secondsToTicks(ability.getStatData("cooldown").getValue());
 
             if (cooldownTicks > 0)
@@ -240,7 +242,9 @@ public class CrystalHeartItem extends WearableRelicItem {
 
                 var bonusHealth = Math.max(0D, ability.getStatData("bonus_health").getValue());
 
-                if (player.getHealth() > bonusHealth)
+                var baseHealthThreshold = (float) Math.max(0D, player.getMaxHealth() - bonusHealth);
+
+                if (player.getHealth() > baseHealthThreshold + 1.0E-3F)
                     continue;
 
                 var healBonus = Math.max(0D, ability.getStatData("low_health_heal_bonus").getValue());
