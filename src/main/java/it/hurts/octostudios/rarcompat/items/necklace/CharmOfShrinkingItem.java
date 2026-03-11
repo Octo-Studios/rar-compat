@@ -12,7 +12,8 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -23,9 +24,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfShrinkingItem extends WearableRelicItem {
-
     private static final ResourceLocation SCALE_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "charm_of_shrinking_scale");
-    private static final ResourceLocation HEALTH_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(RARCompat.MODID, "charm_of_shrinking_health");
 
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
@@ -33,19 +32,13 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
                 .abilities(AbilitiesTemplate.builder()
                         .ability(AbilityTemplate.builder("size")
                                 .modes("stabilize", "shrink", "grow")
-                                .rankModifier(1, "evasion")
-                                .rankModifier(3, "growth")
-                                .rankModifier(5, "vitality")
+                                .rankModifier(1, "fall_resistance")
+                                .rankModifier(3, "target_escape")
+                                .rankModifier(5, "evasion")
                                 .stat(AbilityStatTemplate.builder("min_scale")
                                         .thresholdValue(0.125D, 1D)
                                         .initialValue(0.75D, 0.45D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
-                                        .formatValue(value -> MathUtils.round(value, 2))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("max_scale")
-                                        .thresholdValue(1D, 10D)
-                                        .initialValue(1.25D, 2.5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("change_per_second")
@@ -54,17 +47,29 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
-                                .stat(AbilityStatTemplate.builder("evasion_per_size")
+                                .stat(AbilityStatTemplate.builder("fall_reduction_per_size")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.08D, 0.2D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
-                                .stat(AbilityStatTemplate.builder("health_per_size")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(2D, 8D)
+                                .stat(AbilityStatTemplate.builder("target_loss_chance_per_size")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.08D, 0.2D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("target_loss_radius")
+                                        .thresholdValue(1D, Double.MAX_VALUE)
+                                        .initialValue(4D, 10D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("evasion_per_size")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.08D, 0.2D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .build())
                         .build())
@@ -81,8 +86,6 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
 
         if (!ability.canPlayerUse(player)) {
             applyScaleModifier(player, currentScale);
-            applyHealthModifier(player, 0D);
-
             return;
         }
 
@@ -91,16 +94,8 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         var targetScale = currentScale;
 
         switch (ability.getMode()) {
-            case "shrink" -> {
-                var minScale = clampScale(Math.min(1D, ability.getStatData("min_scale").getValue()));
-                targetScale = minScale;
-            }
-            case "grow" -> {
-                if (ability.isRankModifierUnlocked("growth")) {
-                    var maxScale = clampScale(Math.max(1D, ability.getStatData("max_scale").getValue()));
-                    targetScale = maxScale;
-                }
-            }
+            case "shrink" -> targetScale = clampScale(Math.min(1D, ability.getStatData("min_scale").getValue()));
+            case "grow" -> targetScale = 1D;
             default -> {
             }
         }
@@ -108,16 +103,28 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         var newScale = stepPerTick > 0D ? moveTowards(currentScale, targetScale, stepPerTick) : currentScale;
 
         newScale = clampScale(newScale);
+
         setCurrentScale(stack, newScale);
         applyScaleModifier(player, newScale);
 
-        if (ability.isRankModifierUnlocked("vitality") && newScale > 1D) {
-            var perSize = Math.max(0D, ability.getStatData("health_per_size").getValue());
-            var bonusHealth = (newScale - 1D) * perSize;
+        if (!ability.isRankModifierUnlocked("target_escape") || newScale >= 1D || player.tickCount % 20 != 0)
+            return;
 
-            applyHealthModifier(player, bonusHealth);
-        } else {
-            applyHealthModifier(player, 0D);
+        var chancePerSize = Math.max(0D, ability.getStatData("target_loss_chance_per_size").getValue());
+        var chance = Math.max(0D, Math.min(1D, (1D - newScale) * chancePerSize));
+        var radius = Math.max(0D, ability.getStatData("target_loss_radius").getValue());
+
+        if (chance <= 0D || radius <= 0D)
+            return;
+
+        var maxDistanceSq = radius * radius;
+
+        for (var mob : player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(radius), entity -> entity.isAlive() && entity.getTarget() == player)) {
+            if (mob.distanceToSqr(player) > maxDistanceSq || player.getRandom().nextDouble() > chance)
+                continue;
+
+            mob.setTarget(null);
+            mob.getNavigation().stop();
         }
     }
 
@@ -128,10 +135,8 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         if (stack.getItem() == newStack.getItem())
             return;
 
-        if (slotContext.entity() instanceof Player player && !player.level().isClientSide()) {
+        if (slotContext.entity() instanceof Player player && !player.level().isClientSide())
             removeScaleModifier(player);
-            applyHealthModifier(player, 0D);
-        }
 
         setCurrentScale(stack, 1D);
     }
@@ -154,23 +159,6 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
             return;
 
         attribute.removeModifier(new AttributeModifier(SCALE_MODIFIER_ID, 0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-    }
-
-    private void applyHealthModifier(Player player, double bonusHealth) {
-        var attribute = player.getAttribute(Attributes.MAX_HEALTH);
-
-        if (attribute == null)
-            return;
-
-        attribute.removeModifier(new AttributeModifier(HEALTH_MODIFIER_ID, 0D, AttributeModifier.Operation.ADD_VALUE));
-
-        if (bonusHealth > 0D)
-            attribute.addOrUpdateTransientModifier(new AttributeModifier(HEALTH_MODIFIER_ID, bonusHealth, AttributeModifier.Operation.ADD_VALUE));
-
-        var maxHealth = (float) player.getMaxHealth();
-
-        if (player.getHealth() > maxHealth)
-            player.setHealth(maxHealth);
     }
 
     private double getCurrentScale(ItemStack stack) {
@@ -202,37 +190,52 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
     public static class CommonEvents {
         @SubscribeEvent
         public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
                 return;
 
-            if (!(event.getSource().getEntity() instanceof LivingEntity))
+            var isFallDamage = event.getSource().is(DamageTypes.FALL);
+            var fallReduction = 0D;
+            var evasionChance = 0D;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHARM_OF_SHRINKING.value())) {
+                if (!(stack.getItem() instanceof CharmOfShrinkingItem relic))
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("size");
+
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                var scale = relic.getCurrentScale(stack);
+
+                if (scale >= 1D)
+                    continue;
+
+                var shrinkDelta = 1D - scale;
+
+                if (isFallDamage && ability.isRankModifierUnlocked("fall_resistance")) {
+                    var perSize = Math.max(0D, ability.getStatData("fall_reduction_per_size").getValue());
+                    var reduction = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
+
+                    fallReduction = Math.max(fallReduction, reduction);
+                }
+
+                if (ability.isRankModifierUnlocked("evasion")) {
+                    var perSize = Math.max(0D, ability.getStatData("evasion_per_size").getValue());
+                    var chance = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
+
+                    evasionChance = Math.max(evasionChance, chance);
+                }
+            }
+
+            if (isFallDamage && fallReduction > 0D)
+                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - fallReduction)));
+
+            if (evasionChance <= 0D || player.getRandom().nextDouble() > evasionChance)
                 return;
 
-            var stack = EntityUtils.findEquippedCurio(player, ModItems.CHARM_OF_SHRINKING.value());
-
-            if (!(stack.getItem() instanceof CharmOfShrinkingItem relic))
-                return;
-
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("size");
-
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("evasion"))
-                return;
-
-            var scale = relic.getCurrentScale(stack);
-
-            if (scale >= 1D)
-                return;
-
-            var evasionPerSize = Math.max(0D, ability.getStatData("evasion_per_size").getValue());
-            var chance = Math.max(0D, Math.min(1D, (1D - scale) * evasionPerSize));
-
-            if (chance <= 0D)
-                return;
-
-            if (player.getRandom().nextDouble() < chance)
-                event.setAmount(0F);
+            event.setAmount(0F);
+            event.setCanceled(true);
         }
     }
 }
-
-
