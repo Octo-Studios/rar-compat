@@ -13,6 +13,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -205,10 +206,15 @@ public class GoldenHookItem extends WearableRelicItem {
                     if (direction.lengthSqr() <= 1.0E-6D)
                         continue;
 
-                    var velocity = nearby.getDeltaMovement().add(direction.normalize().scale(0.14D));
+                    var velocity = nearby.getDeltaMovement().add(direction.normalize().scale(0.28D));
 
                     nearby.setDeltaMovement(velocity);
                     nearby.hasImpulse = true;
+
+                    if (nearby instanceof Mob mob) {
+                        mob.setTarget(null);
+                        mob.getNavigation().stop();
+                    }
                 }
             }
 
