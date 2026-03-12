@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -64,6 +69,28 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("smelted_block").build())
+                                        .source(ExperienceSourceTemplate.builder("blazing_ignite")
+                                                .rankModifierVisibilityState("blazing_strike", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("molten_luck_level")
+                                                .rankModifierVisibilityState("molten_luck", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("smelted_blocks")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("blazing_ignites")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("blazing_strike", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("molten_luck_levels")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("molten_luck", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -93,7 +120,8 @@ public class PickaxeHeaterItem extends WearableRelicItem {
         if (blockState == null || !blockState.is(Tags.Blocks.ORES) || tool == null || !(tool.getItem() instanceof PickaxeItem))
             return baseFortune;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("heating");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("heating");
 
         if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("molten_luck")) {
             clearPendingSmeltRoll(stack);
@@ -133,6 +161,11 @@ public class PickaxeHeaterItem extends WearableRelicItem {
 
         setPendingSmeltResult(stack, 1);
         setPendingFortuneBonus(stack, Math.max(0, procs));
+
+        if (procs > 0) {
+            relicData.getLevelingData().addExperience("heating", "molten_luck_level", procs);
+            ability.getStatisticData().getMetricData("molten_luck_levels").addValue(procs);
+        }
 
         if (procs <= 0)
             return baseFortune;
@@ -209,7 +242,8 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             if (!(relicStack.getItem() instanceof PickaxeHeaterItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, relicStack).getAbilitiesData().getAbilityData("heating");
+            var relicData = relic.getRelicData(player, relicStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("heating");
 
             if (!ability.canPlayerUse(player)) {
                 relic.setSmeltPityStacks(relicStack, 0);
@@ -247,6 +281,8 @@ public class PickaxeHeaterItem extends WearableRelicItem {
             if (!success)
                 return;
 
+            var smeltedBlock = false;
+
             for (var dropEntity : event.getDrops()) {
                 var smelted = relic.getSmeltingResult(event, dropEntity.getItem());
 
@@ -254,7 +290,14 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                     continue;
 
                 dropEntity.setItem(smelted);
+                smeltedBlock = true;
             }
+
+            if (!smeltedBlock)
+                return;
+
+            relicData.getLevelingData().addExperience("heating", "smelted_block", 1D);
+            ability.getStatisticData().getMetricData("smelted_blocks").addValue(1D);
         }
 
         @SubscribeEvent
@@ -269,6 +312,8 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                 return;
 
             var igniteDuration = 0D;
+            PickaxeHeaterItem igniteRelic = null;
+            ItemStack igniteStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.PICKAXE_HEATER.value())) {
                 if (!(stack.getItem() instanceof PickaxeHeaterItem relic))
@@ -279,11 +324,31 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("blazing_strike"))
                     continue;
 
-                igniteDuration = Math.max(igniteDuration, Math.max(0D, ability.getStatData("ignite_duration").getValue()));
+                var localDuration = Math.max(0D, ability.getStatData("ignite_duration").getValue());
+
+                if (igniteRelic == null || localDuration > igniteDuration) {
+                    igniteDuration = localDuration;
+                    igniteRelic = relic;
+                    igniteStack = stack;
+                }
             }
 
-            if (igniteDuration > 0D)
-                event.getEntity().igniteForSeconds((float) igniteDuration);
+            if (igniteDuration <= 0D || igniteRelic == null)
+                return;
+
+            var target = event.getEntity();
+            var wasOnFire = target.isOnFire();
+
+            target.igniteForSeconds((float) igniteDuration);
+
+            if (wasOnFire || !target.isOnFire())
+                return;
+
+            var relicData = igniteRelic.getRelicData(player, igniteStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("heating");
+
+            relicData.getLevelingData().addExperience("heating", "blazing_ignite", 1D);
+            ability.getStatisticData().getMetricData("blazing_ignites").addValue(1D);
         }
     }
 }

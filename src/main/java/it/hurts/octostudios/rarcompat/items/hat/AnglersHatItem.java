@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.hat;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -64,6 +69,29 @@ public class AnglersHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("catch").build())
+                                        .source(ExperienceSourceTemplate.builder("fish_eaten").build())
+                                        .source(ExperienceSourceTemplate.builder("treasure_catch")
+                                                .rankModifierVisibilityState("treasure", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("fish_caught")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("fish_eaten")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("healing_restored")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 1)))
+                                                .rankModifierVisibilityState("healing", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("treasures_caught")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("treasure", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -112,15 +140,31 @@ public class AnglersHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof AnglersHatItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("catch");
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("catch");
 
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("healing"))
+            if (!ability.canPlayerUse(player))
+                return;
+
+            ability.getStatisticData().getMetricData("fish_eaten").addValue(1D);
+            relicData.getLevelingData().addExperience("catch", "fish_eaten", 1D);
+
+            if (!ability.isRankModifierUnlocked("healing"))
                 return;
 
             var heal = (float) Math.max(0D, ability.getStatData("heal").getValue());
 
-            if (heal > 0F)
-                player.heal(heal);
+            if (heal <= 0F)
+                return;
+
+            var beforeHealth = player.getHealth();
+
+            player.heal(heal);
+
+            var restoredHealth = Math.max(0F, player.getHealth() - beforeHealth);
+
+            if (restoredHealth > 0F)
+                ability.getStatisticData().getMetricData("healing_restored").addValue(restoredHealth);
         }
 
         @SubscribeEvent
@@ -133,13 +177,16 @@ public class AnglersHatItem extends WearableRelicItem {
             if (level.isClientSide() || !(stack.getItem() instanceof AnglersHatItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("catch");
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("catch");
 
             if (!ability.canPlayerUse(player))
                 return;
 
             var serverLevel = (ServerLevel) level;
             var random = serverLevel.getRandom();
+            var catches = 0;
+            var treasures = 0;
             var treasureChance = 0D;
             var valuables = List.<Item>of();
 
@@ -163,52 +210,66 @@ public class AnglersHatItem extends WearableRelicItem {
 
                             replacement.setCount(drop.getCount());
                             event.getDrops().set(i, replacement);
+                            treasures++;
                         }
                 }
             }
 
+            catches += event.getDrops().size();
+
             var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
 
-            if (chance <= 0D)
-                return;
+            if (chance > 0D) {
+                var rolls = MathUtils.multicast(random, chance);
 
-            var rolls = MathUtils.multicast(random, chance);
+                if (rolls > 0) {
+                    LootTable loottable = serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
 
-            if (rolls <= 0)
-                return;
+                    LootParams lootparams = new LootParams.Builder(serverLevel)
+                            .withParameter(LootContextParams.ORIGIN, player.position())
+                            .withParameter(LootContextParams.TOOL, stack)
+                            .withParameter(LootContextParams.THIS_ENTITY, player)
+                            .create(LootContextParamSets.FISHING);
 
-            LootTable loottable = serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
+                    var fishingHook = event.getHookEntity();
 
-            LootParams lootparams = new LootParams.Builder(serverLevel)
-                    .withParameter(LootContextParams.ORIGIN, player.position())
-                    .withParameter(LootContextParams.TOOL, stack)
-                    .withParameter(LootContextParams.THIS_ENTITY, player)
-                    .create(LootContextParamSets.FISHING);
+                    for (int i = 0; i < rolls; i++)
+                        for (ItemStack itemstack : loottable.getRandomItems(lootparams)) {
+                            catches++;
 
-            var fishingHook = event.getHookEntity();
+                            var reward = itemstack;
 
-            for (int i = 0; i < rolls; i++)
-                for (ItemStack itemstack : loottable.getRandomItems(lootparams)) {
-                    var reward = itemstack;
+                            if (!valuables.isEmpty() && reward.is(ItemTags.FISHES) && random.nextDouble() <= treasureChance) {
+                                var replacement = valuables.get(random.nextInt(valuables.size())).getDefaultInstance();
 
-                    if (!valuables.isEmpty() && reward.is(ItemTags.FISHES) && random.nextDouble() <= treasureChance) {
-                        var replacement = valuables.get(random.nextInt(valuables.size())).getDefaultInstance();
+                                replacement.setCount(reward.getCount());
+                                reward = replacement;
+                                treasures++;
+                            }
 
-                        replacement.setCount(reward.getCount());
-                        reward = replacement;
-                    }
+                            ItemEntity itementity = new ItemEntity(serverLevel, fishingHook.getX(), fishingHook.getY(), fishingHook.getZ(), reward);
 
-                    ItemEntity itementity = new ItemEntity(serverLevel, fishingHook.getX(), fishingHook.getY(), fishingHook.getZ(), reward);
+                            double x = player.getX() - fishingHook.getX();
+                            double y = player.getY() - fishingHook.getY();
+                            double z = player.getZ() - fishingHook.getZ();
 
-                    double x = player.getX() - fishingHook.getX();
-                    double y = player.getY() - fishingHook.getY();
-                    double z = player.getZ() - fishingHook.getZ();
+                            itementity.setDeltaMovement(x * 0.1, y * 0.1 + Math.sqrt(Math.sqrt(x * x + y * y + z * z)) * 0.08, z * 0.1);
 
-                    itementity.setDeltaMovement(x * 0.1, y * 0.1 + Math.sqrt(Math.sqrt(x * x + y * y + z * z)) * 0.08, z * 0.1);
-
-                    serverLevel.addFreshEntity(itementity);
-                    serverLevel.addFreshEntity(new ExperienceOrb(serverLevel, player.getX(), player.getY() + 0.5, player.getZ() + 0.5, random.nextInt(6) + 1));
+                            serverLevel.addFreshEntity(itementity);
+                            serverLevel.addFreshEntity(new ExperienceOrb(serverLevel, player.getX(), player.getY() + 0.5, player.getZ() + 0.5, random.nextInt(6) + 1));
+                        }
                 }
+            }
+
+            if (catches > 0) {
+                ability.getStatisticData().getMetricData("fish_caught").addValue(catches);
+                relicData.getLevelingData().addExperience("catch", "catch", catches);
+            }
+
+            if (treasures > 0) {
+                ability.getStatisticData().getMetricData("treasures_caught").addValue(treasures);
+                relicData.getLevelingData().addExperience("catch", "treasure_catch", treasures);
+            }
         }
     }
 }

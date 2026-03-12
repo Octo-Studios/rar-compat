@@ -6,10 +6,15 @@ import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.network.packets.BunnyJumpReleasePacket;
 import it.hurts.octostudios.rarcompat.network.packets.PowerJumpPacket;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.SynergyTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditionTemplate;
@@ -30,9 +35,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
@@ -69,6 +74,24 @@ public class BunnyHoppersItem extends WearableRelicItem {
                                         .initialValue(0.12D, 0.35D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("jump_height").build())
+                                        .source(ExperienceSourceTemplate.builder("impact_hit")
+                                                .rankModifierVisibilityState("impact", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("high_jumps_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("jump_duration")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 1)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("impact_bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("impact", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .synergy(SynergyTemplate.builder("cloud_jump")
@@ -287,6 +310,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
     private boolean getUsedMaxDuration(ItemStack stack) {
         return stack.getOrDefault(DataComponentRegistry.BUNNY_HOPPERS_USED_MAX_DURATION.get(), false);
     }
+
     private void setJumpStartY(ItemStack stack, double value) {
         stack.set(DataComponentRegistry.BUNNY_HOPPERS_JUMP_START_Y.get(), value);
     }
@@ -384,7 +408,8 @@ public class BunnyHoppersItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof BunnyHoppersItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("jump");
 
             if (!ability.canPlayerUse(player)) {
                 relic.clearRuntimeState(stack);
@@ -400,12 +425,19 @@ public class BunnyHoppersItem extends WearableRelicItem {
             var jumpPeakY = Math.max(jumpStartY, relic.getJumpPeakY(stack));
             var jumpHeight = (float) Math.max(0D, jumpPeakY - jumpStartY);
             var safeHeight = jumpHeight * 1.1F;
+            var jumpDurationSeconds = spentTicks / 20D;
+
+            ability.getStatisticData().getMetricData("high_jumps_done").addValue(1D);
+            ability.getStatisticData().getMetricData("jump_duration").addValue(jumpDurationSeconds);
+
+            if (jumpHeight > 0F)
+                relicData.getLevelingData().addExperience("jump", "jump_height", jumpHeight * 0.1D);
 
             event.setDistance(Math.max(0F, event.getDistance() - safeHeight));
 
             if (ability.isRankModifierUnlocked("safe_landing"))
                 event.setCanceled(true);
-            
+
             relic.setTime(stack, 0);
             relic.setUsedMaxDuration(stack, false);
             relic.setToggled(stack, false);
@@ -419,6 +451,8 @@ public class BunnyHoppersItem extends WearableRelicItem {
                 return;
 
             var bonus = 0D;
+            BunnyHoppersItem impactRelic = null;
+            ItemStack impactStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.BUNNY_HOPPERS.value())) {
                 if (!(stack.getItem() instanceof BunnyHoppersItem relic))
@@ -437,12 +471,32 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
                 var perBlockBonus = Math.max(0D, ability.getStatData("impact_damage_bonus").getValue());
                 var climbedBlocks = jumpPeakY - jumpStartY;
+                var localBonus = perBlockBonus * climbedBlocks;
 
-                bonus = Math.max(bonus, perBlockBonus * climbedBlocks);
+                if (impactRelic == null || localBonus > bonus) {
+                    bonus = localBonus;
+                    impactRelic = relic;
+                    impactStack = stack;
+                }
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonus <= 0D || impactRelic == null || impactStack.isEmpty())
+                return;
+
+            var baseDamage = event.getAmount();
+            var boostedDamage = (float) (baseDamage * (1D + bonus));
+
+            event.setAmount(boostedDamage);
+
+            var relicData = impactRelic.getRelicData(player, impactStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("jump");
+
+            relicData.getLevelingData().addExperience("jump", "impact_hit", 1D);
+
+            var extraDamage = Math.max(0F, boostedDamage - baseDamage);
+
+            if (extraDamage > 0F)
+                ability.getStatisticData().getMetricData("impact_bonus_damage").addValue(extraDamage);
         }
     }
 }

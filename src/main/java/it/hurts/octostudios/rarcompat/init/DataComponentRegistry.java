@@ -30,6 +30,7 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CLOUD_IN_BOTTLE_SLOW_FALL_TICKS = construct("cloud_in_bottle/slow_fall_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COWBOY_HAT_LAST_MOUNT_ID = construct("cowboy_hat/last_mount_id", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> COWBOY_HAT_ABSORPTION_REMAINING = construct("cowboy_hat/absorption_remaining", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> COWBOY_HAT_RIDING_DISTANCE_REMAINDER = construct("cowboy_hat/riding_distance_remainder", Codec.DOUBLE);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> LUCKY_SCARF_PITY_CHANCE_BONUS = construct("lucky_scarf/pity_chance_bonus", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> LUCKY_SCARF_NEXT_MAX_CASTS_BONUS = construct("lucky_scarf/next_max_casts_bonus", Codec.INT);
@@ -71,8 +72,10 @@ public class DataComponentRegistry {
 
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CHARM_OF_SHRINKING_CURRENT_SCALE = construct("charm_of_shrinking/current_scale", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARM_OF_SHRINKING_MOVING_TICKS = construct("charm_of_shrinking/moving_ticks", Codec.INT);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> OBSIDIAN_SKULL_LAVA_TICKS = construct("obsidian_skull/lava_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> OBSIDIAN_SKULL_HEAT_SURGE_ACTIVE = construct("obsidian_skull/heat_surge_active", Codec.BOOL);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CRYSTAL_HEART_COOLDOWN_TICKS = construct("crystal_heart/cooldown_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CRYSTAL_HEART_LAST_HEALTH = construct("crystal_heart/last_health", Codec.DOUBLE);

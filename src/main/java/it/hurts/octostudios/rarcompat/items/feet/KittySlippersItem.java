@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -46,6 +51,12 @@ public class KittySlippersItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("crouch_movement_time")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("crouch_speed", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .ability(AbilityTemplate.builder("nine_lives")
                                 .rankModifier(3, "soft_landing")
@@ -67,6 +78,25 @@ public class KittySlippersItem extends WearableRelicItem {
                                         .initialValue(0.08D, 0.25D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("survival_trigger").build())
+                                        .source(ExperienceSourceTemplate.builder("evasion_miss")
+                                                .rankModifierVisibilityState("evasion", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("survival_triggers")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("fall_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("soft_landing", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("evasion_misses")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("evasion", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -94,6 +124,9 @@ public class KittySlippersItem extends WearableRelicItem {
                 EntityUtils.resetAttribute(player, stack, Attributes.SNEAKING_SPEED, (float) (bonus * 0.3D), AttributeModifier.Operation.ADD_VALUE);
             else
                 EntityUtils.removeAttribute(player, stack, Attributes.SNEAKING_SPEED, AttributeModifier.Operation.ADD_VALUE);
+
+            if (player.tickCount % 20 == 0 && player.isShiftKeyDown() && player.getKnownMovement().multiply(1D, 0D, 1D).length() > 1.0E-4D)
+                aura.getStatisticData().getMetricData("crouch_movement_time").addValue(1D);
         } else {
             EntityUtils.removeAttribute(player, stack, Attributes.SNEAKING_SPEED, AttributeModifier.Operation.ADD_VALUE);
         }
@@ -211,9 +244,14 @@ public class KittySlippersItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
                 return;
 
+            var originalAmount = event.getAmount();
             var dodgeChance = 0D;
+            KittySlippersItem dodgeRelic = null;
+            ItemStack dodgeStack = ItemStack.EMPTY;
             var hasDodgeRoll = false;
             var fallReduction = 0D;
+            KittySlippersItem fallRelic = null;
+            ItemStack fallStack = ItemStack.EMPTY;
             var isFallDamage = event.getSource().is(DamageTypes.FALL);
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.KITTY_SLIPPERS.value())) {
@@ -229,14 +267,25 @@ public class KittySlippersItem extends WearableRelicItem {
 
                 if (ability.isRankModifierUnlocked("evasion") && relic.isDodgeReady(stack)) {
                     hasDodgeRoll = true;
-                    dodgeChance = Math.max(dodgeChance, Math.max(0D, Math.min(1D, ability.getStatData("evasion_chance").getValue())));
+                    var value = Math.max(0D, Math.min(1D, ability.getStatData("evasion_chance").getValue()));
+
+                    if (dodgeRelic == null || value > dodgeChance) {
+                        dodgeChance = value;
+                        dodgeRelic = relic;
+                        dodgeStack = stack;
+                    }
+
                     relic.setDodgeReady(stack, false);
                 }
 
                 if (isFallDamage && ability.isRankModifierUnlocked("soft_landing")) {
                     var value = Math.max(0D, Math.min(1D, ability.getStatData("fall_damage_reduction").getValue()));
 
-                    fallReduction = Math.max(fallReduction, value);
+                    if (fallRelic == null || value > fallReduction) {
+                        fallReduction = value;
+                        fallRelic = relic;
+                        fallStack = stack;
+                    }
                 }
             }
 
@@ -244,11 +293,27 @@ public class KittySlippersItem extends WearableRelicItem {
                 event.setAmount(0F);
                 event.setCanceled(true);
 
+                if (dodgeRelic != null && !dodgeStack.isEmpty()) {
+                    var relicData = dodgeRelic.getRelicData(player, dodgeStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("nine_lives");
+
+                    relicData.getLevelingData().addExperience("nine_lives", "evasion_miss", 1D);
+                    ability.getStatisticData().getMetricData("evasion_misses").addValue(1D);
+                }
+
                 return;
             }
 
-            if (isFallDamage && fallReduction > 0D)
-                event.setAmount((float) (event.getAmount() * (1D - fallReduction)));
+            if (isFallDamage && fallReduction > 0D) {
+                var newAmount = (float) (originalAmount * (1D - fallReduction));
+                event.setAmount(newAmount);
+
+                var reduced = Math.max(0F, originalAmount - newAmount);
+
+                if (reduced > 0F && fallRelic != null && !fallStack.isEmpty())
+                    fallRelic.getRelicData(player, fallStack).getAbilitiesData().getAbilityData("nine_lives")
+                            .getStatisticData().getMetricData("fall_damage_reduced").addValue(reduced);
+            }
         }
 
         @SubscribeEvent
@@ -264,6 +329,8 @@ public class KittySlippersItem extends WearableRelicItem {
                 return;
 
             var chance = 0D;
+            KittySlippersItem survivalRelic = null;
+            ItemStack survivalStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.KITTY_SLIPPERS.value())) {
                 if (!(stack.getItem() instanceof KittySlippersItem relic))
@@ -276,15 +343,27 @@ public class KittySlippersItem extends WearableRelicItem {
                     continue;
                 }
 
-                chance = Math.max(chance, Math.max(0D, Math.min(1D, ability.getStatData("survival_chance").getValue())));
+                var value = Math.max(0D, Math.min(1D, ability.getStatData("survival_chance").getValue()));
+
+                if (survivalRelic == null || value > chance) {
+                    chance = value;
+                    survivalRelic = relic;
+                    survivalStack = stack;
+                }
             }
 
-            if (chance <= 0D || entity.getRandom().nextDouble() > chance)
+            if (chance <= 0D || survivalRelic == null || survivalStack.isEmpty() || entity.getRandom().nextDouble() > chance)
                 return;
 
             var safeDamage = Math.max(0F, lethalThreshold - 1F);
 
             event.setNewDamage(Math.min(event.getNewDamage(), safeDamage));
+
+            var relicData = survivalRelic.getRelicData(player, survivalStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("nine_lives");
+
+            relicData.getLevelingData().addExperience("nine_lives", "survival_trigger", 1D);
+            ability.getStatisticData().getMetricData("survival_triggers").addValue(1D);
         }
 
         @SubscribeEvent

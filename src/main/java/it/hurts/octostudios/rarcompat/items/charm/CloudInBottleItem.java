@@ -7,10 +7,15 @@ import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.items.feet.BunnyHoppersItem;
 import it.hurts.octostudios.rarcompat.items.hat.WhoopeeCushionItem;
 import it.hurts.octostudios.rarcompat.network.packets.DoubleJumpPacket;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.SynergyTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditionTemplate;
@@ -58,6 +63,27 @@ public class CloudInBottleItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("air_jump").build())
+                                        .source(ExperienceSourceTemplate.builder("combat_recovery_hit").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("air_jumps_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("slow_fall_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("slow_fall", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("updraft_jumps_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("updraft", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("combat_recovery_bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("combat_recovery", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .synergy(SynergyTemplate.builder("cloud_burst")
                                 .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.CLOUD_IN_A_BOTTLE.value())
@@ -84,7 +110,8 @@ public class CloudInBottleItem extends WearableRelicItem {
             return;
         }
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("jump");
 
         if (!ability.canPlayerUse(player)) {
             setCount(stack, 0);
@@ -94,6 +121,9 @@ public class CloudInBottleItem extends WearableRelicItem {
 
         if (ability.isRankModifierUnlocked("slow_fall")) {
             if (getSlowFallTicks(stack) > 0) {
+                if (!player.level().isClientSide() && isSlowFallActive(player) && player.tickCount % 20 == 0)
+                    ability.getStatisticData().getMetricData("slow_fall_duration").addValue(1D);
+
                 applySlowFall(player);
                 addSlowFallTicks(stack, -1);
             }
@@ -123,10 +153,16 @@ public class CloudInBottleItem extends WearableRelicItem {
         if (!canAirJump(player, stack))
             return false;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("jump");
         var previousY = player.getDeltaMovement().y;
 
         addCount(stack, 1);
+
+        if (!player.level().isClientSide()) {
+            relicData.getLevelingData().addExperience("jump", "air_jump", 1D);
+            ability.getStatisticData().getMetricData("air_jumps_done").addValue(1D);
+        }
 
         player.jumpFromGround();
         player.hasImpulse = true;
@@ -137,8 +173,12 @@ public class CloudInBottleItem extends WearableRelicItem {
             var currentMotion = player.getDeltaMovement();
             var jumpImpulse = currentMotion.y - previousY;
 
-            if (bonus > 0D && jumpImpulse > 0D)
+            if (bonus > 0D && jumpImpulse > 0D) {
                 player.setDeltaMovement(currentMotion.x, previousY + jumpImpulse * (1D + bonus), currentMotion.z);
+
+                if (!player.level().isClientSide())
+                    ability.getStatisticData().getMetricData("updraft_jumps_done").addValue(1D);
+            }
         }
 
         if (ability.isRankModifierUnlocked("slow_fall"))
@@ -198,6 +238,10 @@ public class CloudInBottleItem extends WearableRelicItem {
         setSlowFallTicks(stack, getSlowFallTicks(stack) + ticks);
     }
 
+    private boolean isSlowFallActive(Player player) {
+        return !player.isInFluidType() && player.getDeltaMovement().y <= 0D && !player.isShiftKeyDown();
+    }
+
     private void applySlowFall(Player player) {
         if (player.isInFluidType() || player.getDeltaMovement().y > 0D)
             return;
@@ -252,7 +296,8 @@ public class CloudInBottleItem extends WearableRelicItem {
                 if (!(stack.getItem() instanceof CloudInBottleItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("jump");
 
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("combat_recovery"))
                     continue;
@@ -261,6 +306,8 @@ public class CloudInBottleItem extends WearableRelicItem {
                     continue;
 
                 relic.restoreOneJump(stack);
+                relicData.getLevelingData().addExperience("jump", "combat_recovery_hit", 1D);
+                ability.getStatisticData().getMetricData("combat_recovery_bonus_damage").addValue(event.getAmount());
                 break;
             }
         }

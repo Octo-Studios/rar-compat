@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.feet;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -75,6 +80,25 @@ public class RootedBootsItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("grass_consumed").build())
+                                        .source(ExperienceSourceTemplate.builder("fertilizer_application")
+                                                .rankModifierVisibilityState("fertilizer", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("grass_consumed")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("healing_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0D, MathUtils.round(value, 2))))
+                                                .rankModifierVisibilityState("healing", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("fertilizer_applications")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("fertilizer", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -85,7 +109,8 @@ public class RootedBootsItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("devouring");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("devouring");
 
         if (!ability.canPlayerUse(player)) {
             stack.set(DataComponentRegistry.ROOTED_BOOTS_COOLDOWN_TICKS.get(), 0);
@@ -108,7 +133,11 @@ public class RootedBootsItem extends WearableRelicItem {
             } else {
                 var intervalTicks = Math.max(1, (int) Math.round(Math.max(0D, ability.getStatData("fertilizer_interval").getValue()) * 20D));
 
-                applyBonemealAtFeet(player);
+                if (applyBonemealAtFeet(player)) {
+                    relicData.getLevelingData().addExperience("devouring", "fertilizer_application", 1D);
+                    ability.getStatisticData().getMetricData("fertilizer_applications").addValue(1D);
+                }
+
                 stack.set(DataComponentRegistry.ROOTED_BOOTS_BONEMEAL_TICKS.get(), intervalTicks);
             }
         } else {
@@ -138,14 +167,25 @@ public class RootedBootsItem extends WearableRelicItem {
 
         level.setBlock(targetPos, Blocks.DIRT.defaultBlockState(), 3);
 
+        relicData.getLevelingData().addExperience("devouring", "grass_consumed", 1D);
+        ability.getStatisticData().getMetricData("grass_consumed").addValue(1D);
+
         foodData.setFoodLevel(targetFood);
         foodData.setSaturation(targetSaturation);
 
         if (ability.isRankModifierUnlocked("healing")) {
             var healAmount = Math.max(0D, ability.getStatData("healing").getValue());
 
-            if (healAmount > 0D)
+            if (healAmount > 0D) {
+                var beforeHealth = player.getHealth();
+
                 player.heal((float) healAmount);
+
+                var healed = Math.max(0D, player.getHealth() - beforeHealth);
+
+                if (healed > 0D)
+                    ability.getStatisticData().getMetricData("healing_done").addValue(healed);
+            }
         }
 
         if (ability.isRankModifierUnlocked("restoration")) {
@@ -164,17 +204,18 @@ public class RootedBootsItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.ROOTED_BOOTS_COOLDOWN_TICKS.get(), newCooldown);
     }
 
-    private void applyBonemealAtFeet(Player player) {
+    private boolean applyBonemealAtFeet(Player player) {
         var level = player.level();
         var targetPos = findBonemealTargetPos(player);
 
         if (targetPos == null)
-            return;
+            return false;
 
         if (!BoneMealItem.applyBonemeal(new ItemStack(Items.BONE_MEAL), level, targetPos, player))
-            return;
+            return false;
 
         level.levelEvent(1505, targetPos, 15);
+        return true;
     }
 
     private BlockPos findBonemealTargetPos(Player player) {

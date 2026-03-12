@@ -7,9 +7,14 @@ import it.hurts.octostudios.rarcompat.entities.WhoopeeCloudEntity;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.init.EntityRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -25,6 +30,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
+
+import java.util.HashSet;
 
 public class WhoopeeCushionItem extends WearableRelicItem {
     @Override
@@ -70,6 +77,27 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                                         .initialValue(0.12D, 0.4D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("activation").build())
+                                        .source(ExperienceSourceTemplate.builder("cloud_created")
+                                                .rankModifierVisibilityState("toxic_cloud", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("paralyzed_target")
+                                                .rankModifierVisibilityState("paralysis", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("triggers")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("targets_hit")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("clouds_created")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("toxic_cloud", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -124,7 +152,8 @@ public class WhoopeeCushionItem extends WearableRelicItem {
     }
 
     private void activateAbility(Player player, ItemStack stack) {
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("push");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("push");
 
         if (!ability.canPlayerUse(player))
             return;
@@ -135,6 +164,9 @@ public class WhoopeeCushionItem extends WearableRelicItem {
             return;
 
         var level = player.level();
+        var affectedTargets = new HashSet<java.util.UUID>();
+        var cloudsCreated = 0;
+        var paralyzedTargets = 0;
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSoundEvents.FART, SoundSource.PLAYERS, 1F,
                 0.9F + player.getRandom().nextFloat() * 0.2F);
@@ -147,6 +179,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                 continue;
 
             target.knockback(strength, player.getX() - target.getX(), player.getZ() - target.getZ());
+            affectedTargets.add(target.getUUID());
 
             if (target instanceof Mob mob) {
                 mob.setTarget(null);
@@ -162,8 +195,10 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                 spawnCloud = player.getRandom().nextDouble() <= cloudChance;
             }
 
-            if (spawnCloud)
+            if (spawnCloud) {
                 spawnToxicCloud(player, Math.max(1.5F, (float) Math.min(6D, distance * 0.75D)));
+                cloudsCreated = 1;
+            }
         }
 
         if (ability.isRankModifierUnlocked("paralysis")) {
@@ -177,7 +212,10 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                     if (target.distanceToSqr(player) > maxRadiusSq)
                         continue;
 
-                    target.addEffect(new MobEffectInstance(RelicsMobEffects.PARALYSIS, durationTicks, 0, false, true));
+                    if (target.addEffect(new MobEffectInstance(RelicsMobEffects.PARALYSIS, durationTicks, 0, false, true)))
+                        paralyzedTargets++;
+
+                    affectedTargets.add(target.getUUID());
 
                     if (target instanceof Mob mob) {
                         mob.setTarget(null);
@@ -186,6 +224,20 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                 }
             }
         }
+
+        relicData.getLevelingData().addExperience("push", "activation", 1D);
+        ability.getStatisticData().getMetricData("triggers").addValue(1D);
+
+        if (!affectedTargets.isEmpty())
+            ability.getStatisticData().getMetricData("targets_hit").addValue(affectedTargets.size());
+
+        if (cloudsCreated > 0) {
+            relicData.getLevelingData().addExperience("push", "cloud_created", cloudsCreated);
+            ability.getStatisticData().getMetricData("clouds_created").addValue(cloudsCreated);
+        }
+
+        if (paralyzedTargets > 0)
+            relicData.getLevelingData().addExperience("push", "paralyzed_target", paralyzedTargets);
     }
 
     private static void spawnToxicCloud(Player player, float radius) {

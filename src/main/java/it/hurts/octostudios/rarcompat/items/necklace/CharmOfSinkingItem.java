@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -22,8 +27,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfSinkingItem extends WearableRelicItem {
@@ -49,6 +54,23 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("air_bubble").build())
+                                        .source(ExperienceSourceTemplate.builder("blocked_damage").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("air_bubbles_restored")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("immortality_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("immortality", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -68,8 +90,20 @@ public class CharmOfSinkingItem extends WearableRelicItem {
 
         var onBottom = isStandingOnBottomUnderWater(player);
 
-        if (onBottom && player.getAirSupply() < player.getMaxAirSupply())
-            player.setAirSupply(Math.min(player.getMaxAirSupply(), player.getAirSupply() + 2));
+        if (onBottom && player.getAirSupply() < player.getMaxAirSupply()) {
+            var beforeAir = player.getAirSupply();
+            var beforeBubbles = getAirBubbleCount(beforeAir, player.getMaxAirSupply());
+            var afterAir = Math.min(player.getMaxAirSupply(), beforeAir + 2);
+            var afterBubbles = getAirBubbleCount(afterAir, player.getMaxAirSupply());
+            var gainedBubbles = Math.max(0, afterBubbles - beforeBubbles);
+
+            player.setAirSupply(afterAir);
+
+            if (gainedBubbles > 0) {
+                ability.getStatisticData().getMetricData("air_bubbles_restored").addValue(gainedBubbles);
+                this.getRelicData(player, stack).getLevelingData().addExperience("sinking", "air_bubble", gainedBubbles);
+            }
+        }
 
         if (ability.isRankModifierUnlocked("fluid_collision") && player.isInWaterOrBubble())
             player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 10, 0, false, false));
@@ -91,6 +125,9 @@ public class CharmOfSinkingItem extends WearableRelicItem {
 
         player.addEffect(new MobEffectInstance(RelicsMobEffects.IMMORTALITY, 10, 0, false, false));
         setImmortalityActive(stack, true);
+
+        if (player.tickCount % 20 == 0)
+            ability.getStatisticData().getMetricData("immortality_duration").addValue(1D);
     }
 
     @Override
@@ -140,6 +177,15 @@ public class CharmOfSinkingItem extends WearableRelicItem {
         var seconds = Math.max(0D, ability.getStatData("immortality_delay").getValue());
 
         return Math.max(1, (int) Math.round(seconds * 20D));
+    }
+
+    private static int getAirBubbleCount(int airSupply, int maxAirSupply) {
+        if (maxAirSupply <= 0)
+            return 0;
+
+        var airPerBubble = Math.max(1, maxAirSupply / 10);
+
+        return Math.max(0, airSupply / airPerBubble);
     }
 
     private int getStationaryTicks(ItemStack stack) {
@@ -212,6 +258,8 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                 return;
 
             var reduction = 0D;
+            CharmOfSinkingItem bestRelic = null;
+            ItemStack bestStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHARM_OF_SINKING.value())) {
                 if (!(stack.getItem() instanceof CharmOfSinkingItem relic))
@@ -225,11 +273,29 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                 var perBlock = Math.max(0D, Math.min(1D, ability.getStatData("resistance_per_block").getValue()));
                 var value = Math.min(1D, perBlock * waterDepth);
 
-                reduction = Math.max(reduction, value);
+                if (value > reduction) {
+                    reduction = value;
+                    bestRelic = relic;
+                    bestStack = stack;
+                }
             }
 
-            if (reduction > 0D)
-                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+            if (reduction <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var reducedDamage = (float) Math.max(0D, baseDamage * (1D - reduction));
+            var blockedDamage = Math.max(0F, baseDamage - reducedDamage);
+
+            event.setAmount(reducedDamage);
+
+            if (bestRelic != null && blockedDamage > 0F) {
+                var relicData = bestRelic.getRelicData(player, bestStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("sinking");
+
+                relicData.getLevelingData().addExperience("sinking", "blocked_damage", blockedDamage);
+                ability.getStatisticData().getMetricData("damage_reduced").addValue(blockedDamage);
+            }
         }
     }
 }

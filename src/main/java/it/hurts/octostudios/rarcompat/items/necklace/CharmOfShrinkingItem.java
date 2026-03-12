@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -71,6 +76,34 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("target_loss_interval")
+                                        .thresholdValue(0.05D, Double.MAX_VALUE)
+                                        .initialValue(1D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
+                                        .formatValue(value -> MathUtils.round(value, 2))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("moving_shrink").build())
+                                        .source(ExperienceSourceTemplate.builder("fall_reduced").build())
+                                        .source(ExperienceSourceTemplate.builder("evasion_parry").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("shrink_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("fall_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("fall_resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("evasion_misses")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("evasion", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("evasion_damage_avoided")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("evasion", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -81,10 +114,12 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("size");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("size");
         var currentScale = getCurrentScale(stack);
 
         if (!ability.canPlayerUse(player)) {
+            setMovingTicks(stack, 0);
             applyScaleModifier(player, currentScale);
             return;
         }
@@ -107,7 +142,28 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         setCurrentScale(stack, newScale);
         applyScaleModifier(player, newScale);
 
-        if (!ability.isRankModifierUnlocked("target_escape") || newScale >= 1D || player.tickCount % 20 != 0)
+        if (newScale < 1D && ability.getMode().equals("shrink") && player.tickCount % 20 == 0)
+            ability.getStatisticData().getMetricData("shrink_duration").addValue(1D);
+
+        if (newScale < 1D && player.getDeltaMovement().lengthSqr() > 1.0E-4D) {
+            var movingTicks = getMovingTicks(stack) + 1;
+
+            if (movingTicks >= 100) {
+                var cycles = movingTicks / 100;
+                var shrinkDelta = Math.max(0D, 1D - newScale);
+
+                if (shrinkDelta > 0D)
+                    relicData.getLevelingData().addExperience("size", "moving_shrink", cycles * shrinkDelta);
+
+                movingTicks %= 100;
+            }
+
+            setMovingTicks(stack, movingTicks);
+        }
+
+        var targetLossIntervalTicks = Math.max(1, (int) Math.round(Math.max(0.05D, ability.getStatData("target_loss_interval").getValue()) * 20D));
+
+        if (!ability.isRankModifierUnlocked("target_escape") || newScale >= 1D || player.tickCount % targetLossIntervalTicks != 0)
             return;
 
         var chancePerSize = Math.max(0D, ability.getStatData("target_loss_chance_per_size").getValue());
@@ -139,6 +195,7 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
             removeScaleModifier(player);
 
         setCurrentScale(stack, 1D);
+        setMovingTicks(stack, 0);
     }
 
     private void applyScaleModifier(Player player, double scale) {
@@ -169,6 +226,14 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.CHARM_OF_SHRINKING_CURRENT_SCALE.get(), clampScale(scale));
     }
 
+    private int getMovingTicks(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.CHARM_OF_SHRINKING_MOVING_TICKS.get(), 0));
+    }
+
+    private void setMovingTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.CHARM_OF_SHRINKING_MOVING_TICKS.get(), Math.max(0, ticks));
+    }
+
     private static double moveTowards(double current, double target, double maxDelta) {
         if (maxDelta <= 0D)
             return current;
@@ -195,7 +260,11 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
 
             var isFallDamage = event.getSource().is(DamageTypes.FALL);
             var fallReduction = 0D;
+            CharmOfShrinkingItem fallRelic = null;
+            ItemStack fallStack = ItemStack.EMPTY;
             var evasionChance = 0D;
+            CharmOfShrinkingItem evasionRelic = null;
+            ItemStack evasionStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHARM_OF_SHRINKING.value())) {
                 if (!(stack.getItem() instanceof CharmOfShrinkingItem relic))
@@ -217,25 +286,57 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
                     var perSize = Math.max(0D, ability.getStatData("fall_reduction_per_size").getValue());
                     var reduction = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
 
-                    fallReduction = Math.max(fallReduction, reduction);
+                    if (reduction > fallReduction) {
+                        fallReduction = reduction;
+                        fallRelic = relic;
+                        fallStack = stack;
+                    }
                 }
 
                 if (ability.isRankModifierUnlocked("evasion")) {
                     var perSize = Math.max(0D, ability.getStatData("evasion_per_size").getValue());
                     var chance = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
 
-                    evasionChance = Math.max(evasionChance, chance);
+                    if (chance > evasionChance) {
+                        evasionChance = chance;
+                        evasionRelic = relic;
+                        evasionStack = stack;
+                    }
                 }
             }
 
-            if (isFallDamage && fallReduction > 0D)
-                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - fallReduction)));
+            if (isFallDamage && fallReduction > 0D) {
+                var baseDamage = event.getAmount();
+                var reducedDamage = (float) Math.max(0D, baseDamage * (1D - fallReduction));
+                var reduced = Math.max(0F, baseDamage - reducedDamage);
+
+                event.setAmount(reducedDamage);
+
+                if (fallRelic != null && reduced > 0F) {
+                    var relicData = fallRelic.getRelicData(player, fallStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("size");
+
+                    relicData.getLevelingData().addExperience("size", "fall_reduced", reduced);
+                    ability.getStatisticData().getMetricData("fall_damage_reduced").addValue(reduced);
+                }
+            }
 
             if (evasionChance <= 0D || player.getRandom().nextDouble() > evasionChance)
                 return;
 
+            var avoidedDamage = Math.max(0F, event.getAmount());
+
             event.setAmount(0F);
             event.setCanceled(true);
+
+            if (evasionRelic != null) {
+                var relicData = evasionRelic.getRelicData(player, evasionStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("size");
+
+                relicData.getLevelingData().addExperience("size", "evasion_parry", 1D);
+                ability.getStatisticData().getMetricData("evasion_misses").addValue(1D);
+                ability.getStatisticData().getMetricData("evasion_damage_avoided").addValue(avoidedDamage);
+            }
         }
     }
 }

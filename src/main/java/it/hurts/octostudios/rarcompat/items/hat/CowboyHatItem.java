@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -20,13 +25,19 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class CowboyHatItem extends WearableRelicItem {
     private static final int NO_MOUNT = -1;
+    private static final Map<UUID, Vec3> LAST_MOUNT_POSITIONS = new HashMap<>();
 
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
@@ -54,6 +65,25 @@ public class CowboyHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("mounted_distance").build())
+                                        .source(ExperienceSourceTemplate.builder("tamed_mount")
+                                                .rankModifierVisibilityState("taming", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("mounted_distance")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("tamed_mounts")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("taming", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("absorbed_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("mounted_absorption", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -64,12 +94,14 @@ public class CowboyHatItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("riding");
 
         if (!ability.canPlayerUse(player)) {
             clearMountBuff(player, stack);
             removeRiderReachBuff(player, stack);
             removeRiderAbsorptionBonus(player, stack);
+            clearDistanceTracking(player);
             return;
         }
 
@@ -77,10 +109,14 @@ public class CowboyHatItem extends WearableRelicItem {
             clearMountBuff(player, stack);
             removeRiderReachBuff(player, stack);
             removeRiderAbsorptionBonus(player, stack);
+            clearDistanceTracking(player);
             return;
         }
 
         var mountedChanged = syncMountedEntity(player, stack, mounted);
+
+        trackMountedDistance(player, stack, mounted, mountedChanged);
+
         var amount = Math.max(0F, (float) ability.getStatData("amount").getValue());
 
         if (amount > 0F) {
@@ -107,10 +143,18 @@ public class CowboyHatItem extends WearableRelicItem {
 
         var absorption = Math.max(0D, ability.getStatData("absorption").getValue());
 
-        if (absorption > 0D)
+        if (absorption > 0D) {
+            var previousRemaining = getRiderAbsorptionRemaining(stack);
+
             applyRiderAbsorptionBonus(player, stack, absorption, mountedChanged);
-        else
+
+            var consumed = Math.max(0D, previousRemaining - getRiderAbsorptionRemaining(stack));
+
+            if (consumed > 0D)
+                ability.getStatisticData().getMetricData("absorbed_damage").addValue(consumed);
+        } else {
             removeRiderAbsorptionBonus(player, stack);
+        }
     }
 
     @Override
@@ -121,6 +165,48 @@ public class CowboyHatItem extends WearableRelicItem {
         clearMountBuff(player, stack);
         removeRiderReachBuff(player, stack);
         removeRiderAbsorptionBonus(player, stack);
+        clearDistanceTracking(player);
+    }
+
+    private void trackMountedDistance(Player player, ItemStack stack, LivingEntity mounted, boolean mountedChanged) {
+        var playerId = player.getUUID();
+        var currentPos = mounted.position();
+
+        if (mountedChanged || !LAST_MOUNT_POSITIONS.containsKey(playerId)) {
+            LAST_MOUNT_POSITIONS.put(playerId, currentPos);
+            return;
+        }
+
+        var previousPos = LAST_MOUNT_POSITIONS.get(playerId);
+
+        LAST_MOUNT_POSITIONS.put(playerId, currentPos);
+
+        if (previousPos == null)
+            return;
+
+        var distance = previousPos.distanceTo(currentPos);
+
+        if (distance <= 1.0E-4D)
+            return;
+
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("riding");
+
+        ability.getStatisticData().getMetricData("mounted_distance").addValue(distance);
+
+        var remainder = getRidingDistanceRemainder(stack) + distance;
+        var experience = (int) Math.floor(remainder / 10D);
+
+        if (experience > 0) {
+            relicData.getLevelingData().addExperience("riding", "mounted_distance", experience);
+            remainder -= experience * 10D;
+        }
+
+        setRidingDistanceRemainder(stack, remainder);
+    }
+
+    private void clearDistanceTracking(Player player) {
+        LAST_MOUNT_POSITIONS.remove(player.getUUID());
     }
 
     private boolean syncMountedEntity(Player player, ItemStack stack, LivingEntity mounted) {
@@ -243,14 +329,12 @@ public class CowboyHatItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.COWBOY_HAT_ABSORPTION_REMAINING.get(), Math.max(0D, value));
     }
 
-    public static boolean canUseTamingModifier(Player player) {
-        var stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
+    private double getRidingDistanceRemainder(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.COWBOY_HAT_RIDING_DISTANCE_REMAINDER.get(), 0D);
+    }
 
-        if (!(stack.getItem() instanceof CowboyHatItem relic))
-            return false;
-
-        return relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding").canPlayerUse(player)
-                && relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("riding").isRankModifierUnlocked("taming");
+    private void setRidingDistanceRemainder(ItemStack stack, double value) {
+        stack.set(DataComponentRegistry.COWBOY_HAT_RIDING_DISTANCE_REMAINDER.get(), Math.max(0D, value));
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -269,10 +353,23 @@ public class CowboyHatItem extends WearableRelicItem {
             if (player.level().isClientSide() || !(target instanceof AbstractHorse horse) || horse.isTamed())
                 return;
 
-            if (!CowboyHatItem.canUseTamingModifier(player))
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.COWBOY_HAT.value());
+
+            if (!(stack.getItem() instanceof CowboyHatItem relic))
+                return;
+
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("riding");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("taming"))
                 return;
 
             horse.tameWithName(player);
+
+            if (horse.isTamed()) {
+                ability.getStatisticData().getMetricData("tamed_mounts").addValue(1D);
+                relicData.getLevelingData().addExperience("riding", "tamed_mount", 1D);
+            }
         }
     }
 }

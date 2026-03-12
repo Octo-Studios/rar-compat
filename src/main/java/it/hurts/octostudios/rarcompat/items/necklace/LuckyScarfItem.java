@@ -1,15 +1,27 @@
 package it.hurts.octostudios.rarcompat.items.necklace;
 
+import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.SynergyTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditionTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.conditions.RelicConditionTemplate;
+import it.hurts.sskirillss.relics.init.RelicsRelicContainers;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
@@ -56,9 +68,46 @@ public class LuckyScarfItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("bonus_fortune").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("bonus_fortune_procs")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .build())
+                                .build())
+                        .synergy(SynergyTemplate.builder("chest_mastery")
+                                .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.LUCKY_SCARF.value())
+                                        .container(RelicsRelicContainers.CURIOS.get())
+                                        .condition(AbilityConditionTemplate.builder("fortune").build())
+                                        .build())
+                                .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.SUPERSTITIOUS_HAT.value())
+                                        .container(RelicsRelicContainers.CURIOS.get())
+                                        .condition(AbilityConditionTemplate.builder("looting").build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
+            return;
+
+        var abilities = this.getRelicData(player, stack).getAbilitiesData();
+        var ability = abilities.getAbilityData("fortune");
+
+        if (!ability.canPlayerUse(player))
+            return;
+
+        var synergy = abilities.getSynergyData("chest_mastery");
+
+        if (!synergy.isUnlocked() || !synergy.isEnabled())
+            return;
+
+        player.addEffect(new MobEffectInstance(MobEffects.LUCK, 40, 49, false, false));
     }
 
     @Override
@@ -68,7 +117,8 @@ public class LuckyScarfItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || lootContext == null)
             return baseFortune;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("fortune");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("fortune");
 
         if (!ability.canPlayerUse(player)) {
             setPityChanceBonus(stack, 0D);
@@ -133,6 +183,9 @@ public class LuckyScarfItem extends WearableRelicItem {
         if (procs <= 0)
             return baseFortune;
 
+        relicData.getLevelingData().addExperience("fortune", "bonus_fortune", procs);
+        ability.getStatisticData().getMetricData("bonus_fortune_procs").addValue(procs);
+
         return baseFortune + procs;
     }
 
@@ -177,4 +230,3 @@ public class LuckyScarfItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.LUCKY_SCARF_NEXT_MAX_CASTS_BONUS.get(), Math.max(0, value));
     }
 }
-

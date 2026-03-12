@@ -1,11 +1,19 @@
 package it.hurts.octostudios.rarcompat.items.charm;
 
+import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -15,6 +23,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class UniversalAttractorItem extends WearableRelicItem {
@@ -33,6 +45,28 @@ public class UniversalAttractorItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("pulled_item").build())
+                                        .source(ExperienceSourceTemplate.builder("pulled_xp")
+                                                .rankModifierVisibilityState("experience", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("repelled_projectile")
+                                                .rankModifierVisibilityState("projectiles", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("pulled_items_picked")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("pulled_xp_picked")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("experience", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("repelled_projectiles")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("projectiles", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -43,7 +77,8 @@ public class UniversalAttractorItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("magnetism");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
 
         if (!ability.canPlayerUse(player))
             return;
@@ -64,12 +99,16 @@ public class UniversalAttractorItem extends WearableRelicItem {
                 if (shouldDelayItemManipulation(player, item))
                     continue;
 
+                markItemPulledByPlayer(player, item);
                 teleportItem(player, item);
             }
         } else {
             for (var item : items) {
                 if (shouldDelayItemManipulation(player, item))
                     continue;
+
+                if (pull)
+                    markItemPulledByPlayer(player, item);
 
                 applyDirectionalForce(item, player, radius, 0.08D, 1.0D, pull, !pull);
             }
@@ -78,15 +117,25 @@ public class UniversalAttractorItem extends WearableRelicItem {
         if (pull && ability.isRankModifierUnlocked("experience")) {
             var orbs = player.level().getEntitiesOfClass(ExperienceOrb.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
-            for (var orb : orbs)
+            for (var orb : orbs) {
+                markXpOrbPulledByPlayer(player, orb);
                 applyDirectionalForce(orb, player, radius, 0.12D, 1.0D, true, false);
+            }
         }
 
         if (!pull && ability.isRankModifierUnlocked("projectiles")) {
             var projectiles = player.level().getEntitiesOfClass(Projectile.class, player.getBoundingBox().inflate(radius), projectile -> projectile.isAlive() && isHostileProjectile(player, projectile));
 
-            for (var projectile : projectiles)
+            for (var projectile : projectiles) {
+                if (!projectile.getPersistentData().getBoolean("rarcompat_universal_attractor_repelled_projectile_counted")) {
+                    projectile.getPersistentData().putBoolean("rarcompat_universal_attractor_repelled_projectile_counted", true);
+                    projectile.getPersistentData().putUUID("rarcompat_universal_attractor_repelled_projectile_owner", player.getUUID());
+                    relicData.getLevelingData().addExperience("magnetism", "repelled_projectile", 1D);
+                    ability.getStatisticData().getMetricData("repelled_projectiles").addValue(1D);
+                }
+
                 applyDirectionalForce(projectile, player, radius, 0.2D, 2.5D, false, false);
+            }
         }
     }
 
@@ -113,6 +162,18 @@ public class UniversalAttractorItem extends WearableRelicItem {
             return false;
 
         return item.getOwner() == player;
+    }
+
+    private static void markItemPulledByPlayer(Player player, ItemEntity item) {
+        var data = item.getPersistentData();
+        data.putBoolean("rarcompat_universal_attractor_pulled_item", true);
+        data.putUUID("rarcompat_universal_attractor_pulled_item_owner", player.getUUID());
+    }
+
+    private static void markXpOrbPulledByPlayer(Player player, ExperienceOrb orb) {
+        var data = orb.getPersistentData();
+        data.putBoolean("rarcompat_universal_attractor_pulled_xp", true);
+        data.putUUID("rarcompat_universal_attractor_pulled_xp_owner", player.getUUID());
     }
 
     private static void applyDirectionalForce(Entity entity, Player player, double radius, double baseForce, double maxSpeed, boolean pull, boolean horizontalOnly) {
@@ -189,5 +250,72 @@ public class UniversalAttractorItem extends WearableRelicItem {
             return Vec3.ZERO;
 
         return horizontalMotion.normalize();
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onItemPickup(ItemEntityPickupEvent.Post event) {
+            var player = event.getPlayer();
+
+            if (player.level().isClientSide())
+                return;
+
+            var data = event.getItemEntity().getPersistentData();
+
+            if (!data.getBoolean("rarcompat_universal_attractor_pulled_item"))
+                return;
+
+            if (!data.hasUUID("rarcompat_universal_attractor_pulled_item_owner") || !player.getUUID().equals(data.getUUID("rarcompat_universal_attractor_pulled_item_owner")))
+                return;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.UNIVERSAL_ATTRACTOR.value())) {
+                if (!(stack.getItem() instanceof UniversalAttractorItem relic))
+                    continue;
+
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
+
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                relicData.getLevelingData().addExperience("magnetism", "pulled_item", 1D);
+                ability.getStatisticData().getMetricData("pulled_items_picked").addValue(1D);
+
+                break;
+            }
+        }
+
+        @SubscribeEvent
+        public static void onXpPickup(PlayerXpEvent.PickupXp event) {
+            var player = event.getEntity();
+
+            if (player.level().isClientSide())
+                return;
+
+            var data = event.getOrb().getPersistentData();
+
+            if (!data.getBoolean("rarcompat_universal_attractor_pulled_xp"))
+                return;
+
+            if (!data.hasUUID("rarcompat_universal_attractor_pulled_xp_owner") || !player.getUUID().equals(data.getUUID("rarcompat_universal_attractor_pulled_xp_owner")))
+                return;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.UNIVERSAL_ATTRACTOR.value())) {
+                if (!(stack.getItem() instanceof UniversalAttractorItem relic))
+                    continue;
+
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
+
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("experience"))
+                    continue;
+
+                relicData.getLevelingData().addExperience("magnetism", "pulled_xp", 1D);
+                ability.getStatisticData().getMetricData("pulled_xp_picked").addValue(1D);
+
+                break;
+            }
+        }
     }
 }

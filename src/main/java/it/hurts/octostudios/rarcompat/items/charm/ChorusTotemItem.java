@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -72,6 +77,25 @@ public class ChorusTotemItem extends WearableRelicItem {
                                         .initialValue(2D, 6D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("trigger").build())
+                                        .source(ExperienceSourceTemplate.builder("disorient_target")
+                                                .rankModifierVisibilityState("disorient", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("triggers")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("recovery_healed")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("recovery", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("disoriented_targets")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("disorient", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -140,22 +164,26 @@ public class ChorusTotemItem extends WearableRelicItem {
         return false;
     }
 
-    private static void applyBlindnessAndForget(Player player, Vec3 center, double radius, int durationTicks) {
+    private static int applyBlindnessAndForget(Player player, Vec3 center, double radius, int durationTicks) {
         if (radius <= 0D || durationTicks <= 0)
-            return;
+            return 0;
 
         var box = new AABB(center, center).inflate(radius);
         var maxDistanceSq = radius * radius;
+        var affectedTargets = 0;
 
         for (var entity : player.level().getEntitiesOfClass(LivingEntity.class, box, entity -> entity.isAlive() && entity != player)) {
             if (entity.distanceToSqr(center) > maxDistanceSq)
                 continue;
 
-            entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, 0, false, true));
+            if (entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, 0, false, true)))
+                affectedTargets++;
 
             if (entity instanceof Mob mob && mob.getTarget() == player)
                 mob.setTarget(null);
         }
+
+        return affectedTargets;
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -176,16 +204,19 @@ public class ChorusTotemItem extends WearableRelicItem {
                 if (!(stack.getItem() instanceof ChorusTotemItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("chorus");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("chorus");
 
                 if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0)
                     continue;
+
+                var disorientedTargets = 0;
 
                 if (ability.isRankModifierUnlocked("disorient")) {
                     var radius = Math.max(0D, ability.getStatData("blind_radius").getValue());
                     var durationTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("blind_duration").getValue()));
 
-                    applyBlindnessAndForget(player, triggerPos, radius, durationTicks);
+                    disorientedTargets = applyBlindnessAndForget(player, triggerPos, radius, durationTicks);
                 }
 
                 var safeDamage = Math.max(0F, lethalThreshold - 1F);
@@ -213,6 +244,14 @@ public class ChorusTotemItem extends WearableRelicItem {
                         player.addEffect(new MobEffectInstance(RelicsMobEffects.VANISHING, vanishingTicks, 0, false, false));
                 }
 
+                relicData.getLevelingData().addExperience("chorus", "trigger", 1D);
+                ability.getStatisticData().getMetricData("triggers").addValue(1D);
+
+                if (disorientedTargets > 0) {
+                    relicData.getLevelingData().addExperience("chorus", "disorient_target", disorientedTargets);
+                    ability.getStatisticData().getMetricData("disoriented_targets").addValue(disorientedTargets);
+                }
+
                 break;
             }
         }
@@ -223,6 +262,8 @@ public class ChorusTotemItem extends WearableRelicItem {
                 return;
 
             var bonus = 0D;
+            ChorusTotemItem bestRelic = null;
+            ItemStack bestStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CHORUS_TOTEM.value())) {
                 if (!(stack.getItem() instanceof ChorusTotemItem relic))
@@ -237,11 +278,27 @@ public class ChorusTotemItem extends WearableRelicItem {
                     continue;
 
                 var value = Math.max(0D, ability.getStatData("regen_boost").getValue());
-                bonus = Math.max(bonus, value);
+
+                if (value > bonus) {
+                    bonus = value;
+                    bestRelic = relic;
+                    bestStack = stack;
+                }
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonus <= 0D)
+                return;
+
+            var baseHeal = event.getAmount();
+            var boostedHeal = (float) (baseHeal * (1D + bonus));
+            var extraHeal = Math.max(0F, boostedHeal - baseHeal);
+
+            event.setAmount(boostedHeal);
+
+            if (bestRelic != null && extraHeal > 0F) {
+                var ability = bestRelic.getRelicData(player, bestStack).getAbilitiesData().getAbilityData("chorus");
+                ability.getStatisticData().getMetricData("recovery_healed").addValue(extraHeal);
+            }
         }
     }
 }

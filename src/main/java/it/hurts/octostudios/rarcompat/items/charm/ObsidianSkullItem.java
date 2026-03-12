@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -56,6 +61,29 @@ public class ObsidianSkullItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("lava_second").build())
+                                        .source(ExperienceSourceTemplate.builder("safe_fall")
+                                                .rankModifierVisibilityState("lava_launch", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("lava_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("safe_falls")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("lava_launch", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("heat_surge_procs")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("heat_surge", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("obsidian_skin", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -66,10 +94,13 @@ public class ObsidianSkullItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("lava");
 
-        if (!ability.canPlayerUse(player))
+        if (!ability.canPlayerUse(player)) {
+            setHeatSurgeActive(stack, false);
             return;
+        }
 
         var maxLavaTicks = getMaxLavaTicks(ability.getStatData("duration").getValue());
 
@@ -77,6 +108,21 @@ public class ObsidianSkullItem extends WearableRelicItem {
             setLavaTicks(stack, maxLavaTicks);
 
         var lavaTicks = Math.max(0, Math.min(maxLavaTicks, getLavaTicks(stack)));
+        var protectedInLava = player.isInLava() && lavaTicks > 0;
+
+        if (protectedInLava && player.tickCount % 20 == 0) {
+            relicData.getLevelingData().addExperience("lava", "lava_second", 1D);
+            ability.getStatisticData().getMetricData("lava_duration").addValue(1D);
+        }
+
+        var lowReserveActive = ability.isRankModifierUnlocked("heat_surge")
+                && protectedInLava
+                && lavaTicks <= Math.max(1, maxLavaTicks / 4);
+
+        if (lowReserveActive && !isHeatSurgeActive(stack))
+            ability.getStatisticData().getMetricData("heat_surge_procs").addValue(1D);
+
+        setHeatSurgeActive(stack, lowReserveActive);
 
         if (player.isInLava()) {
             if (lavaTicks > 0) {
@@ -100,6 +146,14 @@ public class ObsidianSkullItem extends WearableRelicItem {
 
     private void setLavaTicks(ItemStack stack, int ticks) {
         stack.set(DataComponentRegistry.OBSIDIAN_SKULL_LAVA_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private boolean isHeatSurgeActive(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.OBSIDIAN_SKULL_HEAT_SURGE_ACTIVE.get(), false);
+    }
+
+    private void setHeatSurgeActive(ItemStack stack, boolean active) {
+        stack.set(DataComponentRegistry.OBSIDIAN_SKULL_HEAT_SURGE_ACTIVE.get(), active);
     }
 
     public static double getHeatSurgeLavaSpeedBonus(Player player) {
@@ -179,8 +233,16 @@ public class ObsidianSkullItem extends WearableRelicItem {
             if (ability.isRankModifierUnlocked("obsidian_skin")) {
                 var reduction = Math.max(0D, Math.min(1D, ability.getStatData("damage_reduction").getValue()));
 
-                if (reduction > 0D)
-                    event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+                if (reduction > 0D) {
+                    var baseDamage = event.getAmount();
+                    var reducedDamage = (float) Math.max(0D, baseDamage * (1D - reduction));
+                    var blockedDamage = Math.max(0F, baseDamage - reducedDamage);
+
+                    event.setAmount(reducedDamage);
+
+                    if (blockedDamage > 0F)
+                        ability.getStatisticData().getMetricData("damage_reduced").addValue(blockedDamage);
+                }
             }
         }
 
@@ -194,13 +256,18 @@ public class ObsidianSkullItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof ObsidianSkullItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("lava");
 
             if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_launch") || relic.getLavaTicks(stack) <= 0)
                 return;
 
-            if (isLandingInLava(player))
-                event.setCanceled(true);
+            if (!isLandingInLava(player))
+                return;
+
+            event.setCanceled(true);
+            relicData.getLevelingData().addExperience("lava", "safe_fall", 1D);
+            ability.getStatisticData().getMetricData("safe_falls").addValue(1D);
         }
     }
 }

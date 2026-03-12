@@ -7,9 +7,14 @@ import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.network.packets.FlamingoSwimPacket;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
@@ -17,6 +22,7 @@ import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -67,6 +73,22 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("flight_second").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("hover_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("aerial_archery_bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("aerial_archery", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("aerial_guard_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("aerial_guard", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -80,7 +102,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("flying");
 
         if (!ability.canPlayerUse(player)) {
             disableHover(player, stack, true);
@@ -104,6 +127,11 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
         EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         player.fallDistance = 0F;
+
+        if (player.tickCount % 20 == 0) {
+            relicData.getLevelingData().addExperience("flying", "flight_second", 1D);
+            ability.getStatisticData().getMetricData("hover_duration").addValue(1D);
+        }
 
         if (!shouldConsumeHoverTime(player, ability.isRankModifierUnlocked("efficient_hover")) || player.tickCount % 20 != 0)
             return;
@@ -315,6 +343,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                 return;
 
             var bonus = 0D;
+            HeliumFlamingoItem bestRelic = null;
+            ItemStack bestStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.HELIUM_FLAMINGO.value())) {
                 if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || !relic.isHovering(player, stack))
@@ -325,11 +355,28 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("aerial_archery"))
                     continue;
 
-                bonus = Math.max(bonus, Math.max(0D, ability.getStatData("ranged_damage_bonus").getValue()));
+                var localBonus = Math.max(0D, ability.getStatData("ranged_damage_bonus").getValue());
+
+                if (localBonus > bonus) {
+                    bonus = localBonus;
+                    bestRelic = relic;
+                    bestStack = stack;
+                }
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonus <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var boostedDamage = (float) (baseDamage * (1D + bonus));
+            var extraDamage = Math.max(0F, boostedDamage - baseDamage);
+
+            event.setAmount(boostedDamage);
+
+            if (bestRelic != null && extraDamage > 0F) {
+                var ability = bestRelic.getRelicData(player, bestStack).getAbilitiesData().getAbilityData("flying");
+                ability.getStatisticData().getMetricData("aerial_archery_bonus_damage").addValue(extraDamage);
+            }
         }
 
         @SubscribeEvent
@@ -338,6 +385,8 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                 return;
 
             var reduction = 0D;
+            HeliumFlamingoItem bestRelic = null;
+            ItemStack bestStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.HELIUM_FLAMINGO.value())) {
                 if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || !relic.isHovering(player, stack))
@@ -348,13 +397,28 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("aerial_guard"))
                     continue;
 
-                reduction = Math.max(reduction, Math.max(0D, Math.min(1D, ability.getStatData("resistance").getValue())));
+                var localReduction = Math.max(0D, Math.min(1D, ability.getStatData("resistance").getValue()));
+
+                if (localReduction > reduction) {
+                    reduction = localReduction;
+                    bestRelic = relic;
+                    bestStack = stack;
+                }
             }
 
-            if (reduction > 0D)
-                event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+            if (reduction <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var reducedDamage = (float) Math.max(0D, baseDamage * (1D - reduction));
+            var blockedDamage = Math.max(0F, baseDamage - reducedDamage);
+
+            event.setAmount(reducedDamage);
+
+            if (bestRelic != null && blockedDamage > 0F) {
+                var ability = bestRelic.getRelicData(player, bestStack).getAbilitiesData().getAbilityData("flying");
+                ability.getStatisticData().getMetricData("aerial_guard_damage_reduced").addValue(blockedDamage);
+            }
         }
     }
 }
-
-

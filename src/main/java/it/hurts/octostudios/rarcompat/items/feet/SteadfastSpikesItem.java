@@ -3,12 +3,16 @@ package it.hurts.octostudios.rarcompat.items.feet;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
-import it.hurts.octostudios.rarcompat.items.charm.HeliumFlamingoItem;
 import it.hurts.octostudios.rarcompat.network.packets.SteadfastSpikesPacket;
 import it.hurts.sskirillss.relics.api.events.common.LivingSlippingEvent;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
@@ -19,7 +23,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 import java.awt.*;
@@ -38,6 +44,18 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                                         .initialValue(0.1D, 0.35D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("damage_taken").build())
+                                        .source(ExperienceSourceTemplate.builder("wall_slide_time")
+                                                .rankModifierVisibilityState("wall_slide", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("wall_slide_time")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("wall_slide", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -97,6 +115,56 @@ public class SteadfastSpikesItem extends WearableRelicItem {
 
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class SteadfastSpikesEvent {
+        @SubscribeEvent
+        public static void onLivingDamagePost(LivingDamageEvent.Post event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getNewDamage() <= 0F)
+                return;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STEADFAST_SPIKES.value())) {
+                if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                    continue;
+
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("resistance");
+
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                relicData.getLevelingData().addExperience("resistance", "damage_taken", 1D);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onLevelTickPost(LevelTickEvent.Post event) {
+            var level = event.getLevel();
+
+            if (level.isClientSide())
+                return;
+
+            for (var player : level.players()) {
+                if (!player.isAlive() || player.isSpectator() || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1D)
+                    continue;
+
+                for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STEADFAST_SPIKES.value())) {
+                    if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                        continue;
+
+                    var relicData = relic.getRelicData(player, stack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("resistance");
+
+                    if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide"))
+                        continue;
+
+                    if (player.tickCount % 20 == 0) {
+                        relicData.getLevelingData().addExperience("resistance", "wall_slide_time", 1D);
+                        ability.getStatisticData().getMetricData("wall_slide_time").addValue(1D);
+                    }
+
+                    break;
+                }
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingKnockBack(LivingKnockBackEvent event) {
             if (!(event.getEntity() instanceof Player player))

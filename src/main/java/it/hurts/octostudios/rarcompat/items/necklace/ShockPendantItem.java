@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.necklace;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.entities.ElectricSparkEntity;
 import it.hurts.sskirillss.relics.init.RelicsEntities;
@@ -16,6 +21,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -71,6 +77,30 @@ public class ShockPendantItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("spark_created").build())
+                                        .source(ExperienceSourceTemplate.builder("lightning_resist").build())
+                                        .source(ExperienceSourceTemplate.builder("tremor_applied").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("sparks_created")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("spark_targets_hit")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("spark_damage_dealt")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("lightning_resists")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("tremor_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("tremor", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -85,11 +115,28 @@ public class ShockPendantItem extends WearableRelicItem {
             if (entity.level().isClientSide() || event.getAmount() <= 0F)
                 return;
 
+            if (event.getSource().getDirectEntity() instanceof ElectricSparkEntity spark && spark.getOwner() instanceof LivingEntity owner) {
+                var sparkStack = spark.getStack();
+
+                if (!sparkStack.isEmpty() && sparkStack.getItem() instanceof ShockPendantItem relic) {
+                    var ability = relic.getRelicData(owner, sparkStack).getAbilitiesData().getAbilityData("shock");
+
+                    ability.getStatisticData().getMetricData("spark_targets_hit").addValue(1D);
+                    ability.getStatisticData().getMetricData("spark_damage_dealt").addValue(event.getAmount());
+                }
+            }
+
             var attacker = event.getSource().getEntity() instanceof LivingEntity living && living != entity ? living : null;
             var lightningDamage = event.getSource().is(DamageTypes.LIGHTNING_BOLT);
             var lightningImmune = false;
+            ShockPendantItem lightningRelic = null;
+            ItemStack lightningStack = ItemStack.EMPTY;
             var tremorChance = 0D;
             var tremorDuration = 0D;
+            ShockPendantItem tremorRelic = null;
+            ItemStack tremorStack = ItemStack.EMPTY;
+            var tremorSourceChance = 0D;
+            var tremorSourceDuration = 0D;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.SHOCK_PENDANT.value())) {
                 if (!(stack.getItem() instanceof ShockPendantItem relic))
@@ -101,53 +148,86 @@ public class ShockPendantItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (lightningDamage && ability.isRankModifierUnlocked("resistance"))
+                if (lightningDamage && ability.isRankModifierUnlocked("resistance")) {
                     lightningImmune = true;
 
-                if (attacker == null)
-                    continue;
+                    if (lightningRelic == null) {
+                        lightningRelic = relic;
+                        lightningStack = stack;
+                    }
+                }
 
-                var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
+                if (attacker != null) {
+                    var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
 
-                if (chance > 0D && entity.getRandom().nextDouble() <= chance) {
-                    var distance = (float) Math.max(0D, ability.getStatData("distance").getValue());
-                    var bounces = Math.max(0, (int) MathUtils.round(ability.getStatData("bounces").getValue(), 0));
-                    var damage = (float) Math.max(0D, ability.getStatData("damage").getValue());
+                    if (chance > 0D && entity.getRandom().nextDouble() <= chance) {
+                        var distance = (float) Math.max(0D, ability.getStatData("distance").getValue());
+                        var bounces = Math.max(0, (int) MathUtils.round(ability.getStatData("bounces").getValue(), 0));
+                        var damage = (float) Math.max(0D, ability.getStatData("damage").getValue());
 
-                    if (distance > 0F && bounces > 0 && damage > 0F) {
-                        var spark = new ElectricSparkEntity(RelicsEntities.ELECTRIC_SPARK.get(), entity.level());
+                        if (distance > 0F && bounces > 0 && damage > 0F) {
+                            var spark = new ElectricSparkEntity(RelicsEntities.ELECTRIC_SPARK.get(), entity.level());
 
-                        if (ability.isRankModifierUnlocked("conductor"))
-                            spark.setDamageModifier((float) Math.max(0D, ability.getStatData("damage_modifier").getValue()));
+                            if (ability.isRankModifierUnlocked("conductor"))
+                                spark.setDamageModifier((float) Math.max(0D, ability.getStatData("damage_modifier").getValue()));
 
-                        spark.setDistance(distance);
-                        spark.setBounces(bounces);
-                        spark.setDamage(damage);
-                        spark.setPos(entity.position().add(0D, entity.getBbHeight() / 2F, 0D));
-                        spark.setFlawless(relicData.isFlawless());
-                        spark.setTarget(attacker);
-                        spark.setOwner(entity);
-                        spark.setStack(stack);
+                            spark.setDistance(distance);
+                            spark.setBounces(bounces);
+                            spark.setDamage(damage);
+                            spark.setPos(entity.position().add(0D, entity.getBbHeight() / 2F, 0D));
+                            spark.setFlawless(relicData.isFlawless());
+                            spark.setTarget(attacker);
+                            spark.setOwner(entity);
+                            spark.setStack(stack);
 
-                        entity.level().addFreshEntity(spark);
+                            entity.level().addFreshEntity(spark);
+
+                            relicData.getLevelingData().addExperience("shock", "spark_created", 1D);
+                            ability.getStatisticData().getMetricData("sparks_created").addValue(1D);
+                        }
                     }
                 }
 
                 if (ability.isRankModifierUnlocked("tremor")) {
-                    tremorChance = Math.max(tremorChance, Math.max(0D, Math.min(1D, ability.getStatData("tremor_chance").getValue())));
-                    tremorDuration = Math.max(tremorDuration, Math.max(0D, ability.getStatData("tremor_duration").getValue()));
+                    var currentChance = Math.max(0D, Math.min(1D, ability.getStatData("tremor_chance").getValue()));
+                    var currentDuration = Math.max(0D, ability.getStatData("tremor_duration").getValue());
+
+                    tremorChance = Math.max(tremorChance, currentChance);
+                    tremorDuration = Math.max(tremorDuration, currentDuration);
+
+                    if (currentChance > tremorSourceChance || currentChance == tremorSourceChance && currentDuration > tremorSourceDuration) {
+                        tremorSourceChance = currentChance;
+                        tremorSourceDuration = currentDuration;
+                        tremorRelic = relic;
+                        tremorStack = stack;
+                    }
                 }
             }
 
             if (lightningDamage && lightningImmune) {
                 event.setAmount(0F);
-
                 event.setCanceled(true);
+
+                if (lightningRelic != null) {
+                    var relicData = lightningRelic.getRelicData(entity, lightningStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("shock");
+
+                    relicData.getLevelingData().addExperience("shock", "lightning_resist", 1D);
+                    ability.getStatisticData().getMetricData("lightning_resists").addValue(1D);
+                }
             }
 
             if (attacker != null && tremorChance > 0D && tremorDuration > 0D && entity.getRandom().nextDouble() <= tremorChance) {
                 var durationTicks = Math.max(1, (int) Math.round(tremorDuration * 20D));
                 attacker.addEffect(new MobEffectInstance(RelicsMobEffects.TREMOR, durationTicks, 0, false, true));
+
+                if (tremorRelic != null) {
+                    var relicData = tremorRelic.getRelicData(entity, tremorStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("shock");
+
+                    relicData.getLevelingData().addExperience("shock", "tremor_applied", 1D);
+                    ability.getStatisticData().getMetricData("tremor_duration").addValue(durationTicks / 20D);
+                }
             }
         }
     }

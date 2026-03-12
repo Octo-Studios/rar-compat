@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -53,6 +58,21 @@ public class OnionRingItem extends WearableRelicItem {
                                         .initialValue(0.05D, 0.2D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("mined_block").build())
+                                        .source(ExperienceSourceTemplate.builder("sustenance_hunger")
+                                                .rankModifierVisibilityState("sustenance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("mined_blocks")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("sustenance_hunger_restored")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("sustenance", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -187,24 +207,71 @@ public class OnionRingItem extends WearableRelicItem {
             if (player.level().isClientSide() || event.isCanceled())
                 return;
 
+            var instantBreakBlock = event.getState().getDestroySpeed(player.level(), event.getPos()) <= 0F;
+            var minedRelic = (OnionRingItem) null;
+            var minedStack = ItemStack.EMPTY;
+            var bestMiningWeight = -1D;
             var chance = 0D;
+            var sustenanceRelic = (OnionRingItem) null;
+            var sustenanceStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.ONION_RING.value())) {
                 if (!(stack.getItem() instanceof OnionRingItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("hunger_mining");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("hunger_mining");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("sustenance"))
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                var miningWeight = Math.max(0D, ability.getStatData("speed_per_hunger").getValue());
+
+                if (minedRelic == null || miningWeight > bestMiningWeight) {
+                    minedRelic = relic;
+                    minedStack = stack;
+                    bestMiningWeight = miningWeight;
+                }
+
+                if (!ability.isRankModifierUnlocked("sustenance"))
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("hunger_restore_chance").getValue()));
 
-                chance = Math.max(chance, value);
+                if (sustenanceRelic == null || value > chance) {
+                    chance = value;
+                    sustenanceRelic = relic;
+                    sustenanceStack = stack;
+                }
             }
 
-            if (chance > 0D && player.getRandom().nextDouble() <= chance)
-                player.getFoodData().eat(1, 0F);
+            if (!instantBreakBlock && minedRelic != null) {
+                var relicData = minedRelic.getRelicData(player, minedStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("hunger_mining");
+
+                ability.getStatisticData().getMetricData("mined_blocks").addValue(1D);
+
+                if (player.getRandom().nextFloat() <= 0.1F)
+                    relicData.getLevelingData().addExperience("hunger_mining", "mined_block", 1D);
+            }
+
+            if (chance <= 0D || sustenanceRelic == null || player.getRandom().nextDouble() > chance)
+                return;
+
+            var foodData = player.getFoodData();
+            var beforeHunger = foodData.getFoodLevel();
+
+            foodData.eat(1, 0F);
+
+            var restoredHunger = Math.max(0, foodData.getFoodLevel() - beforeHunger);
+
+            if (restoredHunger <= 0)
+                return;
+
+            var relicData = sustenanceRelic.getRelicData(player, sustenanceStack);
+
+            relicData.getLevelingData().addExperience("hunger_mining", "sustenance_hunger", restoredHunger);
+            relicData.getAbilitiesData().getAbilityData("hunger_mining").getStatisticData().getMetricData("sustenance_hunger_restored").addValue(restoredHunger);
         }
     }
 }

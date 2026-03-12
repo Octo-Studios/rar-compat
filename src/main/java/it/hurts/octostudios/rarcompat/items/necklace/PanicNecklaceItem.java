@@ -4,9 +4,13 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -72,6 +76,21 @@ public class PanicNecklaceItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("targeted_hit").build())
+                                        .source(ExperienceSourceTemplate.builder("targeted_kill").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("targeted_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("absorbed_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("healing_restored")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -106,6 +125,9 @@ public class PanicNecklaceItem extends WearableRelicItem {
 
             totalThreats = targetingMobs + countOtherPlayers(player, radius);
             targetBonus = Math.min(targetingMobs * perMobBonus, maxBonus);
+
+            if (targetingMobs > 0 && player.tickCount % 20 == 0)
+                ability.getStatisticData().getMetricData("targeted_duration").addValue(1D);
         }
 
         var currentBonus = getSpeedBonus(stack);
@@ -195,15 +217,26 @@ public class PanicNecklaceItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
                 return;
 
+            var source = event.getSource().getEntity();
+            var fromTargetingMob = source instanceof Mob mob && mob.getTarget() == player;
             var resistance = 0D;
+            PanicNecklaceItem resistanceRelic = null;
+            ItemStack resistanceStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.PANIC_NECKLACE.value())) {
                 if (!(stack.getItem() instanceof PanicNecklaceItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("panic");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("panic");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("resistance"))
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                if (fromTargetingMob)
+                    relicData.getLevelingData().addExperience("panic", "targeted_hit", 1D);
+
+                if (!ability.isRankModifierUnlocked("resistance"))
                     continue;
 
                 if (hasThreatInView(player, Math.max(1D, ability.getStatData("radius").getValue())))
@@ -211,11 +244,26 @@ public class PanicNecklaceItem extends WearableRelicItem {
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("resistance").getValue()));
 
-                resistance = Math.max(resistance, value);
+                if (value > resistance) {
+                    resistance = value;
+                    resistanceRelic = relic;
+                    resistanceStack = stack;
+                }
             }
 
-            if (resistance > 0D)
-                event.setAmount((float) (event.getAmount() * (1D - resistance)));
+            if (resistance <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var reducedDamage = (float) (baseDamage * (1D - resistance));
+            var absorbed = Math.max(0F, baseDamage - reducedDamage);
+
+            event.setAmount(reducedDamage);
+
+            if (resistanceRelic != null && absorbed > 0F) {
+                var ability = resistanceRelic.getRelicData(player, resistanceStack).getAbilitiesData().getAbilityData("panic");
+                ability.getStatisticData().getMetricData("absorbed_damage").addValue(absorbed);
+            }
         }
 
         @SubscribeEvent
@@ -233,6 +281,8 @@ public class PanicNecklaceItem extends WearableRelicItem {
                     continue;
 
                 var heal = 0D;
+                PanicNecklaceItem healingRelic = null;
+                ItemStack healingStack = ItemStack.EMPTY;
 
                 for (var stack : EntityUtils.findEquippedCurios(player, ModItems.PANIC_NECKLACE.value())) {
                     if (!(stack.getItem() instanceof PanicNecklaceItem relic))
@@ -248,11 +298,34 @@ public class PanicNecklaceItem extends WearableRelicItem {
                     if (!isThreatForPlayer(threat, player, radius))
                         continue;
 
-                    heal = Math.max(heal, Math.max(0D, ability.getStatData("heal").getValue()));
+                    var value = Math.max(0D, ability.getStatData("heal").getValue());
+
+                    if (value > heal) {
+                        heal = value;
+                        healingRelic = relic;
+                        healingStack = stack;
+                    }
                 }
 
-                if (heal > 0D)
-                    player.heal((float) heal);
+                if (healingRelic == null)
+                    continue;
+
+                if (threat instanceof Mob)
+                    healingRelic.getRelicData(player, healingStack).getLevelingData().addExperience("panic", "targeted_kill", 1D);
+
+                if (heal <= 0D)
+                    continue;
+
+                var beforeHealth = player.getHealth();
+
+                player.heal((float) heal);
+
+                var restored = Math.max(0F, player.getHealth() - beforeHealth);
+
+                if (restored > 0F) {
+                    var ability = healingRelic.getRelicData(player, healingStack).getAbilitiesData().getAbilityData("panic");
+                    ability.getStatisticData().getMetricData("healing_restored").addValue(restored);
+                }
             }
         }
     }

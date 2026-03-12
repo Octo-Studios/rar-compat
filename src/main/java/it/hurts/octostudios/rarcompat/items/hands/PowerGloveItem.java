@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -47,6 +52,27 @@ public class PowerGloveItem extends WearableRelicItem {
                                         .initialValue(0.15D, 0.45D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("power_strike").build())
+                                        .source(ExperienceSourceTemplate.builder("echo_kill")
+                                                .rankModifierVisibilityState("echo_strike", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("power_strikes")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("shields_broken")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("shield_break", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("power_strike_kills")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -104,6 +130,8 @@ public class PowerGloveItem extends WearableRelicItem {
             var damageBonus = 0D;
             var armorIgnore = 0D;
             var hasPowerStrike = false;
+            PowerGloveItem bestRelic = null;
+            ItemStack bestStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.POWER_GLOVE.value())) {
                 if (!(stack.getItem() instanceof PowerGloveItem relic))
@@ -144,7 +172,13 @@ public class PowerGloveItem extends WearableRelicItem {
                 hasPowerStrike = true;
                 relic.setPowerStrikeActive(stack, true);
 
-                damageBonus = Math.max(damageBonus, Math.max(0D, ability.getStatData("power_damage_bonus").getValue()));
+                var localDamageBonus = Math.max(0D, ability.getStatData("power_damage_bonus").getValue());
+
+                if (bestRelic == null || localDamageBonus > damageBonus) {
+                    bestRelic = relic;
+                    bestStack = stack;
+                    damageBonus = localDamageBonus;
+                }
 
                 if (ability.isRankModifierUnlocked("armor_pierce")) {
                     var value = Math.max(0D, Math.min(1D, ability.getStatData("armor_ignore").getValue()));
@@ -156,8 +190,26 @@ public class PowerGloveItem extends WearableRelicItem {
             if (!hasPowerStrike)
                 return;
 
-            if (damageBonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + damageBonus)));
+            var baseDamage = event.getAmount();
+            var boostedDamage = baseDamage;
+
+            if (damageBonus > 0D) {
+                boostedDamage = (float) (baseDamage * (1D + damageBonus));
+                event.setAmount((float) boostedDamage);
+            }
+
+            if (bestRelic != null) {
+                var relicData = bestRelic.getRelicData(player, bestStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("power");
+
+                relicData.getLevelingData().addExperience("power", "power_strike", 1D);
+                ability.getStatisticData().getMetricData("power_strikes").addValue(1D);
+
+                var additionalDamage = Math.max(0F, (float) boostedDamage - baseDamage);
+
+                if (additionalDamage > 0F)
+                    ability.getStatisticData().getMetricData("bonus_damage").addValue(additionalDamage);
+            }
 
             if (armorIgnore > 0D) {
                 var armorIgnoreFinal = armorIgnore;
@@ -188,6 +240,7 @@ public class PowerGloveItem extends WearableRelicItem {
                     continue;
 
                 target.disableShield();
+                ability.getStatisticData().getMetricData("shields_broken").addValue(1D);
                 break;
             }
         }
@@ -198,15 +251,31 @@ public class PowerGloveItem extends WearableRelicItem {
                 return;
 
             var killed = !event.getEntity().isAlive() || event.getEntity().getHealth() <= 0F;
+            var killStatRecorded = false;
+            var killExpRecorded = false;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.POWER_GLOVE.value())) {
                 if (!(stack.getItem() instanceof PowerGloveItem relic) || !relic.getPowerStrikeActive(stack))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("power");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("power");
 
-                if (killed && ability.canPlayerUse(player) && ability.isRankModifierUnlocked("echo_strike"))
-                    relic.setForceNext(stack, true);
+                if (killed && ability.canPlayerUse(player)) {
+                    if (!killStatRecorded) {
+                        ability.getStatisticData().getMetricData("power_strike_kills").addValue(1D);
+                        killStatRecorded = true;
+                    }
+
+                    if (ability.isRankModifierUnlocked("echo_strike")) {
+                        relic.setForceNext(stack, true);
+
+                        if (!killExpRecorded) {
+                            relicData.getLevelingData().addExperience("power", "echo_kill", 1D);
+                            killExpRecorded = true;
+                        }
+                    }
+                }
 
                 relic.setPowerStrikeActive(stack, false);
             }

@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -49,6 +54,25 @@ public class RunningShoesItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("running_time").build())
+                                        .source(ExperienceSourceTemplate.builder("running_jump")
+                                                .rankModifierVisibilityState("jump_boost", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("running_time")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("running_jumps")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("jump_boost", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("immortality_time")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("immortality", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -59,7 +83,8 @@ public class RunningShoesItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("runner");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("runner");
 
         if (!ability.canPlayerUse(player)) {
             setCharge(stack, 0D);
@@ -79,6 +104,23 @@ public class RunningShoesItem extends WearableRelicItem {
 
         setCharge(stack, charge);
 
+        if (running) {
+            if (player.tickCount % 20 == 0)
+                ability.getStatisticData().getMetricData("running_time").addValue(1D);
+
+            var data = player.getPersistentData();
+            var runningTicks = Math.max(0, data.getInt("rarcompat_running_shoes_running_ticks")) + 1;
+
+            if (runningTicks >= 100) {
+                var experience = runningTicks / 100;
+
+                relicData.getLevelingData().addExperience("runner", "running_time", experience);
+                runningTicks %= 100;
+            }
+
+            data.putInt("rarcompat_running_shoes_running_ticks", runningTicks);
+        }
+
         var speedBonus = Math.max(0D, ability.getStatData("max_speed_bonus").getValue()) * charge;
 
         if (speedBonus <= 0D)
@@ -97,8 +139,12 @@ public class RunningShoesItem extends WearableRelicItem {
             EntityUtils.removeAttribute(player, stack, Attributes.STEP_HEIGHT, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
 
-        if (ability.isRankModifierUnlocked("immortality") && running && charge >= 0.999D)
+        if (ability.isRankModifierUnlocked("immortality") && running && charge >= 0.999D) {
             player.addEffect(new MobEffectInstance(RelicsMobEffects.IMMORTALITY, 10, 0, false, false));
+
+            if (player.tickCount % 20 == 0)
+                ability.getStatisticData().getMetricData("immortality_time").addValue(1D);
+        }
     }
 
     @Override
@@ -116,7 +162,6 @@ public class RunningShoesItem extends WearableRelicItem {
     private boolean isRunning(Player player) {
         return player.isSprinting() && !player.isFallFlying();
     }
-
 
     private double getCharge(ItemStack stack) {
         return Math.max(0D, Math.min(1D, stack.getOrDefault(DataComponentRegistry.RUNNING_SHOES_CHARGE.get(), 0D)));
@@ -137,7 +182,8 @@ public class RunningShoesItem extends WearableRelicItem {
                 if (!(stack.getItem() instanceof RunningShoesItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("runner");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("runner");
 
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("jump_boost") || !relic.isRunning(player))
                     continue;
@@ -148,6 +194,8 @@ public class RunningShoesItem extends WearableRelicItem {
                     continue;
 
                 relic.setCharge(stack, Math.min(1D, relic.getCharge(stack) + bonus));
+                relicData.getLevelingData().addExperience("runner", "running_jump", 1D);
+                ability.getStatisticData().getMetricData("running_jumps").addValue(1D);
             }
         }
     }

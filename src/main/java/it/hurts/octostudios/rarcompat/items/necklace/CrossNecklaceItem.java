@@ -3,14 +3,19 @@ package it.hurts.octostudios.rarcompat.items.necklace;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -49,6 +54,26 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("damage_taken").build())
+                                        .source(ExperienceSourceTemplate.builder("holy_fire_ignite").build())
+                                        .source(ExperienceSourceTemplate.builder("smite_hit").build())
+                                        .source(ExperienceSourceTemplate.builder("salvation_save").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("invulnerability_time")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("holy_fire_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("smite_bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("fatal_cancels")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -69,19 +94,26 @@ public class CrossNecklaceItem extends WearableRelicItem {
                 return;
 
             var chance = 0D;
+            CrossNecklaceItem salvationRelic = null;
+            ItemStack salvationStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.CROSS_NECKLACE.value())) {
                 if (!(stack.getItem() instanceof CrossNecklaceItem relic))
                     continue;
 
-                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("protection");
+                var relicData = relic.getRelicData(entity, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
                 if (!ability.canPlayerUse(entity) || !ability.isRankModifierUnlocked("salvation"))
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("survival_chance").getValue()));
 
-                chance = Math.max(chance, value);
+                if (value > chance) {
+                    chance = value;
+                    salvationRelic = relic;
+                    salvationStack = stack;
+                }
             }
 
             if (chance <= 0D || entity.getRandom().nextDouble() > chance)
@@ -90,6 +122,14 @@ public class CrossNecklaceItem extends WearableRelicItem {
             var safeDamage = Math.max(0F, lethalThreshold - 1F);
 
             event.setNewDamage(Math.min(event.getNewDamage(), safeDamage));
+
+            if (salvationRelic != null) {
+                var relicData = salvationRelic.getRelicData(entity, salvationStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("protection");
+
+                relicData.getLevelingData().addExperience("protection", "salvation_save", 1D);
+                ability.getStatisticData().getMetricData("fatal_cancels").addValue(1D);
+            }
         }
 
         @SubscribeEvent
@@ -102,24 +142,36 @@ public class CrossNecklaceItem extends WearableRelicItem {
             var attacker = event.getSource().getEntity() instanceof LivingEntity living ? living : null;
             var bonusTicks = 0;
             var fireSeconds = 0F;
+            CrossNecklaceItem holyFireRelic = null;
+            ItemStack holyFireStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.CROSS_NECKLACE.value())) {
                 if (!(stack.getItem() instanceof CrossNecklaceItem relic))
                     continue;
 
-                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("protection");
+                var relicData = relic.getRelicData(entity, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
                 if (!ability.canPlayerUse(entity))
                     continue;
+
+                relicData.getLevelingData().addExperience("protection", "damage_taken", 1D);
 
                 var invulnerability = Math.max(0, (int) MathUtils.round(ability.getStatData("invulnerability").getValue(), 0));
 
                 bonusTicks = Math.max(bonusTicks, invulnerability);
 
+                if (invulnerability > 0)
+                    ability.getStatisticData().getMetricData("invulnerability_time").addValue(invulnerability / 20D);
+
                 if (attacker != null && attacker.isInvertedHealAndHarm() && ability.isRankModifierUnlocked("holy_fire")) {
                     var value = (float) Math.max(0D, ability.getStatData("fire_duration").getValue());
 
-                    fireSeconds = Math.max(fireSeconds, value);
+                    if (value > fireSeconds) {
+                        fireSeconds = value;
+                        holyFireRelic = relic;
+                        holyFireStack = stack;
+                    }
                 }
             }
 
@@ -129,8 +181,17 @@ public class CrossNecklaceItem extends WearableRelicItem {
                 entity.invulnerableTime = baseTicks + bonusTicks;
             }
 
-            if (attacker != null && fireSeconds > 0F)
+            if (attacker != null && fireSeconds > 0F) {
                 attacker.igniteForSeconds(fireSeconds);
+
+                if (holyFireRelic != null) {
+                    var relicData = holyFireRelic.getRelicData(entity, holyFireStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("protection");
+
+                    relicData.getLevelingData().addExperience("protection", "holy_fire_ignite", 1D);
+                    ability.getStatisticData().getMetricData("holy_fire_duration").addValue(fireSeconds);
+                }
+            }
         }
 
         @SubscribeEvent
@@ -142,23 +203,43 @@ public class CrossNecklaceItem extends WearableRelicItem {
                 return;
 
             var bonus = 0D;
+            CrossNecklaceItem smiteRelic = null;
+            ItemStack smiteStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(source, ModItems.CROSS_NECKLACE.value())) {
                 if (!(stack.getItem() instanceof CrossNecklaceItem relic))
                     continue;
 
-                var ability = relic.getRelicData(source, stack).getAbilitiesData().getAbilityData("protection");
+                var relicData = relic.getRelicData(source, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
                 if (!ability.canPlayerUse(source) || !ability.isRankModifierUnlocked("smite"))
                     continue;
 
+                relicData.getLevelingData().addExperience("protection", "smite_hit", 1D);
+
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("undead_damage").getValue()));
 
-                bonus = Math.max(bonus, value);
+                if (value > bonus) {
+                    bonus = value;
+                    smiteRelic = relic;
+                    smiteStack = stack;
+                }
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonus <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var boostedDamage = (float) (baseDamage * (1D + bonus));
+            var additionalDamage = Math.max(0F, boostedDamage - baseDamage);
+
+            event.setAmount(boostedDamage);
+
+            if (smiteRelic != null && additionalDamage > 0F) {
+                var ability = smiteRelic.getRelicData(source, smiteStack).getAbilitiesData().getAbilityData("protection");
+                ability.getStatisticData().getMetricData("smite_bonus_damage").addValue(additionalDamage);
+            }
         }
     }
 }

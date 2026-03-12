@@ -5,9 +5,14 @@ import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.events.common.FluidCollisionEvent;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -22,7 +27,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class StriderShoesItem extends WearableRelicItem {
@@ -51,6 +58,21 @@ public class StriderShoesItem extends WearableRelicItem {
                                         .initialValue(0.1D, 0.35D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("surface_movement").build())
+                                        .source(ExperienceSourceTemplate.builder("lava_jump_boost")
+                                                .rankModifierVisibilityState("lava_jump", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("surface_time")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("lava_jump_boosts")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("lava_jump", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -170,6 +192,63 @@ public class StriderShoesItem extends WearableRelicItem {
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {
         @SubscribeEvent
+        public static void onLevelTickPost(LevelTickEvent.Post event) {
+            var level = event.getLevel();
+
+            if (level.isClientSide())
+                return;
+
+            for (var player : level.players()) {
+                if (!player.isAlive() || player.isSpectator())
+                    continue;
+
+                StriderShoesItem activeRelic = null;
+                ItemStack activeStack = ItemStack.EMPTY;
+
+                for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STRIDER_SHOES.value())) {
+                    if (!(stack.getItem() instanceof StriderShoesItem relic))
+                        continue;
+
+                    var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
+
+                    if (!ability.canPlayerUse(player))
+                        continue;
+
+                    if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
+                        continue;
+
+                    activeRelic = relic;
+                    activeStack = stack;
+                    break;
+                }
+
+                if (activeRelic == null)
+                    continue;
+
+                var relicData = activeRelic.getRelicData(player, activeStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("lava_stride");
+
+                if (player.tickCount % 20 == 0)
+                    ability.getStatisticData().getMetricData("surface_time").addValue(1D);
+
+                if (player.getKnownMovement().multiply(1D, 0D, 1D).length() <= 1.0E-4D)
+                    continue;
+
+                var data = player.getPersistentData();
+                var movingTicks = Math.max(0, data.getInt("rarcompat_strider_shoes_surface_moving_ticks")) + 1;
+
+                if (movingTicks >= 100) {
+                    var experience = movingTicks / 100;
+
+                    relicData.getLevelingData().addExperience("lava_stride", "surface_movement", experience);
+                    movingTicks %= 100;
+                }
+
+                data.putInt("rarcompat_strider_shoes_surface_moving_ticks", movingTicks);
+            }
+        }
+
+        @SubscribeEvent
         public static void onFluidCollision(FluidCollisionEvent event) {
             LivingEntity entity = event.getEntity();
 
@@ -200,6 +279,36 @@ public class StriderShoesItem extends WearableRelicItem {
                 return;
             }
         }
+
+        @SubscribeEvent
+        public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
+                return;
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STRIDER_SHOES.value())) {
+                if (!(stack.getItem() instanceof StriderShoesItem relic))
+                    continue;
+
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("lava_stride");
+
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_jump"))
+                    continue;
+
+                if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
+                    continue;
+
+                var jumpBonus = Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue()));
+
+                if (jumpBonus <= 0D)
+                    continue;
+
+                relicData.getLevelingData().addExperience("lava_stride", "lava_jump_boost", 1D);
+                ability.getStatisticData().getMetricData("lava_jump_boosts").addValue(1D);
+                return;
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)

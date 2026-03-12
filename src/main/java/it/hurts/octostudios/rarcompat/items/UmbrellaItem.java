@@ -4,10 +4,15 @@ import artifacts.network.NetworkHandler;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.network.packets.UmbrellaBouncePacket;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -68,6 +73,21 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("slow_fall_distance").build())
+                                        .source(ExperienceSourceTemplate.builder("bounce")
+                                                .rankModifierVisibilityState("bounce", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("flight_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("bounces_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("bounce", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .ability(AbilityTemplate.builder("shield")
                                 .rankModifier(3, "repel")
@@ -88,6 +108,14 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .initialValue(6D, 3D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("blocked_hit").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("blocked_hits")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -168,9 +196,16 @@ public class UmbrellaItem extends WearableRelicItem {
             return;
 
         if (!player.isShiftKeyDown() && !isUsingShield(player, stack)) {
-            var motion = player.getDeltaMovement();
+            var motion = new Vec3(player.getDeltaMovement().x(), -0.15D, player.getDeltaMovement().z());
 
-            player.setDeltaMovement(motion.x(), -0.15D, motion.z());
+            player.setDeltaMovement(motion.x(), motion.y(), motion.z());
+
+            if (!player.level().isClientSide()) {
+                this.getRelicData(player, stack).getLevelingData().addExperience("glider", "slow_fall_distance", motion.length());
+
+                if (player.tickCount % 20 == 0)
+                    ability.getStatisticData().getMetricData("flight_duration").addValue(1D);
+            }
         }
 
         player.fallDistance = 0;
@@ -214,6 +249,8 @@ public class UmbrellaItem extends WearableRelicItem {
         setBounceLandingRequired(stack, true);
         player.getCooldowns().addCooldown(stack.getItem(), BOUNCE_ITEM_COOLDOWN_TICKS);
         applyVanishingOnBounce(player, stack);
+        ability.getStatisticData().getMetricData("bounces_done").addValue(1D);
+        this.getRelicData(player, stack).getLevelingData().addExperience("glider", "bounce", 1D);
 
         return true;
     }
@@ -530,6 +567,8 @@ public class UmbrellaItem extends WearableRelicItem {
             relic.setShieldHitCount(stack, hits + 1);
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("shield");
+            ability.getStatisticData().getMetricData("blocked_hits").addValue(1D);
+            relic.getRelicData(player, stack).getLevelingData().addExperience("shield", "blocked_hit", 1D);
 
             if (ability.isRankModifierUnlocked("repel") && event.getDamageSource().getDirectEntity() instanceof LivingEntity target && target != player) {
                 var distance = Math.max(0D, ability.getStatData("repel_distance").getValue());

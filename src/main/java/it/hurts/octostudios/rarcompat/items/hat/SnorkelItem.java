@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -27,7 +32,13 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class SnorkelItem extends WearableRelicItem {
+    private static final Map<UUID, Integer> LAST_UNDERWATER_AIR = new HashMap<>();
+
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
@@ -54,6 +65,25 @@ public class SnorkelItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("air_spent").build())
+                                        .source(ExperienceSourceTemplate.builder("reserve_unique")
+                                                .rankModifierVisibilityState("reserve", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("safe_underwater_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("reserve_breathing_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("reserve", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("drowning_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -66,10 +96,24 @@ public class SnorkelItem extends WearableRelicItem {
         if (!(entity instanceof Player player) || player.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("snorkeling");
+        var playerId = player.getUUID();
+        var underwater = player.isEyeInFluid(FluidTags.WATER);
 
-        if (!ability.canPlayerUse(player))
+        if (!ability.canPlayerUse(player)) {
+            LAST_UNDERWATER_AIR.remove(playerId);
             return;
+        }
+
+        var previousAir = LAST_UNDERWATER_AIR.get(playerId);
+
+        if (underwater && previousAir != null) {
+            var spentAir = Math.max(0, previousAir - player.getAirSupply());
+
+            if (spentAir > 0)
+                relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentAir);
+        }
 
         var maxWaterDepth = Math.max(0, (int) MathUtils.round(ability.getStatData("water_depth").getValue(), 0));
         var isSafeHeight = isSafeBreathingHeight(player, maxWaterDepth);
@@ -77,21 +121,55 @@ public class SnorkelItem extends WearableRelicItem {
         if (isSafeHeight) {
             setReserveTriggered(stack, false);
 
-            if (player.isEyeInFluid(FluidTags.WATER) && player.getAirSupply() < player.getMaxAirSupply())
+            if (underwater && player.tickCount % 20 == 0)
+                ability.getStatisticData().getMetricData("safe_underwater_duration").addValue(1D);
+
+            if (underwater && player.getAirSupply() < player.getMaxAirSupply())
                 player.setAirSupply(Math.min(player.getAirSupply() + 4, player.getMaxAirSupply()));
+
+            if (underwater)
+                LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
+            else
+                LAST_UNDERWATER_AIR.remove(playerId);
 
             return;
         }
 
-        if (!ability.isRankModifierUnlocked("reserve") || isReserveTriggered(stack))
+        if (!ability.isRankModifierUnlocked("reserve") || isReserveTriggered(stack)) {
+            if (underwater)
+                LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
+            else
+                LAST_UNDERWATER_AIR.remove(playerId);
+
             return;
+        }
 
         var durationTicks = getReserveDurationTicks(player, stack);
 
-        if (durationTicks > 0)
+        if (durationTicks > 0) {
+            var beforeEffect = player.getEffect(MobEffects.WATER_BREATHING);
+            var hadWaterBreathing = beforeEffect != null;
+            var beforeDuration = beforeEffect != null ? beforeEffect.getDuration() : 0;
+
             player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, durationTicks, 0, false, false));
 
+            var afterEffect = player.getEffect(MobEffects.WATER_BREATHING);
+            var afterDuration = afterEffect != null ? afterEffect.getDuration() : 0;
+            var gainedTicks = Math.max(0, afterDuration - beforeDuration);
+
+            if (gainedTicks > 0)
+                ability.getStatisticData().getMetricData("reserve_breathing_duration").addValue(gainedTicks / 20D);
+
+            if (!hadWaterBreathing && afterDuration > 0)
+                relicData.getLevelingData().addExperience("snorkeling", "reserve_unique", 1D);
+        }
+
         setReserveTriggered(stack, true);
+
+        if (underwater)
+            LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
+        else
+            LAST_UNDERWATER_AIR.remove(playerId);
     }
 
     private boolean isSafeBreathingHeight(Player player, int maxWaterDepth) {
@@ -156,7 +234,15 @@ public class SnorkelItem extends WearableRelicItem {
             if (reduction <= 0D)
                 return;
 
-            event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+            var incomingDamage = event.getAmount();
+            var reducedDamage = (float) Math.max(0D, incomingDamage * (1D - reduction));
+
+            event.setAmount(reducedDamage);
+
+            var preventedDamage = Math.max(0F, incomingDamage - reducedDamage);
+
+            if (preventedDamage > 0F)
+                ability.getStatisticData().getMetricData("drowning_damage_reduced").addValue(preventedDamage);
         }
     }
 
@@ -183,4 +269,3 @@ public class SnorkelItem extends WearableRelicItem {
         }
     }
 }
-

@@ -2,9 +2,14 @@ package it.hurts.octostudios.rarcompat.items;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsCreativeTabs;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -105,6 +110,24 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> Math.max(1, (int) Math.round(value)))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("consume").build())
+                                        .source(ExperienceSourceTemplate.builder("healing")
+                                                .rankModifierVisibilityState("restoration", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("consumes")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("consume_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("healed")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 1)))
+                                                .rankModifierVisibilityState("restoration", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -163,11 +186,27 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
 
         var ability = this.getRelicData(livingEntity, stack).getAbilitiesData().getAbilityData("meal");
 
+        if (ability.canPlayerUse(livingEntity)) {
+            ability.getStatisticData().getMetricData("consumes").addValue(1D);
+            ability.getStatisticData().getMetricData("consume_duration").addValue(getConsumeDurationSeconds(livingEntity, stack));
+            this.getRelicData(livingEntity, stack).getLevelingData().addExperience("meal", "consume", 1D);
+        }
+
         if (ability.canPlayerUse(livingEntity) && ability.isRankModifierUnlocked("restoration")) {
             var heal = (float) Math.max(0D, ability.getStatData("healing").getValue());
 
-            if (heal > 0F)
+            if (heal > 0F) {
+                var beforeHealth = livingEntity.getHealth();
+
                 livingEntity.heal(heal);
+
+                var restored = Math.max(0F, livingEntity.getHealth() - beforeHealth);
+
+                if (restored > 0F) {
+                    ability.getStatisticData().getMetricData("healed").addValue(restored);
+                    this.getRelicData(livingEntity, stack).getLevelingData().addExperience("meal", "healing", restored);
+                }
+            }
         }
 
         var consumeDurability = true;
@@ -238,6 +277,20 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
         var regenerationSeconds = Math.max(0.05D, ability.getStatData("regeneration").getValue());
 
         return Math.max(1, (int) Math.round(regenerationSeconds * 20D));
+    }
+
+    private double getConsumeDurationSeconds(LivingEntity livingEntity, ItemStack stack) {
+        var durationTicks = Math.max(1, this.getUseDuration(stack, livingEntity));
+        var ability = this.getRelicData(livingEntity, stack).getAbilitiesData().getAbilityData("meal");
+
+        if (ability.canPlayerUse(livingEntity) && ability.isRankModifierUnlocked("quick_meal")) {
+            var speed = Math.max(0D, Math.min(0.95D, ability.getStatData("consume_speed").getValue()));
+
+            if (speed > 0D)
+                durationTicks = Math.max(1, (int) Math.round(durationTicks / (1D + speed)));
+        }
+
+        return durationTicks / 20D;
     }
 
     private int getMaxDurability(LivingEntity livingEntity, ItemStack stack) {

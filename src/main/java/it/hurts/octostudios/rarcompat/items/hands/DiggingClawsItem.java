@@ -4,9 +4,13 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -55,6 +59,14 @@ public class DiggingClawsItem extends WearableRelicItem {
                                         .initialValue(3D, 6D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("mined_block").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("mined_blocks")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -199,7 +211,8 @@ public class DiggingClawsItem extends WearableRelicItem {
             if (!(relicStack.getItem() instanceof DiggingClawsItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, relicStack).getAbilitiesData().getAbilityData("digging");
+            var relicData = relic.getRelicData(player, relicStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("digging");
 
             if (!ability.canPlayerUse(player)) {
                 relic.setStreakCount(relicStack, 0);
@@ -215,6 +228,11 @@ public class DiggingClawsItem extends WearableRelicItem {
 
             relic.setStreakCount(relicStack, streak);
             relic.setLastBreakTick(relicStack, gameTime);
+
+            ability.getStatisticData().getMetricData("mined_blocks").addValue(1D);
+
+            if (player.getRandom().nextFloat() <= 0.05F)
+                relicData.getLevelingData().addExperience("digging", "mined_block", 1D);
         }
 
         @SubscribeEvent

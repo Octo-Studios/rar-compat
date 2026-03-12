@@ -4,9 +4,13 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -53,6 +57,14 @@ public class FeralClawsItem extends WearableRelicItem {
                                         .initialValue(0.08D, 0.25D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("charge_gain").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("charges_gained")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -157,7 +169,8 @@ public class FeralClawsItem extends WearableRelicItem {
     }
 
     private void registerAttack(Player player, ItemStack stack) {
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("feral");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("feral");
 
         if (!ability.canPlayerUse(player)) {
             clearState(stack);
@@ -166,7 +179,8 @@ public class FeralClawsItem extends WearableRelicItem {
 
         var maxCharges = Math.max(1, (int) MathUtils.round(ability.getStatData("max_charges").getValue(), 0));
         var windowTicks = secondsToTicks(ability.getStatData("window").getValue());
-        var charges = getCharges(stack);
+        var previousCharges = getCharges(stack);
+        var charges = previousCharges;
 
         if (charges > 0 && (getTimeoutTicks(stack) > 0 || ability.isRankModifierUnlocked("linger")))
             charges++;
@@ -178,6 +192,13 @@ public class FeralClawsItem extends WearableRelicItem {
         setCharges(stack, charges);
         setTimeoutTicks(stack, windowTicks);
         setDecayTicks(stack, 20);
+
+        var gainedCharges = Math.max(0, charges - previousCharges);
+
+        if (gainedCharges > 0) {
+            relicData.getLevelingData().addExperience("feral", "charge_gain", gainedCharges);
+            ability.getStatisticData().getMetricData("charges_gained").addValue(gainedCharges);
+        }
     }
 
     private void refreshTimeout(Player player, ItemStack stack) {

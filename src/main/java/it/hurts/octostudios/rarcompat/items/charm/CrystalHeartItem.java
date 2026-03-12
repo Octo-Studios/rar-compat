@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -71,6 +76,18 @@ public class CrystalHeartItem extends WearableRelicItem {
                                         .initialValue(1D, 4D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("bonus_health_healed").build())
+                                        .source(ExperienceSourceTemplate.builder("immortality_trigger")
+                                                .rankModifierVisibilityState("survival", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("immortality_triggers")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("survival", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -191,12 +208,15 @@ public class CrystalHeartItem extends WearableRelicItem {
             var incomingAmount = event.getAmount();
             var reduction = 0D;
             var immortalityTicks = 0;
+            CrystalHeartItem immortalityRelic = null;
+            ItemStack immortalityStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CRYSTAL_HEART.value())) {
                 if (!(stack.getItem() instanceof CrystalHeartItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("heart");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("heart");
 
                 if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0)
                     continue;
@@ -212,7 +232,11 @@ public class CrystalHeartItem extends WearableRelicItem {
                     if (incomingAmount >= player.getMaxHealth() * threshold) {
                         var durationTicks = secondsToTicks(ability.getStatData("immortality_duration").getValue());
 
-                        immortalityTicks = Math.max(immortalityTicks, (int) durationTicks);
+                        if (durationTicks > immortalityTicks) {
+                            immortalityTicks = (int) durationTicks;
+                            immortalityRelic = relic;
+                            immortalityStack = stack;
+                        }
                     }
                 }
             }
@@ -220,8 +244,17 @@ public class CrystalHeartItem extends WearableRelicItem {
             if (reduction > 0D)
                 event.setAmount((float) Math.max(0D, incomingAmount * (1D - reduction)));
 
-            if (immortalityTicks > 0)
+            if (immortalityTicks > 0) {
                 player.addEffect(new MobEffectInstance(RelicsMobEffects.IMMORTALITY, immortalityTicks, 0, false, false));
+
+                if (immortalityRelic != null) {
+                    var relicData = immortalityRelic.getRelicData(player, immortalityStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("heart");
+
+                    relicData.getLevelingData().addExperience("heart", "immortality_trigger", 1D);
+                    ability.getStatisticData().getMetricData("immortality_triggers").addValue(1D);
+                }
+            }
         }
 
         @SubscribeEvent
@@ -230,17 +263,30 @@ public class CrystalHeartItem extends WearableRelicItem {
                 return;
 
             var bonus = 0D;
+            CrystalHeartItem experienceRelic = null;
+            ItemStack experienceStack = ItemStack.EMPTY;
+            var experienceBonusHealth = 0D;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.CRYSTAL_HEART.value())) {
                 if (!(stack.getItem() instanceof CrystalHeartItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("heart");
+                var relicData = relic.getRelicData(player, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("heart");
 
-                if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0 || !ability.isRankModifierUnlocked("recuperation"))
+                if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0)
                     continue;
 
                 var bonusHealth = Math.max(0D, ability.getStatData("bonus_health").getValue());
+
+                if (bonusHealth > experienceBonusHealth) {
+                    experienceBonusHealth = bonusHealth;
+                    experienceRelic = relic;
+                    experienceStack = stack;
+                }
+
+                if (!ability.isRankModifierUnlocked("recuperation"))
+                    continue;
 
                 var baseHealthThreshold = (float) Math.max(0D, player.getMaxHealth() - bonusHealth);
 
@@ -253,7 +299,26 @@ public class CrystalHeartItem extends WearableRelicItem {
 
             if (bonus > 0D)
                 event.setAmount((float) (event.getAmount() * (1D + bonus)));
+
+            if (experienceRelic == null || experienceBonusHealth <= 0D || event.getAmount() <= 0F)
+                return;
+
+            var currentHealth = player.getHealth();
+            var maxHealth = player.getMaxHealth();
+            var healApplied = Math.min(event.getAmount(), Math.max(0F, maxHealth - currentHealth));
+
+            if (healApplied <= 0F)
+                return;
+
+            var baseHealthThreshold = Math.max(0D, maxHealth - experienceBonusHealth);
+            var start = currentHealth;
+            var end = Math.min(maxHealth, currentHealth + healApplied);
+            var healedInBonusHealth = Math.max(0D, end - Math.max(start, baseHealthThreshold));
+
+            if (healedInBonusHealth <= 0D)
+                return;
+
+            experienceRelic.getRelicData(player, experienceStack).getLevelingData().addExperience("heart", "bonus_health_healed", healedInBonusHealth);
         }
     }
 }
-

@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -64,6 +69,18 @@ public class VampiricGloveItem extends WearableRelicItem {
                                         .initialValue(2D, 10D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("healing_done").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("healing_done")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("absorption_gained")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value / 2D, 2)))
+                                                .rankModifierVisibilityState("overheal_absorption", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -142,13 +159,23 @@ public class VampiricGloveItem extends WearableRelicItem {
         return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
     }
 
-    private static void healWithOverflow(Player player, double amount, double absorptionCap) {
+    private record HealResult(double healedHealth, double gainedAbsorption) {
+    }
+
+    private static HealResult healWithOverflow(Player player, double amount, double absorptionCap) {
         if (amount <= 0D)
-            return;
+            return new HealResult(0D, 0D);
+
+        var healthBefore = player.getHealth();
+        var absorptionBefore = Math.max(0D, player.getAbsorptionAmount());
 
         if (absorptionCap <= 0D || player.getAttribute(Attributes.MAX_ABSORPTION) == null) {
             player.heal((float) amount);
-            return;
+
+            return new HealResult(
+                    Math.max(0D, player.getHealth() - healthBefore),
+                    Math.max(0D, player.getAbsorptionAmount() - absorptionBefore)
+            );
         }
 
         var health = player.getHealth();
@@ -161,15 +188,17 @@ public class VampiricGloveItem extends WearableRelicItem {
 
         var overflow = amount - directHeal;
 
-        if (overflow <= 0D)
-            return;
+        if (overflow > 0D) {
+            var currentAbsorption = Math.max(0D, player.getAbsorptionAmount());
 
-        var currentAbsorption = Math.max(0D, player.getAbsorptionAmount());
+            if (currentAbsorption < absorptionCap)
+                player.setAbsorptionAmount((float) Math.min(absorptionCap, currentAbsorption + overflow));
+        }
 
-        if (currentAbsorption >= absorptionCap)
-            return;
-
-        player.setAbsorptionAmount((float) Math.min(absorptionCap, currentAbsorption + overflow));
+        return new HealResult(
+                Math.max(0D, player.getHealth() - healthBefore),
+                Math.max(0D, player.getAbsorptionAmount() - absorptionBefore)
+        );
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -257,15 +286,32 @@ public class VampiricGloveItem extends WearableRelicItem {
             if (bestHealing <= 0D)
                 return;
 
+            HealResult result;
+
             if (!bestUsesOverheal || bestOverhealCap <= 0D) {
-                player.heal((float) bestHealing);
-                return;
+                result = healWithOverflow(player, bestHealing, 0D);
+            } else {
+                if (bestRelic != null && !bestStack.isEmpty())
+                    bestRelic.setAbsorptionCap(player, bestStack, bestOverhealCap);
+
+                result = healWithOverflow(player, bestHealing, bestOverhealCap);
             }
 
-            if (bestRelic != null && !bestStack.isEmpty())
-                bestRelic.setAbsorptionCap(player, bestStack, bestOverhealCap);
+            if (bestRelic == null || bestStack.isEmpty())
+                return;
 
-            healWithOverflow(player, bestHealing, bestOverhealCap);
+            var relicData = bestRelic.getRelicData(player, bestStack);
+            var ability = relicData.getAbilitiesData().getAbilityData("vampire");
+            var healedHealth = Math.max(0D, result.healedHealth());
+            var gainedAbsorption = Math.max(0D, result.gainedAbsorption());
+
+            if (healedHealth > 0D) {
+                relicData.getLevelingData().addExperience("vampire", "healing_done", healedHealth);
+                ability.getStatisticData().getMetricData("healing_done").addValue(healedHealth);
+            }
+
+            if (gainedAbsorption > 0D)
+                ability.getStatisticData().getMetricData("absorption_gained").addValue(gainedAbsorption);
         }
     }
 }

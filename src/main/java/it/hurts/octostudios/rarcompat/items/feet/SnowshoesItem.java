@@ -4,9 +4,13 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -20,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class SnowshoesItem extends WearableRelicItem {
@@ -42,6 +47,14 @@ public class SnowshoesItem extends WearableRelicItem {
                                         .initialValue(1D, 6D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("snow_movement").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("snow_movement_time")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -158,6 +171,60 @@ public class SnowshoesItem extends WearableRelicItem {
 
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLevelTickPost(LevelTickEvent.Post event) {
+            var level = event.getLevel();
+
+            if (level.isClientSide())
+                return;
+
+            for (var player : level.players()) {
+                if (!player.isAlive() || player.isSpectator())
+                    continue;
+
+                SnowshoesItem activeRelic = null;
+                ItemStack activeStack = ItemStack.EMPTY;
+
+                for (var stack : EntityUtils.findEquippedCurios(player, ModItems.SNOWSHOES.value())) {
+                    if (!(stack.getItem() instanceof SnowshoesItem relic))
+                        continue;
+
+                    var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snow");
+
+                    if (!ability.canPlayerUse(player))
+                        continue;
+
+                    activeRelic = relic;
+                    activeStack = stack;
+                    break;
+                }
+
+                if (activeRelic == null || !isOnSnowTerrain(player))
+                    continue;
+
+                if (player.getKnownMovement().multiply(1D, 0D, 1D).length() <= 1.0E-4D)
+                    continue;
+
+                var relicData = activeRelic.getRelicData(player, activeStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("snow");
+
+                if (player.tickCount % 20 == 0)
+                    ability.getStatisticData().getMetricData("snow_movement_time").addValue(1D);
+
+                var data = player.getPersistentData();
+                var movingTicks = Math.max(0, data.getInt("rarcompat_snowshoes_snow_moving_ticks")) + 1;
+
+                if (movingTicks >= 100) {
+                    var experience = movingTicks / 100;
+
+                    relicData.getLevelingData().addExperience("snow", "snow_movement", experience);
+                    movingTicks %= 100;
+                }
+
+                data.putInt("rarcompat_snowshoes_snow_moving_ticks", movingTicks);
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || !event.getSource().is(DamageTypes.FREEZE))

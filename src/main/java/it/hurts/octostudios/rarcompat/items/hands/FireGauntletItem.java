@@ -5,9 +5,14 @@ import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.entities.SparkEntity;
 import it.hurts.octostudios.rarcompat.init.EntityRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -17,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
@@ -73,6 +79,21 @@ public class FireGauntletItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("ignite_new_target").build())
+                                        .source(ExperienceSourceTemplate.builder("spark_damage_hit")
+                                                .rankModifierVisibilityState("spark", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("ignited_targets")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("spark_damage_dealt")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("spark", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -82,9 +103,11 @@ public class FireGauntletItem extends WearableRelicItem {
         return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
     }
 
-    public static void igniteFromGauntlet(LivingEntity target, Player owner, double seconds) {
+    public static boolean igniteFromGauntlet(LivingEntity target, Player owner, double seconds) {
         if (seconds <= 0D)
-            return;
+            return false;
+
+        var newlyIgnited = !target.isOnFire();
 
         target.igniteForSeconds((float) seconds);
 
@@ -96,6 +119,19 @@ public class FireGauntletItem extends WearableRelicItem {
 
         data.putUUID("rarcompat_fire_gauntlet_owner", owner.getUUID());
         data.putLong("rarcompat_fire_gauntlet_expire", expireTick);
+
+        return newlyIgnited;
+    }
+
+    private static void awardIgniteProgress(FireGauntletItem relic, Player owner, ItemStack stack) {
+        var relicData = relic.getRelicData(owner, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("flame");
+
+        if (!ability.canPlayerUse(owner))
+            return;
+
+        relicData.getLevelingData().addExperience("flame", "ignite_new_target", 1D);
+        ability.getStatisticData().getMetricData("ignited_targets").addValue(1D);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -110,6 +146,10 @@ public class FireGauntletItem extends WearableRelicItem {
             var burningDamageBonus = 0D;
             var spreadRadius = 0D;
             var spreadFireDuration = 0D;
+            FireGauntletItem spreadRelic = null;
+            ItemStack spreadStack = ItemStack.EMPTY;
+            var spreadSourceRadius = 0D;
+            var spreadSourceDuration = 0D;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.FIRE_GAUNTLET.value())) {
                 if (!(stack.getItem() instanceof FireGauntletItem relic))
@@ -122,8 +162,8 @@ public class FireGauntletItem extends WearableRelicItem {
 
                 var fireDuration = Math.max(0D, ability.getStatData("fire_duration").getValue());
 
-                if (fireDuration > 0D)
-                    igniteFromGauntlet(target, player, fireDuration);
+                if (fireDuration > 0D && igniteFromGauntlet(target, player, fireDuration))
+                    awardIgniteProgress(relic, player, stack);
 
                 if (!wasOnFire)
                     continue;
@@ -135,8 +175,18 @@ public class FireGauntletItem extends WearableRelicItem {
                 }
 
                 if (ability.isRankModifierUnlocked("spread")) {
-                    spreadRadius = Math.max(spreadRadius, Math.max(0D, ability.getStatData("spread_radius").getValue()));
-                    spreadFireDuration = Math.max(spreadFireDuration, Math.max(0D, ability.getStatData("spread_fire_duration").getValue()));
+                    var localSpreadRadius = Math.max(0D, ability.getStatData("spread_radius").getValue());
+                    var localSpreadFireDuration = Math.max(0D, ability.getStatData("spread_fire_duration").getValue());
+
+                    spreadRadius = Math.max(spreadRadius, localSpreadRadius);
+                    spreadFireDuration = Math.max(spreadFireDuration, localSpreadFireDuration);
+
+                    if (localSpreadRadius > spreadSourceRadius || localSpreadRadius == spreadSourceRadius && localSpreadFireDuration > spreadSourceDuration) {
+                        spreadSourceRadius = localSpreadRadius;
+                        spreadSourceDuration = localSpreadFireDuration;
+                        spreadRelic = relic;
+                        spreadStack = stack;
+                    }
                 }
             }
 
@@ -152,8 +202,35 @@ public class FireGauntletItem extends WearableRelicItem {
                 if (nearby.distanceToSqr(target) > maxDistanceSq)
                     continue;
 
-                igniteFromGauntlet(nearby, player, spreadFireDuration);
+                if (igniteFromGauntlet(nearby, player, spreadFireDuration) && spreadRelic != null && !spreadStack.isEmpty())
+                    awardIgniteProgress(spreadRelic, player, spreadStack);
             }
+        }
+
+        @SubscribeEvent
+        public static void onLivingDamagePost(LivingDamageEvent.Post event) {
+            if (event.getEntity().level().isClientSide() || event.getNewDamage() <= 0F)
+                return;
+
+            if (!(event.getSource().getDirectEntity() instanceof SparkEntity spark))
+                return;
+
+            if (!(spark.getOwner() instanceof Player player))
+                return;
+
+            var stack = spark.getRelicStack();
+
+            if (stack.isEmpty() || !(stack.getItem() instanceof FireGauntletItem relic))
+                return;
+
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("flame");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("spark"))
+                return;
+
+            relicData.getLevelingData().addExperience("flame", "spark_damage_hit", 1D);
+            ability.getStatisticData().getMetricData("spark_damage_dealt").addValue(event.getNewDamage());
         }
 
         @SubscribeEvent

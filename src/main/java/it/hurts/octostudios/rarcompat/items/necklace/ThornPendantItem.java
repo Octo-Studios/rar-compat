@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.necklace;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -14,6 +19,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.NeoForgeMod;
@@ -52,6 +58,23 @@ public class ThornPendantItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("reflect_proc").build())
+                                        .source(ExperienceSourceTemplate.builder("poisoned_hit").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("procs")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("poison_duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("poison", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("poisoned_bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("damage", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -83,7 +106,8 @@ public class ThornPendantItem extends WearableRelicItem {
                 if (!(stack.getItem() instanceof ThornPendantItem relic))
                     continue;
 
-                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("poison");
+                var relicData = relic.getRelicData(entity, stack);
+                var ability = relicData.getAbilitiesData().getAbilityData("poison");
 
                 if (!ability.canPlayerUse(entity))
                     continue;
@@ -106,7 +130,13 @@ public class ThornPendantItem extends WearableRelicItem {
 
                 var reflected = attacker.hurt(entity.damageSources().thorns(entity), reflectedDamage);
 
-                if (!reflected || !ability.isRankModifierUnlocked("poison"))
+                if (!reflected)
+                    continue;
+
+                relicData.getLevelingData().addExperience("poison", "reflect_proc", 1D);
+                ability.getStatisticData().getMetricData("procs").addValue(1D);
+
+                if (!ability.isRankModifierUnlocked("poison"))
                     continue;
 
                 var seconds = Math.max(0D, ability.getStatData("poison_duration").getValue());
@@ -114,6 +144,7 @@ public class ThornPendantItem extends WearableRelicItem {
                 var level = Math.max(1, (int) MathUtils.round(ability.getStatData("poison_level").getValue(), 0));
 
                 attacker.addEffect(new MobEffectInstance(MobEffects.POISON, ticks, level - 1, false, true));
+                ability.getStatisticData().getMetricData("poison_duration").addValue(ticks / 20D);
             }
 
             if (poisonImmune) {
@@ -125,13 +156,15 @@ public class ThornPendantItem extends WearableRelicItem {
 
         @SubscribeEvent
         public static void onLivingIncomingDamageDealing(LivingIncomingDamageEvent event) {
-            if (!(event.getSource().getEntity() instanceof LivingEntity source) || source.level().isClientSide() || event.getEntity() == source)
+            if (!(event.getSource().getEntity() instanceof LivingEntity source) || source.level().isClientSide() || event.getEntity() == source || event.getAmount() <= 0F)
                 return;
 
             if (!event.getEntity().hasEffect(MobEffects.POISON))
                 return;
 
             var bonus = 0D;
+            ThornPendantItem bonusRelic = null;
+            ItemStack bonusStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(source, ModItems.THORN_PENDANT.value())) {
                 if (!(stack.getItem() instanceof ThornPendantItem relic))
@@ -143,11 +176,32 @@ public class ThornPendantItem extends WearableRelicItem {
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("poisoned_damage_bonus").getValue()));
-                bonus = Math.max(bonus, value);
+
+                if (value > bonus) {
+                    bonus = value;
+                    bonusRelic = relic;
+                    bonusStack = stack;
+                }
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonus <= 0D)
+                return;
+
+            var baseDamage = event.getAmount();
+            var boostedDamage = (float) (baseDamage * (1D + bonus));
+            var additionalDamage = Math.max(0F, boostedDamage - baseDamage);
+
+            event.setAmount(boostedDamage);
+
+            if (bonusRelic != null) {
+                var relicData = bonusRelic.getRelicData(source, bonusStack);
+                var ability = relicData.getAbilitiesData().getAbilityData("poison");
+
+                relicData.getLevelingData().addExperience("poison", "poisoned_hit", 1D);
+
+                if (additionalDamage > 0F)
+                    ability.getStatisticData().getMetricData("poisoned_bonus_damage").addValue(additionalDamage);
+            }
         }
     }
 }

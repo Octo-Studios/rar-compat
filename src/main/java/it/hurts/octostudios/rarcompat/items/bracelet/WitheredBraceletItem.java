@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.bracelet;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -15,12 +20,12 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-
 
 public class WitheredBraceletItem extends WearableRelicItem {
     @Override
@@ -61,6 +66,18 @@ public class WitheredBraceletItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("new_wither_target").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("withered_targets")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("leech_healing_done")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("leech", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -78,9 +95,11 @@ public class WitheredBraceletItem extends WearableRelicItem {
         return event.getSource().is(DamageTypes.WITHER) || event.getSource().is(DamageTypes.WITHER_SKULL);
     }
 
-    private static void applyWitherFromBracelet(LivingEntity target, Player owner, int ticks, int amplifier) {
+    private static boolean applyWitherFromBracelet(LivingEntity target, Player owner, int ticks, int amplifier) {
         if (ticks <= 0)
-            return;
+            return false;
+
+        var newlyWithered = !target.hasEffect(MobEffects.WITHER);
 
         target.addEffect(new MobEffectInstance(MobEffects.WITHER, ticks, Math.max(0, amplifier), false, true));
 
@@ -92,6 +111,8 @@ public class WitheredBraceletItem extends WearableRelicItem {
 
         data.putUUID("rarcompat_withered_bracelet_owner", owner.getUUID());
         data.putLong("rarcompat_withered_bracelet_expire", expireTick);
+
+        return newlyWithered;
     }
 
     private static Player getActiveOwner(LivingEntity target) {
@@ -118,18 +139,18 @@ public class WitheredBraceletItem extends WearableRelicItem {
         return server.getPlayerList().getPlayer(data.getUUID("rarcompat_withered_bracelet_owner"));
     }
 
-    private static boolean hasUnlockedModifier(Player player, String rankModifier) {
-        for (var stack : EntityUtils.findEquippedCurios(player, ModItems.WITHERED_BRACELET.value())) {
-            if (!(stack.getItem() instanceof WitheredBraceletItem relic))
-                continue;
+    private static void awardNewWitherTarget(WitheredBraceletItem relic, Player owner, ItemStack stack, int targets) {
+        if (targets <= 0)
+            return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("withering");
+        var relicData = relic.getRelicData(owner, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("withering");
 
-            if (ability.canPlayerUse(player) && ability.isRankModifierUnlocked(rankModifier))
-                return true;
-        }
+        if (!ability.canPlayerUse(owner))
+            return;
 
-        return false;
+        relicData.getLevelingData().addExperience("withering", "new_wither_target", targets);
+        ability.getStatisticData().getMetricData("withered_targets").addValue(targets);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -190,7 +211,8 @@ public class WitheredBraceletItem extends WearableRelicItem {
 
                 var witherLevel = Math.max(1, (int) MathUtils.round(ability.getStatData("wither_level").getValue(), 0));
 
-                applyWitherFromBracelet(target, player, durationTicks, witherLevel - 1);
+                if (applyWitherFromBracelet(target, player, durationTicks, witherLevel - 1))
+                    awardNewWitherTarget(relic, player, stack, 1);
             }
         }
 
@@ -210,6 +232,8 @@ public class WitheredBraceletItem extends WearableRelicItem {
             var spreadDuration = 0;
             var spreadRadius = 0D;
             var spreadAmplifier = 0;
+            WitheredBraceletItem spreadRelic = null;
+            ItemStack spreadStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(owner, ModItems.WITHERED_BRACELET.value())) {
                 if (!(stack.getItem() instanceof WitheredBraceletItem relic))
@@ -220,22 +244,36 @@ public class WitheredBraceletItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(owner) || !ability.isRankModifierUnlocked("spread"))
                     continue;
 
-                spreadDuration = Math.max(spreadDuration, secondsToTicks(ability.getStatData("spread_duration").getValue()));
-                spreadRadius = Math.max(spreadRadius, Math.max(0D, ability.getStatData("spread_radius").getValue()));
-                spreadAmplifier = Math.max(spreadAmplifier, Math.max(0, (int) MathUtils.round(ability.getStatData("wither_level").getValue(), 0) - 1));
+                var localDuration = secondsToTicks(ability.getStatData("spread_duration").getValue());
+                var localRadius = Math.max(0D, ability.getStatData("spread_radius").getValue());
+                var localAmplifier = Math.max(0, (int) MathUtils.round(ability.getStatData("wither_level").getValue(), 0) - 1);
+
+                if (localRadius > spreadRadius || localRadius == spreadRadius && localDuration > spreadDuration || localRadius == spreadRadius && localDuration == spreadDuration && localAmplifier > spreadAmplifier) {
+                    spreadRelic = relic;
+                    spreadStack = stack;
+                }
+
+                spreadDuration = Math.max(spreadDuration, localDuration);
+                spreadRadius = Math.max(spreadRadius, localRadius);
+                spreadAmplifier = Math.max(spreadAmplifier, localAmplifier);
             }
 
-            if (spreadDuration <= 0 || spreadRadius <= 0D)
+            if (spreadDuration <= 0 || spreadRadius <= 0D || spreadRelic == null || spreadStack.isEmpty())
                 return;
 
             var radiusSq = spreadRadius * spreadRadius;
+            var newWitheredTargets = 0;
 
             for (var nearby : level.getEntitiesOfClass(LivingEntity.class, entity.getBoundingBox().inflate(spreadRadius), target -> target.isAlive() && target != entity && target != owner)) {
                 if (nearby.distanceToSqr(entity) > radiusSq)
                     continue;
 
-                applyWitherFromBracelet(nearby, owner, spreadDuration, spreadAmplifier);
+                if (applyWitherFromBracelet(nearby, owner, spreadDuration, spreadAmplifier))
+                    newWitheredTargets++;
             }
+
+            if (newWitheredTargets > 0)
+                awardNewWitherTarget(spreadRelic, owner, spreadStack, newWitheredTargets);
         }
 
         @SubscribeEvent
@@ -250,10 +288,37 @@ public class WitheredBraceletItem extends WearableRelicItem {
             if (owner == null || !owner.isAlive())
                 return;
 
-            if (!hasUnlockedModifier(owner, "leech"))
+            ItemStack leechStack = ItemStack.EMPTY;
+            WitheredBraceletItem leechRelic = null;
+
+            for (var stack : EntityUtils.findEquippedCurios(owner, ModItems.WITHERED_BRACELET.value())) {
+                if (!(stack.getItem() instanceof WitheredBraceletItem relic))
+                    continue;
+
+                var ability = relic.getRelicData(owner, stack).getAbilitiesData().getAbilityData("withering");
+
+                if (!ability.canPlayerUse(owner) || !ability.isRankModifierUnlocked("leech"))
+                    continue;
+
+                leechRelic = relic;
+                leechStack = stack;
+                break;
+            }
+
+            if (leechRelic == null || leechStack.isEmpty())
                 return;
 
+            var healthBefore = owner.getHealth();
+
             owner.heal(event.getNewDamage());
+
+            var healed = Math.max(0F, owner.getHealth() - healthBefore);
+
+            if (healed <= 0F)
+                return;
+
+            leechRelic.getRelicData(owner, leechStack).getAbilitiesData().getAbilityData("withering")
+                    .getStatisticData().getMetricData("leech_healing_done").addValue(healed);
         }
     }
 }

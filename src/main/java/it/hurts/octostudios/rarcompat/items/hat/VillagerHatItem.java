@@ -3,9 +3,14 @@ package it.hurts.octostudios.rarcompat.items.hat;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -46,6 +51,12 @@ public class VillagerHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("golem_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("protection", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .ability(AbilityTemplate.builder("trade_surge")
                                 .rankModifier(3, "preserve")
@@ -68,6 +79,25 @@ public class VillagerHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("trade").build())
+                                        .source(ExperienceSourceTemplate.builder("multicast_bonus")
+                                                .rankModifierVisibilityState("multicast", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("trades_done")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("trades_preserved")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("preserve", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("multicast_bonus_results")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("multicast", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -86,6 +116,18 @@ public class VillagerHatItem extends WearableRelicItem {
 
         for (var golem : player.level().getEntitiesOfClass(IronGolem.class, player.getBoundingBox().inflate(24D), golem -> golem.getTarget() == player))
             golem.setTarget(null);
+    }
+
+    public static void onTradePreserved(Player player, ItemStack stack) {
+        if (!(stack.getItem() instanceof VillagerHatItem relic) || player.level().isClientSide())
+            return;
+
+        var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge");
+
+        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("preserve"))
+            return;
+
+        ability.getStatisticData().getMetricData("trades_preserved").addValue(1D);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -116,20 +158,31 @@ public class VillagerHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof VillagerHatItem relic))
                 return;
 
-            if (!relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard").canPlayerUse(player))
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard");
+
+            if (!ability.canPlayerUse(player))
                 return;
 
-            if (relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard").isRankModifierUnlocked("protection")) {
-                var reductionPerGolem = Math.max(0D, Math.min(1D, relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard").getStatData("damage_reduction_per_golem").getValue()));
-                var radius = Math.max(0D, relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard").getStatData("radius").getValue());
-                var maxReduction = Math.max(0D, Math.min(1D, relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard").getStatData("max_damage_reduction").getValue()));
+            if (ability.isRankModifierUnlocked("protection")) {
+                var reductionPerGolem = Math.max(0D, Math.min(1D, ability.getStatData("damage_reduction_per_golem").getValue()));
+                var radius = Math.max(0D, ability.getStatData("radius").getValue());
+                var maxReduction = Math.max(0D, Math.min(1D, ability.getStatData("max_damage_reduction").getValue()));
 
                 if (reductionPerGolem > 0D && radius > 0D && maxReduction > 0D) {
                     var golems = player.level().getEntitiesOfClass(IronGolem.class, player.getBoundingBox().inflate(radius), golem -> golem.isAlive()).size();
                     var reduction = Math.min(maxReduction, reductionPerGolem * golems);
 
-                    if (reduction > 0D)
-                        event.setAmount((float) Math.max(0D, event.getAmount() * (1D - reduction)));
+                    if (reduction > 0D) {
+                        var previous = event.getAmount();
+                        var reduced = (float) Math.max(0D, previous * (1D - reduction));
+
+                        event.setAmount(reduced);
+
+                        var prevented = Math.max(0F, previous - reduced);
+
+                        if (prevented > 0F)
+                            ability.getStatisticData().getMetricData("golem_damage_reduced").addValue(prevented);
+                    }
                 }
             }
 
@@ -152,11 +205,19 @@ public class VillagerHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof VillagerHatItem relic))
                 return;
 
-            if (!relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").canPlayerUse(player)
-                    || !relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").isRankModifierUnlocked("multicast"))
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("trade_surge");
+
+            if (!ability.canPlayerUse(player))
                 return;
 
-            var multicast = Math.max(0, (int) MathUtils.round(relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge").getStatData("multicast").getValue(), 0));
+            ability.getStatisticData().getMetricData("trades_done").addValue(1D);
+            relicData.getLevelingData().addExperience("trade_surge", "trade", 1D);
+
+            if (!ability.isRankModifierUnlocked("multicast"))
+                return;
+
+            var multicast = Math.max(0, (int) MathUtils.round(ability.getStatData("multicast").getValue(), 0));
 
             if (multicast <= 0)
                 return;
@@ -177,6 +238,9 @@ public class VillagerHatItem extends WearableRelicItem {
                 if (!player.addItem(bonus))
                     player.drop(bonus, false);
             }
+
+            ability.getStatisticData().getMetricData("multicast_bonus_results").addValue(casts);
+            relicData.getLevelingData().addExperience("trade_surge", "multicast_bonus", casts);
         }
     }
 }

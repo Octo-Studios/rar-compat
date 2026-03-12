@@ -2,9 +2,13 @@ package it.hurts.octostudios.rarcompat.items.hat;
 
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -46,10 +50,10 @@ public class SuperstitiousHatItem extends WearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("animal_bonus")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.25D, 0.5D)
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(1D, 2D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("streak_window")
                                         .thresholdValue(0D, Double.MAX_VALUE)
@@ -75,6 +79,14 @@ public class SuperstitiousHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("bonus_looting").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("bonus_looting_procs")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -87,7 +99,8 @@ public class SuperstitiousHatItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || lootContext == null)
             return baseLooting;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("looting");
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("looting");
 
         if (!ability.canPlayerUse(player)) {
             resetRuntimeState(stack);
@@ -107,6 +120,7 @@ public class SuperstitiousHatItem extends WearableRelicItem {
         var baseChance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
         var effectiveChance = baseChance;
         var maxCasts = Math.max(1, (int) MathUtils.round(ability.getStatData("max_casts").getValue(), 0));
+        var animalBonus = 0;
 
         var gameTime = player.level().getGameTime();
         var lastKillTick = getLastKillTick(stack);
@@ -120,11 +134,8 @@ public class SuperstitiousHatItem extends WearableRelicItem {
                 effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + firstKillBonus));
         }
 
-        if (ability.isRankModifierUnlocked("beast_hunter") && mob instanceof Animal) {
-            var animalBonus = Math.max(0D, ability.getStatData("animal_bonus").getValue());
-
-            effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + baseChance * animalBonus));
-        }
+        if (ability.isRankModifierUnlocked("beast_hunter") && mob instanceof Animal)
+            animalBonus = Math.max(0, (int) MathUtils.round(ability.getStatData("animal_bonus").getValue(), 0));
 
         int lootingBonus;
 
@@ -135,7 +146,7 @@ public class SuperstitiousHatItem extends WearableRelicItem {
             var streak = lastKillTick >= 0L && ticksSinceLastKill <= streakWindowTicks ? previousStreak + 1 : 1;
 
             if (streak > 1)
-                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + baseChance * streakBonus * (streak - 1)));
+                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + streakBonus * (streak - 1)));
 
             var streakCap = Math.max(1, (int) MathUtils.round(ability.getStatData("streak_max_effects").getValue(), 0));
 
@@ -147,14 +158,21 @@ public class SuperstitiousHatItem extends WearableRelicItem {
             setKillStreak(stack, 0);
         }
 
+        var totalBonus = lootingBonus + animalBonus;
+
         setLastKillTick(stack, gameTime);
         setLastTargetUuid(stack, targetUuid);
-        setLastLootingBonus(stack, lootingBonus);
+        setLastLootingBonus(stack, totalBonus);
 
-        if (lootingBonus <= 0)
+        if (totalBonus > 0) {
+            relicData.getLevelingData().addExperience("looting", "bonus_looting", totalBonus);
+            ability.getStatisticData().getMetricData("bonus_looting_procs").addValue(totalBonus);
+        }
+
+        if (totalBonus <= 0)
             return baseLooting;
 
-        return baseLooting + lootingBonus;
+        return baseLooting + totalBonus;
     }
 
     private long getLastKillTick(ItemStack stack) {
@@ -200,4 +218,3 @@ public class SuperstitiousHatItem extends WearableRelicItem {
         return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
     }
 }
-

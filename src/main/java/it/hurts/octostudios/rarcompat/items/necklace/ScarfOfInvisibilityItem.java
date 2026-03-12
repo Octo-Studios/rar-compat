@@ -4,9 +4,14 @@ import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
@@ -29,6 +34,7 @@ import top.theillusivec4.curios.api.SlotContext;
 
 public class ScarfOfInvisibilityItem extends WearableRelicItem {
     private static final double STILL_HORIZONTAL_THRESHOLD = 1.0E-4D;
+
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
@@ -67,6 +73,33 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("toggle").build())
+                                        .source(ExperienceSourceTemplate.builder("attack").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("entries")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("duration")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("attacks")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("bonus_damage")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("strike", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("stun_time")
+                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("stun", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .metric(AbilityMetricTemplate.builder("healing")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("regeneration", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -79,11 +112,14 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
         if (entity.level().isClientSide())
             return;
 
-        var ability = this.getRelicData(entity, stack).getAbilitiesData().getAbilityData("invisibility");
+        var relicData = this.getRelicData(entity, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("invisibility");
 
         if (!ability.canPlayerUse(entity)) {
-            if (isInvisibilityActive(stack))
+            if (isInvisibilityActive(stack)) {
                 entity.removeEffect(RelicsMobEffects.VANISHING);
+                onInvisibilityExit(entity, stack);
+            }
 
             setInvisibilityActive(stack, false);
             setStationaryTicks(stack, 0);
@@ -106,11 +142,22 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
         if (isInvisibilityActive(stack)) {
             entity.addEffect(new MobEffectInstance(RelicsMobEffects.VANISHING, 10, 0, false, false));
 
+            if (entity.tickCount % 20 == 0)
+                ability.getStatisticData().getMetricData("duration").addValue(1D);
+
             if (ability.isRankModifierUnlocked("regeneration") && entity.tickCount % 20 == 0) {
                 var heal = (float) Math.max(0D, ability.getStatData("regeneration").getValue());
 
-                if (heal > 0F)
+                if (heal > 0F) {
+                    var beforeHealth = entity.getHealth();
+
                     entity.heal(heal);
+
+                    var restored = Math.max(0F, entity.getHealth() - beforeHealth);
+
+                    if (restored > 0F)
+                        ability.getStatisticData().getMetricData("healing").addValue(restored);
+                }
             }
 
             return;
@@ -136,6 +183,7 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
 
         setInvisibilityActive(stack, true);
         setStationaryTicks(stack, 0);
+        onInvisibilityEnter(entity, stack);
         entity.addEffect(new MobEffectInstance(RelicsMobEffects.VANISHING, 10, 0, false, false));
     }
 
@@ -148,14 +196,36 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
 
         var entity = slotContext.entity();
 
-        if (!entity.level().isClientSide() && isInvisibilityActive(stack))
+        if (!entity.level().isClientSide() && isInvisibilityActive(stack)) {
             entity.removeEffect(RelicsMobEffects.VANISHING);
+            onInvisibilityExit(entity, stack);
+        }
 
         setInvisibilityActive(stack, false);
         setStationaryTicks(stack, 0);
         setInvisibilityCooldown(stack, 0);
         setNeedsOutOfSight(stack, false);
         setStrikeTicks(stack, 0);
+    }
+
+    private void onInvisibilityEnter(LivingEntity entity, ItemStack stack) {
+        var relicData = this.getRelicData(entity, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("invisibility");
+
+        ability.getStatisticData().getMetricData("entries").addValue(1D);
+        relicData.getLevelingData().addExperience("invisibility", "toggle", 1D);
+    }
+
+    private void onInvisibilityExit(LivingEntity entity, ItemStack stack) {
+        this.getRelicData(entity, stack).getLevelingData().addExperience("invisibility", "toggle", 1D);
+    }
+
+    private void onInvisibilityAttack(LivingEntity entity, ItemStack stack) {
+        var relicData = this.getRelicData(entity, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("invisibility");
+
+        ability.getStatisticData().getMetricData("attacks").addValue(1D);
+        relicData.getLevelingData().addExperience("invisibility", "attack", 1D);
     }
 
     private int getDelayTicks(LivingEntity entity, ItemStack stack) {
@@ -263,8 +333,13 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                     continue;
                 }
 
+                if (prepareStrike)
+                    relic.onInvisibilityAttack(entity, stack);
+
                 if (prepareStrike && (ability.isRankModifierUnlocked("strike") || ability.isRankModifierUnlocked("stun")))
                     relic.setStrikeTicks(stack, 2);
+
+                relic.onInvisibilityExit(entity, stack);
 
                 relic.setInvisibilityActive(stack, false);
                 relic.setStationaryTicks(stack, 0);
@@ -297,16 +372,26 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                 if (ability.isRankModifierUnlocked("strike")) {
                     var bonus = Math.max(0D, ability.getStatData("damage").getValue());
 
-                    if (bonus > 0D)
-                        event.setAmount((float) (event.getAmount() * (1D + bonus)));
+                    if (bonus > 0D) {
+                        var baseDamage = event.getAmount();
+                        var boostedDamage = (float) (baseDamage * (1D + bonus));
+                        var additionalDamage = Math.max(0F, boostedDamage - baseDamage);
+
+                        event.setAmount(boostedDamage);
+
+                        if (additionalDamage > 0F)
+                            ability.getStatisticData().getMetricData("bonus_damage").addValue(additionalDamage);
+                    }
                 }
 
                 if (ability.isRankModifierUnlocked("stun") && event.getEntity() instanceof LivingEntity target) {
                     var stunSeconds = Math.max(0D, ability.getStatData("stun").getValue());
                     var stunTicks = Math.max(0, (int) Math.round(stunSeconds * 20D));
 
-                    if (stunTicks > 0)
+                    if (stunTicks > 0) {
                         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, stunTicks, 6, false, true));
+                        ability.getStatisticData().getMetricData("stun_time").addValue(stunTicks / 20D);
+                    }
                 }
 
                 relic.setStrikeTicks(stack, 0);
