@@ -144,13 +144,13 @@ public class SuperstitiousHatItem extends WearableRelicItem {
             var streakBonus = Math.max(0D, ability.getStatData("streak_bonus").getValue());
             var previousStreak = getKillStreak(stack);
             var streak = lastKillTick >= 0L && ticksSinceLastKill <= streakWindowTicks ? previousStreak + 1 : 1;
+            var streakCap = Math.max(1, (int) MathUtils.round(ability.getStatData("streak_max_effects").getValue(), 0));
+
+            streak = Math.min(streak, streakCap);
 
             if (streak > 1)
                 effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + streakBonus * (streak - 1)));
 
-            var streakCap = Math.max(1, (int) MathUtils.round(ability.getStatData("streak_max_effects").getValue(), 0));
-
-            maxCasts = Math.min(maxCasts, streakCap);
             lootingBonus = MathUtils.multicast(player.getRandom(), effectiveChance, maxCasts);
             setKillStreak(stack, streak);
         } else {

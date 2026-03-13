@@ -42,6 +42,12 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                                 .rankModifier(1, "fluid_collision")
                                 .rankModifier(3, "resistance")
                                 .rankModifier(5, "immortality")
+                                .stat(AbilityStatTemplate.builder("air_restore_speed")
+                                        .thresholdValue(0D, Double.MAX_VALUE)
+                                        .initialValue(2D, 4D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> MathUtils.round(value, 2))
+                                        .build())
                                 .stat(AbilityStatTemplate.builder("resistance_per_block")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.01D, 0.03D)
@@ -91,17 +97,22 @@ public class CharmOfSinkingItem extends WearableRelicItem {
         var onBottom = isStandingOnBottomUnderWater(player);
 
         if (onBottom && player.getAirSupply() < player.getMaxAirSupply()) {
-            var beforeAir = player.getAirSupply();
-            var beforeBubbles = getAirBubbleCount(beforeAir, player.getMaxAirSupply());
-            var afterAir = Math.min(player.getMaxAirSupply(), beforeAir + 2);
-            var afterBubbles = getAirBubbleCount(afterAir, player.getMaxAirSupply());
-            var gainedBubbles = Math.max(0, afterBubbles - beforeBubbles);
+            var airRestoreSpeed = Math.max(0D, ability.getStatData("air_restore_speed").getValue());
 
-            player.setAirSupply(afterAir);
+            if (airRestoreSpeed > 0D) {
+                var airPerTick = Math.max(1, (int) Math.round(airRestoreSpeed));
+                var beforeAir = player.getAirSupply();
+                var beforeBubbles = getAirBubbleCount(beforeAir, player.getMaxAirSupply());
+                var afterAir = Math.min(player.getMaxAirSupply(), beforeAir + airPerTick);
+                var afterBubbles = getAirBubbleCount(afterAir, player.getMaxAirSupply());
+                var gainedBubbles = Math.max(0, afterBubbles - beforeBubbles);
 
-            if (gainedBubbles > 0) {
-                ability.getStatisticData().getMetricData("air_bubbles_restored").addValue(gainedBubbles);
-                this.getRelicData(player, stack).getLevelingData().addExperience("sinking", "air_bubble", gainedBubbles);
+                player.setAirSupply(afterAir);
+
+                if (gainedBubbles > 0) {
+                    ability.getStatisticData().getMetricData("air_bubbles_restored").addValue(gainedBubbles);
+                    this.getRelicData(player, stack).getLevelingData().addExperience("sinking", "air_bubble", gainedBubbles);
+                }
             }
         }
 

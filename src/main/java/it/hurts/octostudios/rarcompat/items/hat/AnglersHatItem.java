@@ -69,6 +69,12 @@ public class AnglersHatItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("max_casts")
+                                        .thresholdValue(1D, Double.MAX_VALUE)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("catch").build())
                                         .source(ExperienceSourceTemplate.builder("fish_eaten").build())
@@ -218,9 +224,10 @@ public class AnglersHatItem extends WearableRelicItem {
             catches += event.getDrops().size();
 
             var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
+            var maxCasts = Math.max(0, (int) MathUtils.round(ability.getStatData("max_casts").getValue(), 0));
 
-            if (chance > 0D) {
-                var rolls = MathUtils.multicast(random, chance);
+            if (chance > 0D && maxCasts > 0) {
+                var rolls = MathUtils.multicast(random, chance, maxCasts);
 
                 if (rolls > 0) {
                     LootTable loottable = serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);

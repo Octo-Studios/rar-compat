@@ -49,12 +49,6 @@ public class UmbrellaItem extends WearableRelicItem {
                         .ability(AbilityTemplate.builder("glider")
                                 .rankModifier(1, "bounce")
                                 .rankModifier(5, "vanishing")
-                                .stat(AbilityStatTemplate.builder("recharge")
-                                        .thresholdValue(0.05D, Double.MAX_VALUE)
-                                        .initialValue(2.5D, 1.25D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.05D)
-                                        .formatValue(value -> MathUtils.round(value, 2))
-                                        .build())
                                 .stat(AbilityStatTemplate.builder("bounces")
                                         .thresholdValue(0D, Double.MAX_VALUE)
                                         .initialValue(1D, 3D)
@@ -72,6 +66,13 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .initialValue(1D, 3D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1D)
                                         .formatValue(value -> MathUtils.round(value, 2))
+                                        .build())
+
+                                .stat(AbilityStatTemplate.builder("fall_speed")
+                                        .thresholdValue(0.01D, Double.MAX_VALUE)
+                                        .initialValue(0.15D, 0.1D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.04D)
+                                        .formatValue(value -> MathUtils.round(value, 3))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("slow_fall_distance").build())
@@ -173,8 +174,10 @@ public class UmbrellaItem extends WearableRelicItem {
 
         var isHeld = isHeld(player, stack);
 
-        if (isBounceLandingRequired(stack) && player.onGround())
+        if (player.onGround()) {
+            setBounceCount(stack, 0);
             setBounceLandingRequired(stack, false);
+        }
 
         if (isBounceLandingRequired(stack)) {
             if (isHeld && isFalling(player))
@@ -182,8 +185,6 @@ public class UmbrellaItem extends WearableRelicItem {
 
             return;
         }
-
-        rechargeBounceCharges(player, stack);
 
         if (isHeld && isFalling(player))
             applySlowFall(player, stack);
@@ -196,7 +197,12 @@ public class UmbrellaItem extends WearableRelicItem {
             return;
 
         if (!player.isShiftKeyDown() && !isUsingShield(player, stack)) {
-            var motion = new Vec3(player.getDeltaMovement().x(), -0.15D, player.getDeltaMovement().z());
+            var fallSpeed = Math.max(0D, ability.getStatData("fall_speed").getValue());
+
+            if (fallSpeed <= 0D)
+                return;
+
+            var motion = new Vec3(player.getDeltaMovement().x(), -fallSpeed, player.getDeltaMovement().z());
 
             player.setDeltaMovement(motion.x(), motion.y(), motion.z());
 
@@ -264,32 +270,6 @@ public class UmbrellaItem extends WearableRelicItem {
         return push.normalize();
     }
 
-    private void rechargeBounceCharges(Player player, ItemStack stack) {
-        if (getBounceCount(stack) <= 0) {
-            setBounceRechargeTimer(stack, 0);
-            return;
-        }
-
-        var rechargeTicks = getBounceRechargeTicks(player, stack);
-
-        if (rechargeTicks <= 0)
-            return;
-
-        var timer = getBounceRechargeTimer(stack);
-
-        if (timer <= 0)
-            timer = rechargeTicks;
-
-        timer--;
-
-        if (timer <= 0) {
-            setBounceCount(stack, getBounceCount(stack) - 1);
-            timer = getBounceCount(stack) > 0 ? rechargeTicks : 0;
-        }
-
-        setBounceRechargeTimer(stack, timer);
-    }
-
     private void syncBounceData(Player player, ItemStack stack) {
         var maxBounces = getMaxBounces(player, stack);
 
@@ -298,10 +278,8 @@ public class UmbrellaItem extends WearableRelicItem {
         if (getBounceCount(stack) > maxBounces)
             setBounceCount(stack, maxBounces);
 
-        if (getBounceCount(stack) <= 0) {
-            setBounceRechargeTimer(stack, 0);
+        if (getBounceCount(stack) <= 0)
             setBounceLandingRequired(stack, false);
-        }
     }
 
     private void syncShieldData(Player player, ItemStack stack) {
@@ -353,17 +331,6 @@ public class UmbrellaItem extends WearableRelicItem {
         var max = getMaxShieldHits(player, stack);
 
         return max > 0 && getShieldHitCount(stack) < max;
-    }
-
-    private int getBounceRechargeTicks(Player player, ItemStack stack) {
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
-
-        if (!ability.canPlayerUse(player))
-            return 0;
-
-        var seconds = Math.max(0.05D, ability.getStatData("recharge").getValue());
-
-        return Math.max(1, (int) Math.round(seconds * 20D));
     }
 
     private int getMaxBounces(Player player, ItemStack stack) {
@@ -432,14 +399,6 @@ public class UmbrellaItem extends WearableRelicItem {
 
     private void setBounceCount(ItemStack stack, int count) {
         stack.set(DataComponentRegistry.UMBRELLA_BOUNCE_COUNT.get(), Math.max(0, count));
-    }
-
-    private int getBounceRechargeTimer(ItemStack stack) {
-        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_BOUNCE_RECHARGE_TIMER.get(), 0);
-    }
-
-    private void setBounceRechargeTimer(ItemStack stack, int timer) {
-        stack.set(DataComponentRegistry.UMBRELLA_BOUNCE_RECHARGE_TIMER.get(), Math.max(0, timer));
     }
 
     private boolean isBounceLandingRequired(ItemStack stack) {
@@ -671,3 +630,4 @@ public class UmbrellaItem extends WearableRelicItem {
         }
     }
 }
+

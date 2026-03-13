@@ -34,7 +34,7 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                         .thresholdValue(0D, Double.MAX_VALUE)
                                         .initialValue(2D, 8D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .formatValue(value -> (int) MathUtils.round(value / 20, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("fire_duration")
                                         .thresholdValue(0D, Double.MAX_VALUE)
