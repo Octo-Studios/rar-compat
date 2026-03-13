@@ -27,9 +27,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class ShockPendantItem extends WearableRelicItem {
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
@@ -114,25 +111,16 @@ public class ShockPendantItem extends WearableRelicItem {
                 .build();
     }
 
-    private Map<Integer, Long> getLightningHistory(ItemStack stack) {
-        return new HashMap<>(stack.getOrDefault(DataComponentRegistry.SHOCK_PENDANT_LIGHTNING_HISTORY.get(), Map.of()));
+    private long getLastLightningExperienceTick(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.SHOCK_PENDANT_LAST_LIGHTNING_XP_TICK.get(), -20L);
     }
 
-    private void setLightningHistory(ItemStack stack, Map<Integer, Long> history) {
-        stack.set(DataComponentRegistry.SHOCK_PENDANT_LIGHTNING_HISTORY.get(), history);
+    private void setLastLightningExperienceTick(ItemStack stack, long gameTime) {
+        stack.set(DataComponentRegistry.SHOCK_PENDANT_LAST_LIGHTNING_XP_TICK.get(), gameTime);
     }
 
-    private boolean markLightningProcessed(ItemStack stack, int lightningId, long gameTime) {
-        var history = getLightningHistory(stack);
-
-        history.entrySet().removeIf(entry -> gameTime - entry.getValue() > 200L);
-
-        var isNewLightning = !history.containsKey(lightningId);
-
-        history.put(lightningId, gameTime);
-        setLightningHistory(stack, history);
-
-        return isNewLightning;
+    private boolean canAwardLightningExperience(ItemStack stack, long gameTime) {
+        return gameTime - getLastLightningExperienceTick(stack) >= 20L;
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -157,8 +145,6 @@ public class ShockPendantItem extends WearableRelicItem {
 
             var attacker = event.getSource().getEntity() instanceof LivingEntity living && living != entity ? living : null;
             var lightningDamage = event.getSource().is(DamageTypes.LIGHTNING_BOLT);
-            var lightningSource = event.getSource().getDirectEntity() != null ? event.getSource().getDirectEntity() : event.getSource().getEntity();
-            var lightningEntityId = lightningDamage && lightningSource != null ? lightningSource.getId() : Integer.MIN_VALUE;
             var gameTime = entity.level().getGameTime();
             var lightningImmune = false;
             ShockPendantItem lightningRelic = null;
@@ -240,16 +226,13 @@ public class ShockPendantItem extends WearableRelicItem {
                 event.setAmount(0F);
                 event.setCanceled(true);
 
-                if (lightningRelic != null) {
-                    var isNewLightning = lightningEntityId == Integer.MIN_VALUE || lightningRelic.markLightningProcessed(lightningStack, lightningEntityId, gameTime);
+                if (lightningRelic != null && lightningRelic.canAwardLightningExperience(lightningStack, gameTime)) {
+                    var relicData = lightningRelic.getRelicData(entity, lightningStack);
+                    var ability = relicData.getAbilitiesData().getAbilityData("shock");
 
-                    if (isNewLightning) {
-                        var relicData = lightningRelic.getRelicData(entity, lightningStack);
-                        var ability = relicData.getAbilitiesData().getAbilityData("shock");
-
-                        relicData.getLevelingData().addExperience("shock", "lightning_resist", 1D);
-                        ability.getStatisticData().getMetricData("lightning_resists").addValue(1D);
-                    }
+                    relicData.getLevelingData().addExperience("shock", "lightning_resist", 1D);
+                    ability.getStatisticData().getMetricData("lightning_resists").addValue(1D);
+                    lightningRelic.setLastLightningExperienceTick(lightningStack, gameTime);
                 }
             }
 

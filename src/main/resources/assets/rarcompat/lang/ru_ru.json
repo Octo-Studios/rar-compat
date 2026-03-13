@@ -555,6 +555,7 @@
   "relics.description.fire_gauntlet.ability.flame.experience_source.spark_damage_hit": "+1 единица опыта за попадание искрой.",
   "relics.description.fire_gauntlet.ability.flame.statistic.ignited_targets": "Подожжено целей",
   "relics.description.fire_gauntlet.ability.flame.statistic.spark_damage_dealt": "Нанесено урона искрами",
+  "relics.description.fire_gauntlet.ability.flame.statistic.sparks_created": "Порождено искр",
 
   "relics.description.pickaxe_heater.description": "Компактный нагревательный модуль, устанавливаемый прямо в кирку. Он мгновенно разогревает добытую руду, иногда превращая её в готовый слиток ещё в момент добычи.",
   "relics.description.pickaxe_heater.ability.heating": "Термообработка",

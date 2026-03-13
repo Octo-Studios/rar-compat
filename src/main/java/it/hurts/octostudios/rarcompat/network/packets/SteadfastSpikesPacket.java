@@ -39,13 +39,37 @@ public class SteadfastSpikesPacket implements CustomPacketPayload {
 
             ItemStack stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
 
-            if (!(stack.getItem() instanceof SteadfastSpikesItem))
+            if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                return;
+
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("resistance");
+
+            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide"))
                 return;
 
             player.fallDistance = 0;
+
+            var data = player.getPersistentData();
+            var gameTime = player.level().getGameTime();
+            var lastTick = data.getLong("rarcompat_steadfast_spikes_wall_slide_tick");
+
+            if (lastTick != gameTime) {
+                var ticks = data.getInt("rarcompat_steadfast_spikes_wall_slide_ticks") + 1;
+                var seconds = ticks / 20;
+
+                if (seconds > 0) {
+                    relicData.getLevelingData().addExperience("resistance", "wall_slide_time", seconds);
+                    ability.getStatisticData().getMetricData("wall_slide_time").addValue(seconds);
+                    ticks %= 20;
+                }
+
+                data.putInt("rarcompat_steadfast_spikes_wall_slide_ticks", ticks);
+            }
+
+            data.putLong("rarcompat_steadfast_spikes_wall_slide_tick", gameTime);
         });
     }
-
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return TYPE;

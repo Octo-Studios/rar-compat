@@ -149,10 +149,12 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         if (newScale < 1D && ability.getMode().equals("shrink") && player.tickCount % 20 == 0)
             ability.getStatisticData().getMetricData("shrink_duration").addValue(1D);
 
-        var horizontalSpeedSqr = player.getDeltaMovement().x * player.getDeltaMovement().x
-                + player.getDeltaMovement().z * player.getDeltaMovement().z;
+        var horizontalSpeedSqr = Math.max(
+                player.getKnownMovement().horizontalDistanceSqr(),
+                player.getDeltaMovement().horizontalDistanceSqr()
+        );
 
-        if (newScale < 1D && horizontalSpeedSqr > 1.0E-4D) {
+        if (newScale < 1D && horizontalSpeedSqr > 1.0E-6D) {
             var movingTicks = getMovingTicks(stack) + 1;
 
             if (movingTicks >= 100) {

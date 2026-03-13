@@ -100,21 +100,11 @@ public class SnorkelItem extends WearableRelicItem {
         var ability = relicData.getAbilitiesData().getAbilityData("snorkeling");
         var playerId = player.getUUID();
         var underwater = player.isEyeInFluid(FluidTags.WATER);
+        var previousAir = LAST_UNDERWATER_AIR.get(playerId);
 
         if (!ability.canPlayerUse(player)) {
             LAST_UNDERWATER_AIR.remove(playerId);
             return;
-        }
-
-        var previousAir = LAST_UNDERWATER_AIR.get(playerId);
-
-        if (underwater && previousAir != null) {
-            var previousBubbles = getAirBubbleCount(previousAir, player.getMaxAirSupply());
-            var currentBubbles = getAirBubbleCount(player.getAirSupply(), player.getMaxAirSupply());
-            var spentBubbles = Math.max(0, previousBubbles - currentBubbles);
-
-            if (spentBubbles > 0)
-                relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentBubbles);
         }
 
         var maxWaterDepth = Math.max(0, (int) MathUtils.round(ability.getStatData("water_depth").getValue(), 0));
@@ -129,19 +119,31 @@ public class SnorkelItem extends WearableRelicItem {
             if (underwater && player.getAirSupply() < player.getMaxAirSupply())
                 player.setAirSupply(Math.min(player.getAirSupply() + 4, player.getMaxAirSupply()));
 
-            if (underwater)
+            if (underwater) {
+                var spentBubbles = getSpentBubbles(previousAir, player.getAirSupply(), player.getMaxAirSupply());
+
+                if (spentBubbles > 0)
+                    relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentBubbles);
+
                 LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
-            else
+            } else {
                 LAST_UNDERWATER_AIR.remove(playerId);
+            }
 
             return;
         }
 
         if (!ability.isRankModifierUnlocked("reserve") || isReserveTriggered(stack)) {
-            if (underwater)
+            if (underwater) {
+                var spentBubbles = getSpentBubbles(previousAir, player.getAirSupply(), player.getMaxAirSupply());
+
+                if (spentBubbles > 0)
+                    relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentBubbles);
+
                 LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
-            else
+            } else {
                 LAST_UNDERWATER_AIR.remove(playerId);
+            }
 
             return;
         }
@@ -168,12 +170,17 @@ public class SnorkelItem extends WearableRelicItem {
 
         setReserveTriggered(stack, true);
 
-        if (underwater)
-            LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
-        else
-            LAST_UNDERWATER_AIR.remove(playerId);
-    }
+        if (underwater) {
+            var spentBubbles = getSpentBubbles(previousAir, player.getAirSupply(), player.getMaxAirSupply());
 
+            if (spentBubbles > 0)
+                relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentBubbles);
+
+            LAST_UNDERWATER_AIR.put(playerId, player.getAirSupply());
+        } else {
+            LAST_UNDERWATER_AIR.remove(playerId);
+        }
+    }
     private boolean isSafeBreathingHeight(Player player, int maxWaterDepth) {
         if (!player.isEyeInFluid(FluidTags.WATER))
             return true;
@@ -215,6 +222,15 @@ public class SnorkelItem extends WearableRelicItem {
         return Math.max(0, airSupply / airPerBubble);
     }
 
+    private static int getSpentBubbles(Integer previousAir, int currentAir, int maxAirSupply) {
+        if (previousAir == null)
+            return 0;
+
+        var previousBubbles = getAirBubbleCount(previousAir, maxAirSupply);
+        var currentBubbles = getAirBubbleCount(currentAir, maxAirSupply);
+
+        return Math.max(0, previousBubbles - currentBubbles);
+    }
     private boolean isReserveTriggered(ItemStack stack) {
         return stack.getOrDefault(DataComponentRegistry.SNORKEL_RESERVE_TRIGGERED.get(), false);
     }

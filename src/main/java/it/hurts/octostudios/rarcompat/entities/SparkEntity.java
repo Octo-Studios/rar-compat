@@ -35,6 +35,8 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     @Setter
     private LivingEntity target;
 
+    private boolean hitProcessed;
+
     public SparkEntity(EntityType<? extends ThrowableProjectile> type, Level worldIn) {
         super(type, worldIn);
     }
@@ -42,6 +44,9 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     @Override
     public void tick() {
         super.tick();
+
+        if (this.isRemoved() || hitProcessed)
+            return;
 
         if (this.isInWaterRainOrBubble()) {
             this.discard();
@@ -87,10 +92,22 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     }
 
     public void hitEntity(LivingEntity target) {
+        if (hitProcessed || this.isRemoved())
+            return;
+
+        hitProcessed = true;
+
         if (this.getOwner() instanceof Player player && !target.getStringUUID().equals(player.getStringUUID())) {
             target.invulnerableTime = 0;
 
+            var beforeHealth = target.getHealth();
+            var beforeAbsorption = target.getAbsorptionAmount();
+
             if (target.hurt(getCommandSenderWorld().damageSources().mobProjectile(this, player), getDamage())) {
+                var dealtDamage = Math.max(0F, beforeHealth - target.getHealth()) + Math.max(0F, beforeAbsorption - target.getAbsorptionAmount());
+
+                FireGauntletItem.awardSparkHitProgress(player, ItemStack.EMPTY, dealtDamage);
+
                 var fireDuration = Math.max(0F, getFireDuration());
 
                 if (fireDuration <= 0F && getRelicStack().getItem() instanceof FireGauntletItem relic) {
@@ -100,8 +117,8 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
                         fireDuration = (float) Math.max(0D, ability.getStatData("spark_fire_duration").getValue());
                 }
 
-                if (fireDuration > 0F)
-                    FireGauntletItem.igniteFromGauntlet(target, player, fireDuration);
+                if (fireDuration > 0F && FireGauntletItem.igniteFromGauntlet(target, player, fireDuration))
+                    FireGauntletItem.awardSparkIgniteProgress(player);
             }
         }
 

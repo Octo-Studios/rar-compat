@@ -59,9 +59,7 @@ public class FlamePendantItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("ignite").build())
-                                        .source(ExperienceSourceTemplate.builder("burning_hit")
-                                                .rankModifierVisibilityState("burning_damage", VisibilityState.OBFUSCATED)
-                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("burning_hit").build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("ignited_targets")
@@ -177,6 +175,8 @@ public class FlamePendantItem extends WearableRelicItem {
             var bonus = 0D;
             FlamePendantItem bonusRelic = null;
             ItemStack bonusStack = ItemStack.EMPTY;
+            FlamePendantItem experienceRelic = null;
+            ItemStack experienceStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(source, ModItems.FLAME_PENDANT.value())) {
                 if (!(stack.getItem() instanceof FlamePendantItem relic))
@@ -184,7 +184,15 @@ public class FlamePendantItem extends WearableRelicItem {
 
                 var ability = relic.getRelicData(source, stack).getAbilitiesData().getAbilityData("fire");
 
-                if (!ability.canPlayerUse(source) || !ability.isRankModifierUnlocked("burning_damage"))
+                if (!ability.canPlayerUse(source))
+                    continue;
+
+                if (experienceRelic == null) {
+                    experienceRelic = relic;
+                    experienceStack = stack;
+                }
+
+                if (!ability.isRankModifierUnlocked("burning_damage"))
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("burning_damage_bonus").getValue()));
@@ -196,6 +204,9 @@ public class FlamePendantItem extends WearableRelicItem {
                 }
             }
 
+            if (experienceRelic != null && !experienceStack.isEmpty())
+                experienceRelic.getRelicData(source, experienceStack).getLevelingData().addExperience("fire", "burning_hit", 1D);
+
             if (bonus <= 0D)
                 return;
 
@@ -205,15 +216,9 @@ public class FlamePendantItem extends WearableRelicItem {
 
             event.setAmount(boostedDamage);
 
-            if (bonusRelic != null) {
-                var relicData = bonusRelic.getRelicData(source, bonusStack);
-                var ability = relicData.getAbilitiesData().getAbilityData("fire");
-
-                relicData.getLevelingData().addExperience("fire", "burning_hit", 1D);
-
-                if (additionalDamage > 0F)
-                    ability.getStatisticData().getMetricData("burning_bonus_damage").addValue(additionalDamage);
-            }
+            if (bonusRelic != null && additionalDamage > 0F)
+                bonusRelic.getRelicData(source, bonusStack).getAbilitiesData().getAbilityData("fire")
+                        .getStatisticData().getMetricData("burning_bonus_damage").addValue(additionalDamage);
         }
     }
 }

@@ -61,7 +61,7 @@ public class ThornPendantItem extends WearableRelicItem {
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("reflect_proc").build())
                                         .source(ExperienceSourceTemplate.builder("poisoned_hit")
-                                                .rankModifierVisibilityState("damage", VisibilityState.OBFUSCATED)
+                                                .rankModifierVisibilityState("poison", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
@@ -167,6 +167,8 @@ public class ThornPendantItem extends WearableRelicItem {
             var bonus = 0D;
             ThornPendantItem bonusRelic = null;
             ItemStack bonusStack = ItemStack.EMPTY;
+            ThornPendantItem experienceRelic = null;
+            ItemStack experienceStack = ItemStack.EMPTY;
 
             for (var stack : EntityUtils.findEquippedCurios(source, ModItems.THORN_PENDANT.value())) {
                 if (!(stack.getItem() instanceof ThornPendantItem relic))
@@ -174,7 +176,15 @@ public class ThornPendantItem extends WearableRelicItem {
 
                 var ability = relic.getRelicData(source, stack).getAbilitiesData().getAbilityData("poison");
 
-                if (!ability.canPlayerUse(source) || !ability.isRankModifierUnlocked("damage"))
+                if (!ability.canPlayerUse(source))
+                    continue;
+
+                if (experienceRelic == null && ability.isRankModifierUnlocked("poison")) {
+                    experienceRelic = relic;
+                    experienceStack = stack;
+                }
+
+                if (!ability.isRankModifierUnlocked("damage"))
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("poisoned_damage_bonus").getValue()));
@@ -186,7 +196,10 @@ public class ThornPendantItem extends WearableRelicItem {
                 }
             }
 
-            if (bonus <= 0D)
+            if (experienceRelic != null && !experienceStack.isEmpty())
+                experienceRelic.getRelicData(source, experienceStack).getLevelingData().addExperience("poison", "poisoned_hit", 1D);
+
+            if (bonus <= 0D || bonusRelic == null || bonusStack.isEmpty())
                 return;
 
             var baseDamage = event.getAmount();
@@ -195,15 +208,9 @@ public class ThornPendantItem extends WearableRelicItem {
 
             event.setAmount(boostedDamage);
 
-            if (bonusRelic != null) {
-                var relicData = bonusRelic.getRelicData(source, bonusStack);
-                var ability = relicData.getAbilitiesData().getAbilityData("poison");
-
-                relicData.getLevelingData().addExperience("poison", "poisoned_hit", 1D);
-
-                if (additionalDamage > 0F)
-                    ability.getStatisticData().getMetricData("poisoned_bonus_damage").addValue(additionalDamage);
-            }
+            if (additionalDamage > 0F)
+                bonusRelic.getRelicData(source, bonusStack).getAbilitiesData().getAbilityData("poison")
+                        .getStatisticData().getMetricData("poisoned_bonus_damage").addValue(additionalDamage);
         }
     }
 }

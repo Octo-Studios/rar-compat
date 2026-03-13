@@ -22,7 +22,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
@@ -93,6 +92,10 @@ public class FireGauntletItem extends WearableRelicItem {
                                                 .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
                                                 .rankModifierVisibilityState("spark", VisibilityState.OBFUSCATED)
                                                 .build())
+                                        .metric(AbilityMetricTemplate.builder("sparks_created")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("spark", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .build())
@@ -101,6 +104,54 @@ public class FireGauntletItem extends WearableRelicItem {
 
     private static long secondsToTicks(double seconds) {
         return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
+    }
+
+    private static ItemStack findPreferredGauntletStack(Player owner, boolean requireSparkRank) {
+        ItemStack selected = ItemStack.EMPTY;
+        var selectedScore = -1D;
+
+        for (var equipped : EntityUtils.findEquippedCurios(owner, ModItems.FIRE_GAUNTLET.value())) {
+            if (!(equipped.getItem() instanceof FireGauntletItem relic))
+                continue;
+
+            var ability = relic.getRelicData(owner, equipped).getAbilitiesData().getAbilityData("flame");
+
+            if (!ability.canPlayerUse(owner))
+                continue;
+
+            if (requireSparkRank && !ability.isRankModifierUnlocked("spark"))
+                continue;
+
+            var score = requireSparkRank
+                    ? ability.getStatData("spark_count").getValue() * 100D + ability.getStatData("spark_damage").getValue()
+                    : ability.getStatData("fire_duration").getValue();
+
+            if (score > selectedScore) {
+                selectedScore = score;
+                selected = equipped;
+            }
+        }
+
+        return selected;
+    }
+
+    private static ItemStack resolveAwardStack(Player owner, ItemStack stack, boolean requireSparkRank) {
+        for (var equipped : EntityUtils.findEquippedCurios(owner, ModItems.FIRE_GAUNTLET.value())) {
+            if (equipped != stack || !(equipped.getItem() instanceof FireGauntletItem relic))
+                continue;
+
+            var ability = relic.getRelicData(owner, equipped).getAbilitiesData().getAbilityData("flame");
+
+            if (!ability.canPlayerUse(owner))
+                continue;
+
+            if (requireSparkRank && !ability.isRankModifierUnlocked("spark"))
+                continue;
+
+            return equipped;
+        }
+
+        return findPreferredGauntletStack(owner, requireSparkRank);
     }
 
     public static boolean igniteFromGauntlet(LivingEntity target, Player owner, double seconds) {
@@ -123,8 +174,13 @@ public class FireGauntletItem extends WearableRelicItem {
         return newlyIgnited;
     }
 
-    private static void awardIgniteProgress(FireGauntletItem relic, Player owner, ItemStack stack) {
-        var relicData = relic.getRelicData(owner, stack);
+    public static void awardIgniteProgress(Player owner, ItemStack stack) {
+        var trackedStack = resolveAwardStack(owner, stack, false);
+
+        if (!(trackedStack.getItem() instanceof FireGauntletItem relic))
+            return;
+
+        var relicData = relic.getRelicData(owner, trackedStack);
         var ability = relicData.getAbilitiesData().getAbilityData("flame");
 
         if (!ability.canPlayerUse(owner))
@@ -132,6 +188,33 @@ public class FireGauntletItem extends WearableRelicItem {
 
         relicData.getLevelingData().addExperience("flame", "ignite_new_target", 1D);
         ability.getStatisticData().getMetricData("ignited_targets").addValue(1D);
+    }
+
+    public static void awardSparkIgniteProgress(Player owner) {
+        var trackedStack = findPreferredGauntletStack(owner, true);
+
+        if (trackedStack.isEmpty())
+            return;
+
+        awardIgniteProgress(owner, trackedStack);
+    }
+
+    public static void awardSparkHitProgress(Player owner, ItemStack stack, float damageDealt) {
+        var trackedStack = resolveAwardStack(owner, stack, true);
+
+        if (!(trackedStack.getItem() instanceof FireGauntletItem relic))
+            return;
+
+        var relicData = relic.getRelicData(owner, trackedStack);
+        var ability = relicData.getAbilitiesData().getAbilityData("flame");
+
+        if (!ability.canPlayerUse(owner) || !ability.isRankModifierUnlocked("spark"))
+            return;
+
+        relicData.getLevelingData().addExperience("flame", "spark_damage_hit", 1D);
+
+        if (damageDealt > 0F)
+            ability.getStatisticData().getMetricData("spark_damage_dealt").addValue(damageDealt);
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -163,7 +246,7 @@ public class FireGauntletItem extends WearableRelicItem {
                 var fireDuration = Math.max(0D, ability.getStatData("fire_duration").getValue());
 
                 if (fireDuration > 0D && igniteFromGauntlet(target, player, fireDuration))
-                    awardIgniteProgress(relic, player, stack);
+                    awardIgniteProgress(player, stack);
 
                 if (!wasOnFire)
                     continue;
@@ -203,34 +286,8 @@ public class FireGauntletItem extends WearableRelicItem {
                     continue;
 
                 if (igniteFromGauntlet(nearby, player, spreadFireDuration) && spreadRelic != null && !spreadStack.isEmpty())
-                    awardIgniteProgress(spreadRelic, player, spreadStack);
+                    awardIgniteProgress(player, spreadStack);
             }
-        }
-
-        @SubscribeEvent
-        public static void onLivingDamagePost(LivingDamageEvent.Post event) {
-            if (event.getEntity().level().isClientSide() || event.getNewDamage() <= 0F)
-                return;
-
-            if (!(event.getSource().getDirectEntity() instanceof SparkEntity spark))
-                return;
-
-            if (!(spark.getOwner() instanceof Player player))
-                return;
-
-            var stack = spark.getRelicStack();
-
-            if (stack.isEmpty() || !(stack.getItem() instanceof FireGauntletItem relic))
-                return;
-
-            var relicData = relic.getRelicData(player, stack);
-            var ability = relicData.getAbilitiesData().getAbilityData("flame");
-
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("spark"))
-                return;
-
-            relicData.getLevelingData().addExperience("flame", "spark_damage_hit", 1D);
-            ability.getStatisticData().getMetricData("spark_damage_dealt").addValue(event.getNewDamage());
         }
 
         @SubscribeEvent
@@ -276,7 +333,7 @@ public class FireGauntletItem extends WearableRelicItem {
 
                 if (count > sparkCount) {
                     sparkCount = count;
-                    sparkStack = stack.copy();
+                    sparkStack = stack;
                 }
 
                 sparkDamage = Math.max(sparkDamage, damage);
@@ -296,6 +353,7 @@ public class FireGauntletItem extends WearableRelicItem {
                 return;
 
             var startPos = entity.position().add(0D, entity.getBbHeight() / 2F, 0D);
+            var spawnedSparks = 0;
 
             for (var target : targets) {
                 var spark = new SparkEntity(EntityRegistry.SPARK.get(), level);
@@ -313,6 +371,14 @@ public class FireGauntletItem extends WearableRelicItem {
                     spark.setDeltaMovement(direction.normalize().scale(0.2D));
 
                 level.addFreshEntity(spark);
+                spawnedSparks++;
+            }
+
+            if (spawnedSparks > 0 && sparkStack.getItem() instanceof FireGauntletItem relic) {
+                var ability = relic.getRelicData(owner, sparkStack).getAbilitiesData().getAbilityData("flame");
+
+                if (ability.canPlayerUse(owner) && ability.isRankModifierUnlocked("spark"))
+                    ability.getStatisticData().getMetricData("sparks_created").addValue(spawnedSparks);
             }
         }
     }
