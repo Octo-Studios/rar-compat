@@ -20,6 +20,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -94,26 +95,34 @@ public class StriderShoesItem extends WearableRelicItem {
         }
 
         var active = isStrideActive(player, freeStride);
+        var onSurface = isOnLavaSurface(player);
+        var currentRecoveryTicks = getRecoveryTicks(stack);
+        var keepRecovery = currentRecoveryTicks > 0 && (!player.onGround() || onSurface);
         var keepSafeFall = jumpBonus > 0D
-                && getRecoveryTicks(stack) > 0
+                && keepRecovery
                 && (!player.onGround() || player.fallDistance > 0F);
+        var applyJumpBonus = jumpBonus > 0D && onSurface;
 
         if (!active) {
             EntityUtils.removeAttribute(player, stack, Attributes.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-            EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            if (applyJumpBonus)
+                EntityUtils.resetAttribute(player, stack, Attributes.JUMP_STRENGTH, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            else
+                EntityUtils.removeAttribute(player, stack, Attributes.JUMP_STRENGTH, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
             if (keepSafeFall)
                 EntityUtils.resetAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, (float) jumpBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-            else {
-                setRecoveryTicks(stack, 0);
+            else
                 EntityUtils.removeAttribute(player, stack, Attributes.SAFE_FALL_DISTANCE, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-            }
+
+            if (!keepRecovery)
+                setRecoveryTicks(stack, 0);
 
             return;
         }
 
         var maxRecoveryTicks = Math.max(1, (int) Math.round(Math.max(0D, ability.getStatData("recovery_time").getValue()) * 20D));
-        var recoveryTicks = Math.min(maxRecoveryTicks, getRecoveryTicks(stack) + 1);
+        var recoveryTicks = Math.min(maxRecoveryTicks, currentRecoveryTicks + 1);
         setRecoveryTicks(stack, recoveryTicks);
 
         var penalty = Math.max(0D, Math.min(1D, ability.getStatData("speed_penalty").getValue()));
@@ -166,27 +175,36 @@ public class StriderShoesItem extends WearableRelicItem {
         if (!freeStride && !player.isShiftKeyDown())
             return false;
 
-        var surfaceY = getLavaSurfaceY(player);
-
-        if (Double.isNaN(surfaceY))
-            return false;
-
-        return true;
+        return isOnLavaSurface(player);
     }
 
-    private static double getLavaSurfaceY(Player player) {
+    private static boolean isOnLavaSurface(Player player) {
         var level = player.level();
-        var probe = BlockPos.containing(player.getX(), player.getBoundingBox().minY - 0.05D, player.getZ());
+        var box = player.getBoundingBox();
+        var minX = Mth.floor(box.minX + 1.0E-4D);
+        var maxX = Mth.floor(box.maxX - 1.0E-4D);
+        var minZ = Mth.floor(box.minZ + 1.0E-4D);
+        var maxZ = Mth.floor(box.maxZ - 1.0E-4D);
+        var startY = Mth.floor(box.minY - 0.05D);
+        var pos = new BlockPos.MutableBlockPos();
 
-        if (level.getFluidState(probe).is(FluidTags.LAVA))
-            return probe.getY() + 1D;
+        for (var x = minX; x <= maxX; x++) {
+            for (var z = minZ; z <= maxZ; z++) {
+                for (var depth = 0; depth <= 5; depth++) {
+                    pos.set(x, startY - depth, z);
 
-        var below = probe.below();
+                    var state = level.getBlockState(pos);
 
-        if (level.getFluidState(below).is(FluidTags.LAVA))
-            return below.getY() + 1D;
+                    if (state.blocksMotion())
+                        break;
 
-        return Double.NaN;
+                    if (state.getFluidState().is(FluidTags.LAVA))
+                        return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)
@@ -295,7 +313,7 @@ public class StriderShoesItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_jump"))
                     continue;
 
-                if (!isStrideActive(player, ability.isRankModifierUnlocked("free_stride")))
+                if (!isOnLavaSurface(player))
                     continue;
 
                 var jumpBonus = Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue()));
