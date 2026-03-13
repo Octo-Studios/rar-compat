@@ -43,9 +43,9 @@ public class SteadfastSpikesPacket implements CustomPacketPayload {
                 return;
 
             var relicData = relic.getRelicData(player, stack);
-            var ability = relicData.getAbilitiesData().getAbilityData("resistance");
+            var ability = relicData.getAbilitiesData().getAbilityData("wall_slide");
 
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide"))
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled"))
                 return;
 
             player.fallDistance = 0;
@@ -59,7 +59,7 @@ public class SteadfastSpikesPacket implements CustomPacketPayload {
                 var seconds = ticks / 20;
 
                 if (seconds > 0) {
-                    relicData.getLevelingData().addExperience("resistance", "wall_slide_time", seconds);
+                    relicData.getLevelingData().addExperience("wall_slide", "wall_slide_time", seconds);
                     ability.getStatisticData().getMetricData("wall_slide_time").addValue(seconds);
                     ticks %= 20;
                 }

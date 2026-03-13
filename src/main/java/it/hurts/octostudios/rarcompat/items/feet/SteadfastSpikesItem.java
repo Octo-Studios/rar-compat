@@ -8,7 +8,6 @@ import it.hurts.sskirillss.relics.api.events.common.LivingSlippingEvent;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
-import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -24,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
@@ -35,9 +35,8 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         return RelicTemplate.builder()
                 .abilities(AbilitiesTemplate.builder()
                         .ability(AbilityTemplate.builder("resistance")
-                                .rankModifier(1, "crouch")
-                                .rankModifier(3, "anchor")
-                                .rankModifier(5, "wall_slide")
+                                .rankModifier(3, "crouch")
+                                .rankModifier(5, "anchor")
                                 .stat(AbilityStatTemplate.builder("modifier")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.1D, 0.35D)
@@ -46,14 +45,24 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("damage_taken").build())
-                                        .source(ExperienceSourceTemplate.builder("wall_slide_time")
-                                                .rankModifierVisibilityState("wall_slide", VisibilityState.OBFUSCATED)
-                                                .build())
+                                        .build())
+                                .build())
+                        .ability(AbilityTemplate.builder("wall_slide")
+                                .requiredLevel(5)
+                                .modes("enabled", "disabled")
+                                .rankModifier(1, "damage_resistance")
+                                .stat(AbilityStatTemplate.builder("damage_resistance")
+                                        .thresholdValue(0D, 1D)
+                                        .initialValue(0.1D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("wall_slide_time").build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("wall_slide_time")
                                                 .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
-                                                .rankModifierVisibilityState("wall_slide", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .build())
                                 .build())
@@ -66,10 +75,9 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player))
             return;
 
-        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
+        var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("wall_slide");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide") || !player.level().isClientSide()
-                || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -1.0E-3D)
+        if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !player.level().isClientSide() || !isWallSliding(player))
             return;
 
         NetworkHandler.sendToServer(new SteadfastSpikesPacket());
@@ -112,6 +120,10 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         return resistance;
     }
 
+    private static boolean isWallSliding(Player player) {
+        return !player.onGround() && player.horizontalCollision && player.getDeltaMovement().y < -1.0E-3D;
+    }
+
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class SteadfastSpikesEvent {
         @SubscribeEvent
@@ -132,6 +144,29 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                 relicData.getLevelingData().addExperience("resistance", "damage_taken", 1D);
             }
         }
+        @SubscribeEvent
+        public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F || !isWallSliding(player))
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.STEADFAST_SPIKES.value());
+
+            if (!(stack.getItem() instanceof SteadfastSpikesItem relic))
+                return;
+
+            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("wall_slide");
+
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("damage_resistance"))
+                return;
+
+            var resistance = Math.max(0D, Math.min(1D, ability.getStatData("damage_resistance").getValue()));
+
+            if (resistance <= 0D)
+                return;
+
+            event.setAmount((float) (event.getAmount() * (1D - resistance)));
+        }
+
         @SubscribeEvent
         public static void onLivingKnockBack(LivingKnockBackEvent event) {
             if (!(event.getEntity() instanceof Player player))
