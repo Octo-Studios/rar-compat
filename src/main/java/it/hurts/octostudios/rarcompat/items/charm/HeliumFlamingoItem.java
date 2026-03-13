@@ -30,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -99,15 +100,28 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player))
             return;
 
-        if (player.level().isClientSide())
-            return;
-
         var relicData = this.getRelicData(player, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("flying");
 
         if (!ability.canPlayerUse(player)) {
+            if (!player.level().isClientSide())
+                setWaterTakeoffReady(stack, false);
+
             disableHover(player, stack, true);
             return;
+        }
+
+        if (!player.level().isClientSide()) {
+            if (player.isSwimming() && player.isInWater())
+                setWaterTakeoffReady(stack, true);
+
+            if (getWaterTakeoffReady(stack) && !getToggled(stack) && player.isInWater() && !player.isUnderWater()
+                    && getTime(stack) < getMaxHoverSeconds(player, stack) && trySetHovering(player, stack, true)) {
+                setWaterTakeoffReady(stack, false);
+            }
+
+            if (player.onGround() || player.getAbilities().flying || player.isFallFlying() || player.isInLava())
+                setWaterTakeoffReady(stack, false);
         }
 
         if (isHoverResetState(player)) {
@@ -126,6 +140,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         }
 
         EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
         player.fallDistance = 0F;
 
         if (player.tickCount % 20 == 0) {
@@ -149,6 +164,9 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || stack.getItem() == newStack.getItem())
             return;
 
+        if (!player.level().isClientSide())
+            setWaterTakeoffReady(stack, false);
+
         disableHover(player, stack, true);
     }
 
@@ -162,6 +180,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
         if (!toggled) {
             setToggled(stack, false);
+            setWaterTakeoffReady(stack, false);
             EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
             return true;
@@ -171,6 +190,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             return false;
 
         setToggled(stack, true);
+        setWaterTakeoffReady(stack, false);
         EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         player.fallDistance = 0F;
 
@@ -190,12 +210,6 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
 
         return ability.canPlayerUse(player) && !isHoverResetState(player) && getTime(stack) < getMaxHoverSeconds(player, stack);
-    }
-
-    public static boolean shouldForceSwimPose(Player player) {
-        var stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
-
-        return stack.getItem() instanceof HeliumFlamingoItem relic && relic.isHovering(player, stack);
     }
 
     private boolean shouldConsumeHoverTime(Player player, boolean efficientHoverUnlocked) {
@@ -219,8 +233,14 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > STATIONARY_POSITION_DELTA_SQR;
     }
 
+    private static boolean canHoverFromLiquidSurface(Player player) {
+        return player.isInLiquid()
+                && !player.isEyeInFluidType(NeoForgeMod.WATER_TYPE.value())
+                && !player.isEyeInFluidType(NeoForgeMod.LAVA_TYPE.value());
+    }
+
     private static boolean isHoverResetState(Player player) {
-        return player.onGround() || player.isInLiquid() || player.isFallFlying() || player.getAbilities().flying;
+        return player.onGround() || (player.isInLiquid() && !canHoverFromLiquidSurface(player)) || player.isFallFlying() || player.getAbilities().flying;
     }
 
     private void disableHover(Player player, ItemStack stack, boolean resetTime) {
@@ -239,6 +259,14 @@ public class HeliumFlamingoItem extends WearableRelicItem {
 
     public void setToggled(ItemStack stack, boolean val) {
         stack.set(DataComponentRegistry.TOGGLED, val);
+    }
+
+    public boolean getWaterTakeoffReady(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.HELIUM_FLAMINGO_WATER_TAKEOFF_READY.get(), false);
+    }
+
+    public void setWaterTakeoffReady(ItemStack stack, boolean val) {
+        stack.set(DataComponentRegistry.HELIUM_FLAMINGO_WATER_TAKEOFF_READY.get(), val);
     }
 
     public void addTime(ItemStack stack, int time) {
@@ -260,7 +288,20 @@ public class HeliumFlamingoItem extends WearableRelicItem {
         private static int lastStopPressTick = -1000;
 
         @SubscribeEvent
-        public static void onClientTick(InputEvent.Key event) {
+        public static void onClientTick(ClientTickEvent.Post event) {
+            var player = Minecraft.getInstance().player;
+
+            if (player == null || player.getForcedPose() != Pose.SWIMMING)
+                return;
+
+            var stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
+
+            if (!(stack.getItem() instanceof HeliumFlamingoItem relic) || !relic.isHovering(player, stack))
+                player.setForcedPose(null);
+        }
+
+        @SubscribeEvent
+        public static void onKeyInput(InputEvent.Key event) {
             var minecraft = Minecraft.getInstance();
             var player = minecraft.player;
 
@@ -273,7 +314,12 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                     || event.getKey() != minecraft.options.keyJump.getKey().getValue())
                 return;
 
-            if (player.onGround() || player.isInLiquid() || player.getAbilities().flying) {
+            if (player.onGround() || player.getAbilities().flying) {
+                waitingStopPress = false;
+                return;
+            }
+
+            if (player.isInLiquid() && !canHoverFromLiquidSurface(player)) {
                 waitingStopPress = false;
                 return;
             }
@@ -305,6 +351,7 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             if (relic.getTime(stack) >= relic.getMaxHoverSeconds(player, stack))
                 return;
 
+
             NetworkHandler.sendToServer(new FlamingoSwimPacket(true));
         }
     }
@@ -316,22 +363,33 @@ public class HeliumFlamingoItem extends WearableRelicItem {
             var player = event.getEntity();
             var stack = EntityUtils.findEquippedCurio(player, ModItems.HELIUM_FLAMINGO.value());
 
-            if (!(stack.getItem() instanceof HeliumFlamingoItem relic))
+            if (!(stack.getItem() instanceof HeliumFlamingoItem relic)) {
+                if (player.getForcedPose() == Pose.SWIMMING)
+                    player.setForcedPose(null);
+
                 return;
+            }
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
 
             if (!ability.canPlayerUse(player) || !relic.isHovering(player, stack)) {
                 event.setResult(EventResult.PASS);
+
                 EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
                 EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+                player.setForcedPose(null);
+
                 return;
             }
 
             event.setResult(EventResult.SUCCESS);
 
             var speedBonus = Math.max(0D, ability.getStatData("speed_bonus").getValue());
+
             EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+            player.setForcedPose(Pose.SWIMMING);
         }
 
         @SubscribeEvent

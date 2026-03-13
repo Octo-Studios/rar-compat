@@ -92,17 +92,12 @@ public class FlippersItem extends WearableRelicItem {
         }
 
         var inWater = player.isInWaterOrBubble();
+        var speedBonus = Math.max(0D, ability.getStatData("speed").getValue());
 
-        if (inWater) {
-            var speedBonus = Math.max(0D, ability.getStatData("speed").getValue());
-
-            if (speedBonus <= 0D)
-                EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
-            else
-                EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_VALUE);
-        } else {
+        if (speedBonus <= 0D)
             EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
-        }
+        else
+            EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_VALUE);
 
         if (inWater && ability.isRankModifierUnlocked("buoyancy"))
             EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -128,6 +123,7 @@ public class FlippersItem extends WearableRelicItem {
         EntityUtils.removeAttribute(player, stack, NeoForgeMod.SWIM_SPEED, AttributeModifier.Operation.ADD_VALUE);
         EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
+
 
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {

@@ -262,7 +262,10 @@ public class CrystalHeartItem extends WearableRelicItem {
             if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getAmount() <= 0F)
                 return;
 
-            var bonus = 0D;
+            var currentHealth = player.getHealth();
+            var maxHealth = player.getMaxHealth();
+            var incomingHeal = Math.min(event.getAmount(), Math.max(0F, maxHealth - currentHealth));
+            var bonusExtraHeal = 0D;
             CrystalHeartItem experienceRelic = null;
             ItemStack experienceStack = ItemStack.EMPTY;
             var experienceBonusHealth = 0D;
@@ -288,23 +291,27 @@ public class CrystalHeartItem extends WearableRelicItem {
                 if (!ability.isRankModifierUnlocked("recuperation"))
                     continue;
 
-                var baseHealthThreshold = (float) Math.max(0D, player.getMaxHealth() - bonusHealth);
+                var healBonus = Math.max(0D, ability.getStatData("low_health_heal_bonus").getValue());
 
-                if (player.getHealth() > baseHealthThreshold + 1.0E-3F)
+                if (healBonus <= 0D || incomingHeal <= 0F)
                     continue;
 
-                var healBonus = Math.max(0D, ability.getStatData("low_health_heal_bonus").getValue());
-                bonus = Math.max(bonus, healBonus);
+                var baseHealthThreshold = Math.max(0D, maxHealth - bonusHealth);
+                var healEnd = Math.min(maxHealth, currentHealth + incomingHeal);
+                var healedInBonusRange = Math.max(0D, healEnd - Math.max(currentHealth, baseHealthThreshold));
+
+                if (healedInBonusRange <= 0D)
+                    continue;
+
+                bonusExtraHeal = Math.max(bonusExtraHeal, healedInBonusRange * healBonus);
             }
 
-            if (bonus > 0D)
-                event.setAmount((float) (event.getAmount() * (1D + bonus)));
+            if (bonusExtraHeal > 0D)
+                event.setAmount((float) (event.getAmount() + bonusExtraHeal));
 
             if (experienceRelic == null || experienceBonusHealth <= 0D || event.getAmount() <= 0F)
                 return;
 
-            var currentHealth = player.getHealth();
-            var maxHealth = player.getMaxHealth();
             var healApplied = Math.min(event.getAmount(), Math.max(0F, maxHealth - currentHealth));
 
             if (healApplied <= 0F)

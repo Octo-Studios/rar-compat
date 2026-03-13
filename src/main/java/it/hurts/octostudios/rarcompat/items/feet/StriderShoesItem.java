@@ -94,6 +94,11 @@ public class StriderShoesItem extends WearableRelicItem {
             return;
         }
 
+        if (player.isInLava()) {
+            resetStrideState(player, stack);
+            return;
+        }
+
         var active = isStrideActive(player, freeStride);
         var onSurface = isOnLavaSurface(player);
         var currentRecoveryTicks = getRecoveryTicks(stack);
@@ -169,7 +174,7 @@ public class StriderShoesItem extends WearableRelicItem {
     }
 
     private static boolean isStrideActive(Player player, boolean freeStride) {
-        if (player.isSpectator() || player.getAbilities().flying || player.isFallFlying())
+        if (player.isSpectator() || player.getAbilities().flying || player.isFallFlying() || player.isInLava())
             return false;
 
         if (!freeStride && !player.isShiftKeyDown())
@@ -179,6 +184,9 @@ public class StriderShoesItem extends WearableRelicItem {
     }
 
     private static boolean isOnLavaSurface(Player player) {
+        if (player.isInLava())
+            return false;
+
         var level = player.level();
         var box = player.getBoundingBox();
         var minX = Mth.floor(box.minX + 1.0E-4D);
@@ -270,7 +278,7 @@ public class StriderShoesItem extends WearableRelicItem {
         public static void onFluidCollision(FluidCollisionEvent event) {
             LivingEntity entity = event.getEntity();
 
-            if (!(entity instanceof Player player))
+            if (!(entity instanceof Player player) || player.isInLava())
                 return;
 
             if (!event.getFluid().is(FluidTags.LAVA))

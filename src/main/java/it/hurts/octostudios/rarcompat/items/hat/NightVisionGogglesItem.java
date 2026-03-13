@@ -92,7 +92,7 @@ public class NightVisionGogglesItem extends WearableRelicItem {
                         .build())
                 .leveling(LevelingTemplate.builder()
                         .initialCost(100)
-                        .maxRank(10)
+                        .maxRank(5)
                         .step(100)
                         .build())
                 .loot(LootTemplate.builder()

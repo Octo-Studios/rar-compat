@@ -103,6 +103,11 @@ public class AquaDashersItem extends WearableRelicItem {
             return;
         }
 
+        if (player.isInWater()) {
+            resetDashState(player, stack);
+            return;
+        }
+
         var active = isDashActive(player, freeDash);
         var onSurface = isOnWaterSurface(player);
         var currentRecoveryTicks = getRecoveryTicks(stack);
@@ -184,7 +189,7 @@ public class AquaDashersItem extends WearableRelicItem {
     }
 
     private static boolean isDashActive(Player player, boolean freeDash) {
-        if (player.isSpectator() || player.getAbilities().flying || player.isFallFlying())
+        if (player.isSpectator() || player.getAbilities().flying || player.isFallFlying() || player.isInWater())
             return false;
 
         if (!freeDash && !isRunning(player))
@@ -194,6 +199,9 @@ public class AquaDashersItem extends WearableRelicItem {
     }
 
     private static boolean isOnWaterSurface(Player player) {
+        if (player.isInWater())
+            return false;
+
         var level = player.level();
         var box = player.getBoundingBox();
         var minX = Mth.floor(box.minX + 1.0E-4D);
@@ -285,7 +293,7 @@ public class AquaDashersItem extends WearableRelicItem {
         public static void onFluidCollision(FluidCollisionEvent event) {
             var entity = event.getEntity();
 
-            if (!(entity instanceof Player player) || player.isShiftKeyDown())
+            if (!(entity instanceof Player player) || player.isShiftKeyDown() || player.isInWater())
                 return;
 
             if (!event.getFluid().is(FluidTags.WATER))
