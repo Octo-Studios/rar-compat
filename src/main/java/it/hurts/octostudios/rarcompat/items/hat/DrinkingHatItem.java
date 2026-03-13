@@ -196,14 +196,19 @@ public class DrinkingHatItem extends WearableRelicItem {
 
                 if (air > 0) {
                     var beforeAir = player.getAirSupply();
+                    var beforeBubbles = getAirBubbleCount(beforeAir, player.getMaxAirSupply());
 
                     player.setAirSupply(Math.min(player.getMaxAirSupply(), beforeAir + air));
 
                     var restoredAir = Math.max(0, player.getAirSupply() - beforeAir);
+                    var afterBubbles = getAirBubbleCount(player.getAirSupply(), player.getMaxAirSupply());
+                    var restoredBubbles = Math.max(0, afterBubbles - beforeBubbles);
 
                     if (restoredAir > 0) {
                         ability.getStatisticData().getMetricData("air_restored").addValue(restoredAir);
-                        relicData.getLevelingData().addExperience("drinking", "breathing", restoredAir);
+
+                        if (restoredBubbles > 0)
+                            relicData.getLevelingData().addExperience("drinking", "breathing", restoredBubbles);
                     }
                 }
             }
@@ -241,6 +246,15 @@ public class DrinkingHatItem extends WearableRelicItem {
                     }
                 }
             }
+        }
+
+        private static int getAirBubbleCount(int airSupply, int maxAirSupply) {
+            if (maxAirSupply <= 0)
+                return 0;
+
+            var airPerBubble = Math.max(1, maxAirSupply / 10);
+
+            return Math.max(0, airSupply / airPerBubble);
         }
     }
 }

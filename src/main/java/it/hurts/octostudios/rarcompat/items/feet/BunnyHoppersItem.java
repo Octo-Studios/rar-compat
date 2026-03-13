@@ -132,7 +132,9 @@ public class BunnyHoppersItem extends WearableRelicItem {
             if (getTime(stack) > 0)
                 setJumpPeakY(stack, Math.max(getJumpPeakY(stack), player.getY()));
 
-            if (player.onGround()) {
+            var waitingForFallProcessing = getTime(stack) > 0 && player.fallDistance > 0F;
+
+            if (player.onGround() && !waitingForFallProcessing) {
                 setToggled(stack, false);
                 setTime(stack, 0);
                 setUsedMaxDuration(stack, false);

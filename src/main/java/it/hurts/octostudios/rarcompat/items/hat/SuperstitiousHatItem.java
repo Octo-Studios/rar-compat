@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
+import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
@@ -11,6 +13,7 @@ import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
@@ -18,6 +21,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import org.jetbrains.annotations.Nullable;
 import top.theillusivec4.curios.api.SlotContext;
 
@@ -164,10 +170,6 @@ public class SuperstitiousHatItem extends WearableRelicItem {
         setLastTargetUuid(stack, targetUuid);
         setLastLootingBonus(stack, totalBonus);
 
-        if (totalBonus > 0) {
-            relicData.getLevelingData().addExperience("looting", "bonus_looting", totalBonus);
-            ability.getStatisticData().getMetricData("bonus_looting_procs").addValue(totalBonus);
-        }
 
         if (totalBonus <= 0)
             return baseLooting;
@@ -216,5 +218,35 @@ public class SuperstitiousHatItem extends WearableRelicItem {
 
     private static long secondsToTicks(double seconds) {
         return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingDrops(LivingDropsEvent event) {
+            if (!(event.getSource().getEntity() instanceof Player player) || player.level().isClientSide())
+                return;
+
+            var targetUuid = event.getEntity().getStringUUID();
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.SUPERSTITIOUS_HAT.value())) {
+                if (!(stack.getItem() instanceof SuperstitiousHatItem relic))
+                    continue;
+
+                var bonus = relic.getLastLootingBonus(stack);
+
+                if (bonus <= 0 || !targetUuid.equals(relic.getLastTargetUuid(stack)))
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("looting");
+
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                relic.getRelicData(player, stack).getLevelingData().addExperience("looting", "bonus_looting", bonus);
+                ability.getStatisticData().getMetricData("bonus_looting_procs").addValue(bonus);
+                relic.setLastLootingBonus(stack, 0);
+            }
+        }
     }
 }

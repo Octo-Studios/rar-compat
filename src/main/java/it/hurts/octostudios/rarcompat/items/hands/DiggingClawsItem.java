@@ -231,7 +231,7 @@ public class DiggingClawsItem extends WearableRelicItem {
 
             ability.getStatisticData().getMetricData("mined_blocks").addValue(1D);
 
-            if (player.getRandom().nextFloat() <= 0.05F)
+            if (player.getRandom().nextFloat() <= 0.1F)
                 relicData.getLevelingData().addExperience("digging", "mined_block", 1D);
         }
 

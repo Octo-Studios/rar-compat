@@ -2,6 +2,7 @@ package it.hurts.octostudios.rarcompat.items.necklace;
 
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
@@ -25,6 +26,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ShockPendantItem extends WearableRelicItem {
     @Override
@@ -79,8 +83,12 @@ public class ShockPendantItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("spark_created").build())
-                                        .source(ExperienceSourceTemplate.builder("lightning_resist").build())
-                                        .source(ExperienceSourceTemplate.builder("tremor_applied").build())
+                                        .source(ExperienceSourceTemplate.builder("lightning_resist")
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("tremor_applied")
+                                                .rankModifierVisibilityState("tremor", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("sparks_created")
@@ -106,6 +114,27 @@ public class ShockPendantItem extends WearableRelicItem {
                 .build();
     }
 
+    private Map<Integer, Long> getLightningHistory(ItemStack stack) {
+        return new HashMap<>(stack.getOrDefault(DataComponentRegistry.SHOCK_PENDANT_LIGHTNING_HISTORY.get(), Map.of()));
+    }
+
+    private void setLightningHistory(ItemStack stack, Map<Integer, Long> history) {
+        stack.set(DataComponentRegistry.SHOCK_PENDANT_LIGHTNING_HISTORY.get(), history);
+    }
+
+    private boolean markLightningProcessed(ItemStack stack, int lightningId, long gameTime) {
+        var history = getLightningHistory(stack);
+
+        history.entrySet().removeIf(entry -> gameTime - entry.getValue() > 200L);
+
+        var isNewLightning = !history.containsKey(lightningId);
+
+        history.put(lightningId, gameTime);
+        setLightningHistory(stack, history);
+
+        return isNewLightning;
+    }
+
     @EventBusSubscriber(modid = RARCompat.MODID)
     public static class CommonEvents {
         @SubscribeEvent
@@ -128,6 +157,9 @@ public class ShockPendantItem extends WearableRelicItem {
 
             var attacker = event.getSource().getEntity() instanceof LivingEntity living && living != entity ? living : null;
             var lightningDamage = event.getSource().is(DamageTypes.LIGHTNING_BOLT);
+            var lightningSource = event.getSource().getDirectEntity() != null ? event.getSource().getDirectEntity() : event.getSource().getEntity();
+            var lightningEntityId = lightningDamage && lightningSource != null ? lightningSource.getId() : Integer.MIN_VALUE;
+            var gameTime = entity.level().getGameTime();
             var lightningImmune = false;
             ShockPendantItem lightningRelic = null;
             ItemStack lightningStack = ItemStack.EMPTY;
@@ -209,11 +241,15 @@ public class ShockPendantItem extends WearableRelicItem {
                 event.setCanceled(true);
 
                 if (lightningRelic != null) {
-                    var relicData = lightningRelic.getRelicData(entity, lightningStack);
-                    var ability = relicData.getAbilitiesData().getAbilityData("shock");
+                    var isNewLightning = lightningEntityId == Integer.MIN_VALUE || lightningRelic.markLightningProcessed(lightningStack, lightningEntityId, gameTime);
 
-                    relicData.getLevelingData().addExperience("shock", "lightning_resist", 1D);
-                    ability.getStatisticData().getMetricData("lightning_resists").addValue(1D);
+                    if (isNewLightning) {
+                        var relicData = lightningRelic.getRelicData(entity, lightningStack);
+                        var ability = relicData.getAbilitiesData().getAbilityData("shock");
+
+                        relicData.getLevelingData().addExperience("shock", "lightning_resist", 1D);
+                        ability.getStatisticData().getMetricData("lightning_resists").addValue(1D);
+                    }
                 }
             }
 

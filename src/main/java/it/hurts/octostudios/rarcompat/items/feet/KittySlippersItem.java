@@ -355,14 +355,18 @@ public class KittySlippersItem extends WearableRelicItem {
             if (chance <= 0D || survivalRelic == null || survivalStack.isEmpty() || entity.getRandom().nextDouble() > chance)
                 return;
 
+            var originalDamage = event.getNewDamage();
             var safeDamage = Math.max(0F, lethalThreshold - 1F);
+            var newDamage = Math.min(originalDamage, safeDamage);
+            var canceledDamage = Math.max(0F, originalDamage - newDamage);
 
-            event.setNewDamage(Math.min(event.getNewDamage(), safeDamage));
+            event.setNewDamage(newDamage);
 
             var relicData = survivalRelic.getRelicData(player, survivalStack);
             var ability = relicData.getAbilitiesData().getAbilityData("nine_lives");
 
-            relicData.getLevelingData().addExperience("nine_lives", "survival_trigger", 1D);
+            if (canceledDamage > 0F)
+                relicData.getLevelingData().addExperience("nine_lives", "survival_trigger", canceledDamage);
             ability.getStatisticData().getMetricData("survival_triggers").addValue(1D);
         }
 

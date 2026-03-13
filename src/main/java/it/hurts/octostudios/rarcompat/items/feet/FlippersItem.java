@@ -48,7 +48,7 @@ public class FlippersItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
-                                .stat(AbilityStatTemplate.builder("evasion_per_speed")
+                                .stat(AbilityStatTemplate.builder("evasion")
                                         .thresholdValue(0D, 1D)
                                         .initialValue(0.03D, 0.12D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
@@ -188,7 +188,7 @@ public class FlippersItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("evasion"))
                     continue;
 
-                var chance = Math.max(0D, Math.min(1D, ability.getStatData("evasion_per_speed").getValue()));
+                var chance = Math.max(0D, Math.min(1D, ability.getStatData("evasion").getValue()));
 
                 if (chance > missChance) {
                     missChance = chance;

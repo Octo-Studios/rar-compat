@@ -70,7 +70,7 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
 
         if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("wall_slide") || !player.level().isClientSide()
-                || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1D)
+                || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -1.0E-3D)
             return;
 
         NetworkHandler.sendToServer(new SteadfastSpikesPacket());
@@ -142,7 +142,7 @@ public class SteadfastSpikesItem extends WearableRelicItem {
                 return;
 
             for (var player : level.players()) {
-                if (!player.isAlive() || player.isSpectator() || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -0.1D)
+                if (!player.isAlive() || player.isSpectator() || player.onGround() || !player.horizontalCollision || player.getDeltaMovement().y >= -1.0E-3D)
                     continue;
 
                 for (var stack : EntityUtils.findEquippedCurios(player, ModItems.STEADFAST_SPIKES.value())) {

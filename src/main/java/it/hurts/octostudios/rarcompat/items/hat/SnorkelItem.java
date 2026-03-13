@@ -109,10 +109,12 @@ public class SnorkelItem extends WearableRelicItem {
         var previousAir = LAST_UNDERWATER_AIR.get(playerId);
 
         if (underwater && previousAir != null) {
-            var spentAir = Math.max(0, previousAir - player.getAirSupply());
+            var previousBubbles = getAirBubbleCount(previousAir, player.getMaxAirSupply());
+            var currentBubbles = getAirBubbleCount(player.getAirSupply(), player.getMaxAirSupply());
+            var spentBubbles = Math.max(0, previousBubbles - currentBubbles);
 
-            if (spentAir > 0)
-                relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentAir);
+            if (spentBubbles > 0)
+                relicData.getLevelingData().addExperience("snorkeling", "air_spent", spentBubbles);
         }
 
         var maxWaterDepth = Math.max(0, (int) MathUtils.round(ability.getStatData("water_depth").getValue(), 0));
@@ -202,6 +204,15 @@ public class SnorkelItem extends WearableRelicItem {
         var seconds = Math.max(0D, ability.getStatData("reserve_duration").getValue());
 
         return Math.max(0, (int) Math.round(seconds * 20D));
+    }
+
+    private static int getAirBubbleCount(int airSupply, int maxAirSupply) {
+        if (maxAirSupply <= 0)
+            return 0;
+
+        var airPerBubble = Math.max(1, maxAirSupply / 10);
+
+        return Math.max(0, airSupply / airPerBubble);
     }
 
     private boolean isReserveTriggered(ItemStack stack) {

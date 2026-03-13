@@ -6,6 +6,7 @@ import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -56,9 +57,15 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("damage_taken").build())
-                                        .source(ExperienceSourceTemplate.builder("holy_fire_ignite").build())
-                                        .source(ExperienceSourceTemplate.builder("smite_hit").build())
-                                        .source(ExperienceSourceTemplate.builder("salvation_save").build())
+                                        .source(ExperienceSourceTemplate.builder("holy_fire_ignite")
+                                                .rankModifierVisibilityState("holy_fire", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("smite_hit")
+                                                .rankModifierVisibilityState("smite", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("salvation_save")
+                                                .rankModifierVisibilityState("salvation", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("invulnerability_time")
@@ -66,12 +73,15 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("holy_fire_duration")
                                                 .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("holy_fire", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("smite_bonus_damage")
                                                 .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("smite", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("fatal_cancels")
                                                 .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("salvation", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .build())
                                 .build())
@@ -119,15 +129,19 @@ public class CrossNecklaceItem extends WearableRelicItem {
             if (chance <= 0D || entity.getRandom().nextDouble() > chance)
                 return;
 
+            var originalDamage = event.getNewDamage();
             var safeDamage = Math.max(0F, lethalThreshold - 1F);
+            var newDamage = Math.min(originalDamage, safeDamage);
+            var canceledDamage = Math.max(0F, originalDamage - newDamage);
 
-            event.setNewDamage(Math.min(event.getNewDamage(), safeDamage));
+            event.setNewDamage(newDamage);
 
             if (salvationRelic != null) {
                 var relicData = salvationRelic.getRelicData(entity, salvationStack);
                 var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
-                relicData.getLevelingData().addExperience("protection", "salvation_save", 1D);
+                if (canceledDamage > 0F)
+                    relicData.getLevelingData().addExperience("protection", "salvation_save", canceledDamage);
                 ability.getStatisticData().getMetricData("fatal_cancels").addValue(1D);
             }
         }

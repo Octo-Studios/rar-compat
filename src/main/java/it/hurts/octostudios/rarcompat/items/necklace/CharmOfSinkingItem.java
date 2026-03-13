@@ -62,7 +62,9 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("air_bubble").build())
-                                        .source(ExperienceSourceTemplate.builder("blocked_damage").build())
+                                        .source(ExperienceSourceTemplate.builder("blocked_damage")
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("air_bubbles_restored")
@@ -195,8 +197,10 @@ public class CharmOfSinkingItem extends WearableRelicItem {
             return 0;
 
         var airPerBubble = Math.max(1, maxAirSupply / 10);
+        var maxBubbles = Math.max(1, (int) Math.ceil(maxAirSupply / (double) airPerBubble));
+        var visibleBubbles = (int) Math.ceil(Math.max(0, airSupply) / (double) airPerBubble);
 
-        return Math.max(0, airSupply / airPerBubble);
+        return Math.max(0, Math.min(maxBubbles, visibleBubbles));
     }
 
     private int getStationaryTicks(ItemStack stack) {

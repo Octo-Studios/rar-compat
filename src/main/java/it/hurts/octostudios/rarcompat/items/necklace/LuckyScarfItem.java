@@ -1,6 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.necklace;
 
 import artifacts.registry.ModItems;
+import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
@@ -17,6 +18,7 @@ import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditi
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.RelicConditionTemplate;
 import it.hurts.sskirillss.relics.init.RelicsRelicContainers;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +28,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class LuckyScarfItem extends WearableRelicItem {
@@ -123,20 +128,38 @@ public class LuckyScarfItem extends WearableRelicItem {
         if (!ability.canPlayerUse(player)) {
             setPityChanceBonus(stack, 0D);
             setNextMaxCastsBonus(stack, 0);
+            resetFortuneRollState(stack);
 
             return baseFortune;
         }
 
+        if (!isBlockDropContext(lootContext)) {
+            resetFortuneRollState(stack);
+            return baseFortune;
+        }
+
+        var blockPos = getContextBlockPos(lootContext);
+
+        if (blockPos == null) {
+            resetFortuneRollState(stack);
+            return baseFortune;
+        }
+
+        if (blockPos.asLong() == getLastBlockPos(stack))
+            return baseFortune + getLastFortuneBonus(stack);
+
         var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
         var maxCasts = Math.max(0, (int) MathUtils.round(ability.getStatData("max_casts").getValue(), 0));
-        var blockContext = isBlockDropContext(lootContext);
 
-        if (chance <= 0D || maxCasts <= 0)
+        if (chance <= 0D || maxCasts <= 0) {
+            setLastBlockPos(stack, blockPos.asLong());
+            setLastFortuneBonus(stack, 0);
+            setPendingFortuneBonus(stack, 0);
             return baseFortune;
+        }
 
         if (ability.isRankModifierUnlocked("pity")) {
-            if (blockContext)
-                chance = Math.max(0D, Math.min(1D, chance + getPityChanceBonus(stack)));
+            chance = Math.max(0D, Math.min(1D, chance + getPityChanceBonus(stack)));
         } else {
             setPityChanceBonus(stack, 0D);
         }
@@ -147,10 +170,14 @@ public class LuckyScarfItem extends WearableRelicItem {
             setNextMaxCastsBonus(stack, 0);
         }
 
-        if (maxCasts <= 0)
+        if (maxCasts <= 0) {
+            setLastBlockPos(stack, blockPos.asLong());
+            setLastFortuneBonus(stack, 0);
+            setPendingFortuneBonus(stack, 0);
             return baseFortune;
+        }
 
-        if (ability.isRankModifierUnlocked("vein") && blockContext) {
+        if (ability.isRankModifierUnlocked("vein")) {
             var nearbySameBlocks = countNearbySameBlocks(slotContext, lootContext);
 
             if (nearbySameBlocks > 0) {
@@ -163,7 +190,7 @@ public class LuckyScarfItem extends WearableRelicItem {
 
         var procs = MathUtils.multicast(player.getRandom(), chance, maxCasts);
 
-        if (ability.isRankModifierUnlocked("pity") && blockContext) {
+        if (ability.isRankModifierUnlocked("pity")) {
             if (procs > 0) {
                 setPityChanceBonus(stack, 0D);
             } else {
@@ -180,11 +207,12 @@ public class LuckyScarfItem extends WearableRelicItem {
             setNextMaxCastsBonus(stack, nextBonus);
         }
 
+        setLastBlockPos(stack, blockPos.asLong());
+        setLastFortuneBonus(stack, procs);
+        setPendingFortuneBonus(stack, procs);
+
         if (procs <= 0)
             return baseFortune;
-
-        relicData.getLevelingData().addExperience("fortune", "bonus_fortune", procs);
-        ability.getStatisticData().getMetricData("bonus_fortune_procs").addValue(procs);
 
         return baseFortune + procs;
     }
@@ -193,6 +221,12 @@ public class LuckyScarfItem extends WearableRelicItem {
         var blockState = lootContext.getParamOrNull(LootContextParams.BLOCK_STATE);
 
         return blockState != null;
+    }
+
+    private static BlockPos getContextBlockPos(LootContext lootContext) {
+        var origin = lootContext.getParamOrNull(LootContextParams.ORIGIN);
+
+        return origin == null ? null : BlockPos.containing(origin);
     }
 
     private int countNearbySameBlocks(SlotContext slotContext, LootContext lootContext) {
@@ -228,5 +262,67 @@ public class LuckyScarfItem extends WearableRelicItem {
 
     private void setNextMaxCastsBonus(ItemStack stack, int value) {
         stack.set(DataComponentRegistry.LUCKY_SCARF_NEXT_MAX_CASTS_BONUS.get(), Math.max(0, value));
+    }
+
+    private long getLastBlockPos(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.LUCKY_SCARF_LAST_BLOCK_POS.get(), Long.MIN_VALUE);
+    }
+
+    private void setLastBlockPos(ItemStack stack, long value) {
+        stack.set(DataComponentRegistry.LUCKY_SCARF_LAST_BLOCK_POS.get(), value);
+    }
+
+    private int getLastFortuneBonus(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.LUCKY_SCARF_LAST_FORTUNE_BONUS.get(), 0));
+    }
+
+    private void setLastFortuneBonus(ItemStack stack, int value) {
+        stack.set(DataComponentRegistry.LUCKY_SCARF_LAST_FORTUNE_BONUS.get(), Math.max(0, value));
+    }
+
+    private int getPendingFortuneBonus(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(DataComponentRegistry.LUCKY_SCARF_PENDING_FORTUNE_BONUS.get(), 0));
+    }
+
+    private void setPendingFortuneBonus(ItemStack stack, int value) {
+        stack.set(DataComponentRegistry.LUCKY_SCARF_PENDING_FORTUNE_BONUS.get(), Math.max(0, value));
+    }
+
+    private void resetFortuneRollState(ItemStack stack) {
+        setLastBlockPos(stack, Long.MIN_VALUE);
+        setLastFortuneBonus(stack, 0);
+        setPendingFortuneBonus(stack, 0);
+    }
+
+    @EventBusSubscriber(modid = RARCompat.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onBlockDrops(BlockDropsEvent event) {
+            if (!(event.getBreaker() instanceof Player player) || player.level().isClientSide() || event.isCanceled() )
+                return;
+
+            var blockPos = event.getPos().asLong();
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.LUCKY_SCARF.value())) {
+                if (!(stack.getItem() instanceof LuckyScarfItem relic))
+                    continue;
+
+                var pendingBonus = relic.getPendingFortuneBonus(stack);
+
+                if (pendingBonus <= 0 || relic.getLastBlockPos(stack) != blockPos)
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("fortune");
+
+                if (!ability.canPlayerUse(player) || event.getDrops().isEmpty()) {
+                    relic.resetFortuneRollState(stack);
+                    continue;
+                }
+
+                relic.getRelicData(player, stack).getLevelingData().addExperience("fortune", "bonus_fortune", pendingBonus);
+                ability.getStatisticData().getMetricData("bonus_fortune_procs").addValue(pendingBonus);
+                relic.resetFortuneRollState(stack);
+            }
+        }
     }
 }

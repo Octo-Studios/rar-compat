@@ -7,6 +7,7 @@ import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -78,7 +79,9 @@ public class PanicNecklaceItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("targeted_hit").build())
-                                        .source(ExperienceSourceTemplate.builder("targeted_kill").build())
+                                        .source(ExperienceSourceTemplate.builder("targeted_kill")
+                                                .rankModifierVisibilityState("healing", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("targeted_duration")
@@ -86,9 +89,11 @@ public class PanicNecklaceItem extends WearableRelicItem {
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("absorbed_damage")
                                                 .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("resistance", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("healing_restored")
                                                 .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("healing", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .build())
                                 .build())

@@ -84,8 +84,12 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("moving_shrink").build())
-                                        .source(ExperienceSourceTemplate.builder("fall_reduced").build())
-                                        .source(ExperienceSourceTemplate.builder("evasion_parry").build())
+                                        .source(ExperienceSourceTemplate.builder("fall_reduced")
+                                                .rankModifierVisibilityState("fall_resistance", VisibilityState.OBFUSCATED)
+                                                .build())
+                                        .source(ExperienceSourceTemplate.builder("evasion_parry")
+                                                .rankModifierVisibilityState("evasion", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("shrink_duration")
@@ -145,7 +149,10 @@ public class CharmOfShrinkingItem extends WearableRelicItem {
         if (newScale < 1D && ability.getMode().equals("shrink") && player.tickCount % 20 == 0)
             ability.getStatisticData().getMetricData("shrink_duration").addValue(1D);
 
-        if (newScale < 1D && player.getDeltaMovement().lengthSqr() > 1.0E-4D) {
+        var horizontalSpeedSqr = player.getDeltaMovement().x * player.getDeltaMovement().x
+                + player.getDeltaMovement().z * player.getDeltaMovement().z;
+
+        if (newScale < 1D && horizontalSpeedSqr > 1.0E-4D) {
             var movingTicks = getMovingTicks(stack) + 1;
 
             if (movingTicks >= 100) {

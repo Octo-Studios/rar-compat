@@ -35,6 +35,9 @@ public class DataComponentRegistry {
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> LUCKY_SCARF_PITY_CHANCE_BONUS = construct("lucky_scarf/pity_chance_bonus", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> LUCKY_SCARF_NEXT_MAX_CASTS_BONUS = construct("lucky_scarf/next_max_casts_bonus", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LUCKY_SCARF_LAST_BLOCK_POS = construct("lucky_scarf/last_block_pos", Codec.LONG);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> LUCKY_SCARF_LAST_FORTUNE_BONUS = construct("lucky_scarf/last_fortune_bonus", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> LUCKY_SCARF_PENDING_FORTUNE_BONUS = construct("lucky_scarf/pending_fortune_bonus", Codec.INT);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> SUPERSTITIOUS_HAT_LAST_KILL_TICK = construct("superstitious_hat/last_kill_tick", Codec.LONG);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SUPERSTITIOUS_HAT_STREAK_COUNT = construct("superstitious_hat/streak_count", Codec.INT);
@@ -96,6 +99,8 @@ public class DataComponentRegistry {
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARM_OF_SINKING_STATIONARY_TICKS = construct("charm_of_sinking/stationary_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> CHARM_OF_SINKING_IMMORTALITY_ACTIVE = construct("charm_of_sinking/immortality_active", Codec.BOOL);
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Map<Integer, Long>>> SHOCK_PENDANT_LIGHTNING_HISTORY = construct("shock_pendant/lightning_history", Codec.unboundedMap(Codec.INT, Codec.LONG));
 
     public static <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> construct(String name, Codec<T> codec) {
         return DATA_COMPONENTS.register(name, () -> DataComponentType.<T>builder().persistent(codec).build());

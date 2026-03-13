@@ -90,7 +90,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         if (this.getOwner() instanceof Player player && !target.getStringUUID().equals(player.getStringUUID())) {
             target.invulnerableTime = 0;
 
-            if (target.hurt(getCommandSenderWorld().damageSources().onFire(), getDamage())) {
+            if (target.hurt(getCommandSenderWorld().damageSources().mobProjectile(this, player), getDamage())) {
                 var fireDuration = Math.max(0F, getFireDuration());
 
                 if (fireDuration <= 0F && getRelicStack().getItem() instanceof FireGauntletItem relic) {

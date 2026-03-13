@@ -75,7 +75,9 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("toggle").build())
-                                        .source(ExperienceSourceTemplate.builder("attack").build())
+                                        .source(ExperienceSourceTemplate.builder("attack")
+                                                .rankModifierVisibilityState("strike", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("entries")
@@ -86,6 +88,7 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("attacks")
                                                 .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .rankModifierVisibilityState("strike", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("bonus_damage")
                                                 .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
@@ -223,6 +226,9 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
     private void onInvisibilityAttack(LivingEntity entity, ItemStack stack) {
         var relicData = this.getRelicData(entity, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("invisibility");
+
+        if (!ability.isRankModifierUnlocked("strike"))
+            return;
 
         ability.getStatisticData().getMetricData("attacks").addValue(1D);
         relicData.getLevelingData().addExperience("invisibility", "attack", 1D);
@@ -389,7 +395,7 @@ public class ScarfOfInvisibilityItem extends WearableRelicItem {
                     var stunTicks = Math.max(0, (int) Math.round(stunSeconds * 20D));
 
                     if (stunTicks > 0) {
-                        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, stunTicks, 6, false, true));
+                        target.addEffect(new MobEffectInstance(RelicsMobEffects.STUN, stunTicks, 0, false, true));
                         ability.getStatisticData().getMetricData("stun_time").addValue(stunTicks / 20D);
                     }
                 }

@@ -122,6 +122,15 @@ public class VampiricGloveItem extends WearableRelicItem {
 
         clearState(stack);
         removeAbsorptionCap(player, stack);
+
+        if (player.level().isClientSide())
+            return;
+
+        if (!EntityUtils.findEquippedCurios(player, ModItems.VAMPIRIC_GLOVE.value()).isEmpty())
+            return;
+
+        if (player.getAbsorptionAmount() > 0F)
+            player.setAbsorptionAmount(0F);
     }
 
     private int getStreakCount(ItemStack stack) {

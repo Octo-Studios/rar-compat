@@ -203,6 +203,7 @@ public class AnglersHatItem extends WearableRelicItem {
                     valuables = BuiltInRegistries.ITEM.getTag(ANGLERS_HAT_VALUABLES)
                             .stream()
                             .flatMap(holderSet -> holderSet.stream().map(Holder::value))
+                            .filter(item -> !item.getDefaultInstance().is(ItemTags.FISHES))
                             .toList();
 
                     if (!valuables.isEmpty())
@@ -213,6 +214,9 @@ public class AnglersHatItem extends WearableRelicItem {
                                 continue;
 
                             var replacement = valuables.get(random.nextInt(valuables.size())).getDefaultInstance();
+
+                            if (replacement.is(ItemTags.FISHES))
+                                continue;
 
                             replacement.setCount(drop.getCount());
                             event.getDrops().set(i, replacement);
@@ -249,9 +253,11 @@ public class AnglersHatItem extends WearableRelicItem {
                             if (!valuables.isEmpty() && reward.is(ItemTags.FISHES) && random.nextDouble() <= treasureChance) {
                                 var replacement = valuables.get(random.nextInt(valuables.size())).getDefaultInstance();
 
-                                replacement.setCount(reward.getCount());
-                                reward = replacement;
-                                treasures++;
+                                if (!replacement.is(ItemTags.FISHES)) {
+                                    replacement.setCount(reward.getCount());
+                                    reward = replacement;
+                                    treasures++;
+                                }
                             }
 
                             ItemEntity itementity = new ItemEntity(serverLevel, fishingHook.getX(), fishingHook.getY(), fishingHook.getZ(), reward);
