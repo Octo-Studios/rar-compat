@@ -359,7 +359,7 @@
   "relics.description.flippers.ability.swim.description": "Увеличивает скорость плавания игрока на %1$s%%.",
   "relics.description.flippers.ability.swim.rank_modifier.breathing": "Пока игрок находится в воде, он на %2$s%% медленнее теряет воздух.",
   "relics.description.flippers.ability.swim.rank_modifier.buoyancy": "Гравитация под водой больше не работает.",
-  "relics.description.flippers.ability.swim.rank_modifier.evasion": "Позволяет атакующим промахиваться по игроку с шансом %3$s%% за единицу скорости его передвижения под водой.",
+  "relics.description.flippers.ability.swim.rank_modifier.evasion": "Позволяет атакующим промахиваться по игроку с шансом %3$s%% под водой.",
   "relics.description.flippers.ability.swim.experience_source.swimming_time": "+1 единица опыта за каждые 5 секунд плавания.",
   "relics.description.flippers.ability.swim.experience_source.evasion_miss": "+1 единица опыта за каждый промах по игроку от 5 ранга.",
   "relics.description.flippers.ability.swim.statistic.swimming_time": "Проведено времени вплавь",

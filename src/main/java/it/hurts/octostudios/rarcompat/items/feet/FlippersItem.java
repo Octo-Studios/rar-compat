@@ -182,10 +182,6 @@ public class FlippersItem extends WearableRelicItem {
             var missChance = 0D;
             FlippersItem evasionRelic = null;
             ItemStack evasionStack = ItemStack.EMPTY;
-            var underwaterSpeed = player.getKnownMovement().multiply(1, 0, 1).length();
-
-            if (underwaterSpeed <= 0D)
-                return;
 
             for (var stack : EntityUtils.findEquippedCurios(player, ModItems.FLIPPERS.value())) {
                 if (!(stack.getItem() instanceof FlippersItem relic))
@@ -196,8 +192,7 @@ public class FlippersItem extends WearableRelicItem {
                 if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("evasion"))
                     continue;
 
-                var perSpeed = Math.max(0D, ability.getStatData("evasion_per_speed").getValue());
-                var chance = Math.max(0D, Math.min(1D, perSpeed * underwaterSpeed));
+                var chance = Math.max(0D, Math.min(1D, ability.getStatData("evasion_per_speed").getValue()));
 
                 if (chance > missChance) {
                     missChance = chance;
