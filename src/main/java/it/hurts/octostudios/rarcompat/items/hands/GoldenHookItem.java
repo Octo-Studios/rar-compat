@@ -39,21 +39,23 @@ public class GoldenHookItem extends WearableRelicItem {
                                 .rankModifier(3, "crowd_pull")
                                 .rankModifier(5, "disarm")
                                 .stat(AbilityStatTemplate.builder("experience_bonus")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(0.12D, 0.4D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.15D, 0.35D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1755D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
-                                .stat(AbilityStatTemplate.builder("pull_radius")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(3D, 8D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                .stat(AbilityStatTemplate.builder("experience_pull_radius")
+                                        .initialValue(3D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("entities_pull_radius")
+                                        .initialValue(3D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("steal_chance")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.05D, 0.2D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.01D, 0.025D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
@@ -131,7 +133,7 @@ public class GoldenHookItem extends WearableRelicItem {
             if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("boat_guard"))
                 continue;
 
-            var value = Math.max(0D, ability.getStatData("pull_radius").getValue());
+            var value = Math.max(0D, ability.getStatData("experience_pull_radius").getValue());
 
             if (bestRelic == null || value > radius) {
                 radius = value;
@@ -251,7 +253,7 @@ public class GoldenHookItem extends WearableRelicItem {
                     continue;
 
                 if (ability.isRankModifierUnlocked("crowd_pull")) {
-                    var value = Math.max(0D, ability.getStatData("pull_radius").getValue());
+                    var value = Math.max(0D, ability.getStatData("entities_pull_radius").getValue());
 
                     if (pullRelic == null || value > pullRadius) {
                         pullRadius = value;

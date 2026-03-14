@@ -27,11 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EverlastingFoodRelicItem extends RelicItem {
-    protected EverlastingFoodRelicItem(FoodProperties foodProperties, int maxDurability) {
+    protected EverlastingFoodRelicItem(FoodProperties foodProperties) {
         super(new Item.Properties()
                 .rarity(Rarity.EPIC)
                 .food(foodProperties)
-                .durability(Math.max(1, maxDurability))
                 .setNoRepair());
     }
 

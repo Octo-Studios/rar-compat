@@ -1,7 +1,5 @@
 package it.hurts.octostudios.rarcompat.items;
 
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -12,16 +10,17 @@ import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.world.food.FoodProperties;
 
 public class EverlastingBeefItem extends EverlastingFoodRelicItem {
     public EverlastingBeefItem() {
         super(new FoodProperties.Builder()
-                        .nutrition(3)
-                        .saturationModifier(0.3F)
-                        .build(),
-                96);
+                .nutrition(3)
+                .saturationModifier(0.3F)
+                .build());
     }
 
     @Override
@@ -34,32 +33,29 @@ public class EverlastingBeefItem extends EverlastingFoodRelicItem {
                                 .rankModifier(5, "quick_meal")
                                 .stat(AbilityStatTemplate.builder("regeneration")
                                         .thresholdValue(0.05D, Double.MAX_VALUE)
-                                        .initialValue(12D, 5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
+                                        .initialValue(30D, 25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0171D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("healing")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(1D, 3D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.5D, 2.5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("preservation_chance")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.08D, 0.3D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.01D, 0.05D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0571D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("consume_speed")
                                         .thresholdValue(0D, 0.95D)
-                                        .initialValue(0.1D, 0.4D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("durability")
-                                        .thresholdValue(1D, Double.MAX_VALUE)
-                                        .initialValue(64D, 96D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.019D)
                                         .formatValue(value -> Math.max(1, (int) Math.round(value)))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
@@ -81,6 +77,9 @@ public class EverlastingBeefItem extends EverlastingFoodRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.VILLAGE)
                         .build())
                 .build();
     }

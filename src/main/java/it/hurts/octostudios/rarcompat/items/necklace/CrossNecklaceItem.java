@@ -34,27 +34,23 @@ public class CrossNecklaceItem extends WearableRelicItem {
                                 .rankModifier(3, "smite")
                                 .rankModifier(5, "salvation")
                                 .stat(AbilityStatTemplate.builder("invulnerability")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(2D, 8D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value / 20, 0))
+                                        .initialValue(0.05D, 0.1D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.2571D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("fire_duration")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(1D, 4D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(3D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1429D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("undead_damage")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.1D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.2571D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("survival_chance")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(0.08D, 0.2D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.05D, 0.1D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0429D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
@@ -176,7 +172,7 @@ public class CrossNecklaceItem extends WearableRelicItem {
 
                 relicData.getLevelingData().addExperience("protection", "damage_taken", 1D);
 
-                var invulnerability = Math.max(0, (int) MathUtils.round(ability.getStatData("invulnerability").getValue(), 0));
+                var invulnerability = Math.max(0, (int) MathUtils.round(ability.getStatData("invulnerability").getValue() / 20, 0));
 
                 bonusTicks = Math.max(bonusTicks, invulnerability);
 
