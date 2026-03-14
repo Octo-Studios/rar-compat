@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.network.NetworkHandler;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
@@ -119,6 +121,9 @@ public class UmbrellaItem extends WearableRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.VILLAGE)
                         .build())
                 .build();
     }

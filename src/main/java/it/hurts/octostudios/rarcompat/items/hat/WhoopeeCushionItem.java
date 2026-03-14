@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.hat;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import artifacts.registry.ModSoundEvents;
 import it.hurts.octostudios.rarcompat.RARCompat;
@@ -100,6 +102,9 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.VILLAGE)
                         .build())
                 .build();
     }

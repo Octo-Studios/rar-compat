@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.charm;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import be.florens.expandability.api.EventResult;
 import be.florens.expandability.api.forge.PlayerSwimEvent;
@@ -91,6 +93,9 @@ public class HeliumFlamingoItem extends WearableRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.AQUATIC)
                         .build())
                 .build();
     }

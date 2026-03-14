@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.feet;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
@@ -100,6 +102,9 @@ public class RootedBootsItem extends WearableRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.OVERWORLD)
                         .build())
                 .build();
     }

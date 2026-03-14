@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -79,6 +81,9 @@ public class EternalSteakItem extends EverlastingFoodRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.VILLAGE)
                         .build())
                 .build();
     }

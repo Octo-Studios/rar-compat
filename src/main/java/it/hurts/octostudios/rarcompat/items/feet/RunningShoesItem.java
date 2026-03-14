@@ -1,5 +1,7 @@
 package it.hurts.octostudios.rarcompat.items.feet;
 
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
@@ -74,6 +76,9 @@ public class RunningShoesItem extends WearableRelicItem {
                                                 .build())
                                         .build())
                                 .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.PLAINS, LootEntries.VILLAGE)
                         .build())
                 .build();
     }
