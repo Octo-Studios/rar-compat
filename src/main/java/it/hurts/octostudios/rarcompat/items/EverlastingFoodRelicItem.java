@@ -2,20 +2,9 @@ package it.hurts.octostudios.rarcompat.items;
 
 import it.hurts.octostudios.rarcompat.RARCompat;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
-import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
-import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
-import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
-import it.hurts.sskirillss.relics.api.relics.VisibilityState;
-import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
-import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
-import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
-import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
-import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsCreativeTabs;
-import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.misc.CreativeContentConstructor;
 import it.hurts.sskirillss.relics.items.relics.base.RelicItem;
-import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -38,99 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EverlastingFoodRelicItem extends RelicItem {
-    private final double durabilityInitial;
-    private final double durabilityFinal;
-    private final double regenerationInitial;
-    private final double regenerationFinal;
-    private final double healingInitial;
-    private final double healingFinal;
-    private final double preservationChanceInitial;
-    private final double preservationChanceFinal;
-    private final double consumeSpeedInitial;
-    private final double consumeSpeedFinal;
-
-    protected EverlastingFoodRelicItem(FoodProperties foodProperties, double durabilityInitial, double durabilityFinal,
-                                       double regenerationInitial, double regenerationFinal,
-                                       double healingInitial, double healingFinal,
-                                       double preservationChanceInitial, double preservationChanceFinal,
-                                       double consumeSpeedInitial, double consumeSpeedFinal) {
+    protected EverlastingFoodRelicItem(FoodProperties foodProperties, int maxDurability) {
         super(new Item.Properties()
                 .rarity(Rarity.EPIC)
                 .food(foodProperties)
-                .durability(Math.max(1, (int) Math.round(Math.max(durabilityInitial, durabilityFinal))))
+                .durability(Math.max(1, maxDurability))
                 .setNoRepair());
-
-        this.durabilityInitial = durabilityInitial;
-        this.durabilityFinal = durabilityFinal;
-        this.regenerationInitial = regenerationInitial;
-        this.regenerationFinal = regenerationFinal;
-        this.healingInitial = healingInitial;
-        this.healingFinal = healingFinal;
-        this.preservationChanceInitial = preservationChanceInitial;
-        this.preservationChanceFinal = preservationChanceFinal;
-        this.consumeSpeedInitial = consumeSpeedInitial;
-        this.consumeSpeedFinal = consumeSpeedFinal;
-    }
-
-    @Override
-    public RelicTemplate constructDefaultRelicTemplate() {
-        return RelicTemplate.builder()
-                .abilities(AbilitiesTemplate.builder()
-                        .ability(AbilityTemplate.builder("meal")
-                                .rankModifier(1, "restoration")
-                                .rankModifier(3, "preservation")
-                                .rankModifier(5, "quick_meal")
-                                .stat(AbilityStatTemplate.builder("regeneration")
-                                        .thresholdValue(0.05D, Double.MAX_VALUE)
-                                        .initialValue(this.regenerationInitial, this.regenerationFinal)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.06D)
-                                        .formatValue(value -> MathUtils.round(value, 1))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("healing")
-                                        .thresholdValue(0D, Double.MAX_VALUE)
-                                        .initialValue(this.healingInitial, this.healingFinal)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> MathUtils.round(value, 1))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("preservation_chance")
-                                        .thresholdValue(0D, 1D)
-                                        .initialValue(this.preservationChanceInitial, this.preservationChanceFinal)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("consume_speed")
-                                        .thresholdValue(0D, 0.95D)
-                                        .initialValue(this.consumeSpeedInitial, this.consumeSpeedFinal)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("durability")
-                                        .thresholdValue(1D, Double.MAX_VALUE)
-                                        .initialValue(this.durabilityInitial, this.durabilityFinal)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
-                                        .formatValue(value -> Math.max(1, (int) Math.round(value)))
-                                        .build())
-                                .experienceSources(ExperienceSourcesTemplate.builder()
-                                        .source(ExperienceSourceTemplate.builder("consume").build())
-                                        .source(ExperienceSourceTemplate.builder("healing")
-                                                .rankModifierVisibilityState("restoration", VisibilityState.OBFUSCATED)
-                                                .build())
-                                        .build())
-                                .statistic(AbilityStatisticTemplate.builder()
-                                        .metric(AbilityMetricTemplate.builder("consumes")
-                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
-                                                .build())
-                                        .metric(AbilityMetricTemplate.builder("consume_duration")
-                                                .formatValue(value -> MathUtils.formatTime(Math.max(0, (int) MathUtils.round(value, 0))))
-                                                .build())
-                                        .metric(AbilityMetricTemplate.builder("healed")
-                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 1)))
-                                                .rankModifierVisibilityState("restoration", VisibilityState.OBFUSCATED)
-                                                .build())
-                                        .build())
-                                .build())
-                        .build())
-                .build();
     }
 
     @Override
