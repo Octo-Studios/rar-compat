@@ -40,7 +40,7 @@ public class SnowshoesItem extends WearableRelicItem {
                                 .rankModifier(5, "linger")
                                 .stat(AbilityStatTemplate.builder("speed_bonus")
                                         .initialValue(0.1D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("linger_duration")

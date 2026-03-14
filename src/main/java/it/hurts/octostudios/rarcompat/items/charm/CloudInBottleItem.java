@@ -123,6 +123,11 @@ public class CloudInBottleItem extends WearableRelicItem {
             return;
         }
 
+        if (isSlowFallSuppressed(player)) {
+            if (getSlowFallTicks(stack) > 0)
+                setSlowFallTicks(stack, 0);
+        }
+
         if (ability.isRankModifierUnlocked("slow_fall")) {
             if (getSlowFallTicks(stack) > 0) {
                 if (!player.level().isClientSide() && isSlowFallActive(player) && player.tickCount % 20 == 0)
@@ -172,7 +177,7 @@ public class CloudInBottleItem extends WearableRelicItem {
         player.hasImpulse = true;
         player.fallDistance = 0F;
 
-        if (ability.isRankModifierUnlocked("updraft") && player.getLookAngle().y > 0D) {
+        if (ability.isRankModifierUnlocked("updraft") && player.getLookAngle().y > 0.70D) {
             var bonus = Math.max(0D, ability.getStatData("updraft_bonus").getValue());
             var currentMotion = player.getDeltaMovement();
             var jumpImpulse = currentMotion.y - previousY;
@@ -243,11 +248,11 @@ public class CloudInBottleItem extends WearableRelicItem {
     }
 
     private boolean isSlowFallActive(Player player) {
-        return !player.isInFluidType() && player.getDeltaMovement().y <= 0D && !player.isShiftKeyDown();
+        return !isSlowFallSuppressed(player) && !player.isInFluidType() && player.getDeltaMovement().y <= 0D && !player.isShiftKeyDown();
     }
 
     private void applySlowFall(Player player) {
-        if (player.isInFluidType() || player.getDeltaMovement().y > 0D)
+        if (isSlowFallSuppressed(player) || player.isInFluidType() || player.getDeltaMovement().y > 0D)
             return;
 
         if (!player.isShiftKeyDown()) {
@@ -257,6 +262,10 @@ public class CloudInBottleItem extends WearableRelicItem {
         }
 
         player.fallDistance = 0F;
+    }
+
+    private boolean isSlowFallSuppressed(Player player) {
+        return player.isSpectator() || player.getAbilities().flying || player.isFallFlying();
     }
 
     private static int secondsToTicks(double seconds) {

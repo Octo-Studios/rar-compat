@@ -1,4 +1,4 @@
-﻿{
+{
   "relics.description.umbrella.description": "At first glance, it looks like the most ordinary travel umbrella: worn fabric, creaking ribs, and a handle polished by long wanderings. But the moment the wind catches its canopy, the air itself begins to obey its owner. The umbrella gently slows the fall, allowing one to glide along the currents as if stepping on invisible stairs.",
   "relics.description.umbrella.ability.glider": "Gliding",
   "relics.description.umbrella.ability.glider.description": "While the umbrella is held in hand, it limits the holder's falling speed to %4$s.",
@@ -90,6 +90,7 @@
   "relics.description.villager_hat.ability.golem_guard": "Golem Guard",
   "relics.description.villager_hat.ability.golem_guard.description": "Iron golems do not attack the relic holder and stand in their defense.",
   "relics.description.villager_hat.ability.golem_guard.rank_modifier.protection": "Reduces incoming damage by %1$s%% for each iron golem within %2$s blocks, up to a maximum of %3$s%%.",
+  "relics.description.villager_hat.ability.golem_guard.experience_source.protection_trigger": "+1 experience for each damage distribution trigger from Golem Guard.",
   "relics.description.villager_hat.ability.golem_guard.statistic.golem_damage_reduced": "Damage reduced thanks to iron golems",
   "relics.description.villager_hat.ability.trade_surge": "Trading Instinct",
   "relics.description.villager_hat.ability.trade_surge.description": "Reduces the cost of trades with villagers by %1$s%%.",
@@ -505,12 +506,12 @@
   "relics.description.kitty_slippers.ability.nine_lives": "Nine Lives",
   "relics.description.kitty_slippers.ability.nine_lives.description": "With a %1$s%% chance, fatal damage does not kill the relic holder, leaving them at 1 health.",
   "relics.description.kitty_slippers.ability.nine_lives.rank_modifier.evasion": "After taking damage, the next attack against the relic holder has a %3$s%% chance to miss.",
-  "relics.description.kitty_slippers.ability.nine_lives.rank_modifier.soft_landing": "Reduces fall damage taken by %3$s%%.",
+  "relics.description.kitty_slippers.ability.feline_aura.rank_modifier.soft_landing": "Reduces fall damage taken by %3$s%%.",
   "relics.description.kitty_slippers.ability.feline_aura.statistic.crouch_movement_time": "Time spent moving while sneaking",
   "relics.description.kitty_slippers.ability.nine_lives.experience_source.survival_trigger": "+1 experience for each point of damage survived when the lifesaving effect activates.",
   "relics.description.kitty_slippers.ability.nine_lives.experience_source.evasion_miss": "+1 experience for each missed attack against the relic holder.",
   "relics.description.kitty_slippers.ability.nine_lives.statistic.survival_triggers": "Life-saving activations",
-  "relics.description.kitty_slippers.ability.nine_lives.statistic.fall_damage_reduced": "Fall damage reduced",
+  "relics.description.kitty_slippers.ability.feline_aura.statistic.fall_damage_reduced": "Fall damage reduced",
   "relics.description.kitty_slippers.ability.nine_lives.statistic.evasion_misses": "Missed attacks against the relic holder",
 
   "relics.description.bunny_hoppers.description": "A pair of soft bunny-shaped slippers with springy soles. One jump is enough for them to launch the wearer high upward, turning an ordinary leap into a prolonged vertical burst. Such slippers are especially useful for mobile combat and unexpected attacks from above.",

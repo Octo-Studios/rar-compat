@@ -172,12 +172,13 @@ public class CrossNecklaceItem extends WearableRelicItem {
 
                 relicData.getLevelingData().addExperience("protection", "damage_taken", 1D);
 
-                var invulnerability = Math.max(0, (int) MathUtils.round(ability.getStatData("invulnerability").getValue() / 20, 0));
+                var invulnerabilitySeconds = Math.max(0D, ability.getStatData("invulnerability").getValue());
+                var invulnerabilityTicks = Math.max(0, (int) MathUtils.round(invulnerabilitySeconds * 20D, 0));
 
-                bonusTicks = Math.max(bonusTicks, invulnerability);
+                bonusTicks = Math.max(bonusTicks, invulnerabilityTicks);
 
-                if (invulnerability > 0)
-                    ability.getStatisticData().getMetricData("invulnerability_time").addValue(invulnerability / 20D);
+                if (invulnerabilityTicks > 0)
+                    ability.getStatisticData().getMetricData("invulnerability_time").addValue(invulnerabilitySeconds);
 
                 if (attacker != null && attacker.isInvertedHealAndHarm() && ability.isRankModifierUnlocked("holy_fire")) {
                     var value = (float) Math.max(0D, ability.getStatData("fire_duration").getValue());
@@ -188,12 +189,6 @@ public class CrossNecklaceItem extends WearableRelicItem {
                         holyFireStack = stack;
                     }
                 }
-            }
-
-            if (bonusTicks > 0) {
-                var baseTicks = Math.max(entity.invulnerableTime, event.getPostAttackInvulnerabilityTicks());
-
-                entity.invulnerableTime = baseTicks + bonusTicks;
             }
 
             if (attacker != null && fireSeconds > 0F) {
@@ -207,6 +202,37 @@ public class CrossNecklaceItem extends WearableRelicItem {
                     ability.getStatisticData().getMetricData("holy_fire_duration").addValue(fireSeconds);
                 }
             }
+        }
+
+        @SubscribeEvent
+        public static void onLivingIncomingDamageDefending(LivingIncomingDamageEvent event) {
+            var entity = event.getEntity();
+
+            if (entity.level().isClientSide() || event.getAmount() <= 0F)
+                return;
+
+            var bonusTicks = 0;
+
+            for (var stack : EntityUtils.findEquippedCurios(entity, ModItems.CROSS_NECKLACE.value())) {
+                if (!(stack.getItem() instanceof CrossNecklaceItem relic))
+                    continue;
+
+                var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("protection");
+
+                if (!ability.canPlayerUse(entity))
+                    continue;
+
+                var invulnerabilitySeconds = Math.max(0D, ability.getStatData("invulnerability").getValue());
+                var invulnerabilityTicks = Math.max(0, (int) MathUtils.round(invulnerabilitySeconds * 20D, 0));
+
+                bonusTicks = Math.max(bonusTicks, invulnerabilityTicks);
+            }
+
+            if (bonusTicks <= 0)
+                return;
+
+            var baseTicks = Math.max(0, event.getContainer().getPostAttackInvulnerabilityTicks());
+            event.setInvulnerabilityTicks(baseTicks + bonusTicks);
         }
 
         @SubscribeEvent

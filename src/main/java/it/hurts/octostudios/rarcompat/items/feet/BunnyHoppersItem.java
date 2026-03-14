@@ -4,6 +4,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.handlers.KnockbackHelper;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.octostudios.rarcompat.network.packets.BunnyJumpReleasePacket;
@@ -60,8 +61,8 @@ public class BunnyHoppersItem extends WearableRelicItem {
                                 .rankModifier(3, "safe_landing")
                                 .rankModifier(5, "impact")
                                 .stat(AbilityStatTemplate.builder("duration")
-                                        .initialValue(1D, 3D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0667D)
+                                        .initialValue(0.5, 1D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1143D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("repel_radius")
@@ -393,7 +394,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
                 if (nearby.distanceToSqr(player) > maxDistanceSq)
                     continue;
 
-                nearby.knockback(0.325D, player.getX() - nearby.getX(), player.getZ() - nearby.getZ());
+                KnockbackHelper.apply(nearby, 0.325D, new Vec3(player.getX() - nearby.getX(), player.getY() - nearby.getY(), player.getZ() - nearby.getZ()));
 
                 if (nearby instanceof Mob mob) {
                     mob.setTarget(null);

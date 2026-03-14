@@ -43,7 +43,7 @@ public class PickaxeHeaterItem extends WearableRelicItem {
                                 .rankModifier(5, "molten_luck")
                                 .stat(AbilityStatTemplate.builder("smelt_chance")
                                         .initialValue(0.15D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("ignite_duration")

@@ -2,6 +2,7 @@ package it.hurts.octostudios.rarcompat.items;
 
 import artifacts.network.NetworkHandler;
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.handlers.KnockbackHelper;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.network.packets.UmbrellaBouncePacket;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
@@ -56,8 +57,8 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("strength")
-                                        .initialValue(0.25D, 0.5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0015D)
+                                        .initialValue(0.5D, 0.75D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0071D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("vanishing_duration")
@@ -170,21 +171,33 @@ public class UmbrellaItem extends WearableRelicItem {
         syncShieldData(player, stack);
 
         var isHeld = isHeld(player, stack);
+        var isFalling = isHeld && isFalling(player);
+
+        if (isFalling) {
+            setFallTicks(stack, getFallTicks(stack) + 1);
+        } else {
+            setFallTicks(stack, 0);
+        }
 
         if (player.onGround()) {
             setBounceCount(stack, 0);
             setBounceLandingRequired(stack, false);
+            setFallTicks(stack, 0);
         }
 
         if (isBounceLandingRequired(stack)) {
-            if (isHeld && isFalling(player))
+            if (isFalling && hasSlowFallDelayPassed(stack))
                 applySlowFall(player, stack);
 
             return;
         }
 
-        if (isHeld && isFalling(player))
+        if (isFalling && hasSlowFallDelayPassed(stack))
             applySlowFall(player, stack);
+    }
+
+    private boolean hasSlowFallDelayPassed(ItemStack stack) {
+        return getFallTicks(stack) >= 3;
     }
 
     private void applySlowFall(Player player, ItemStack stack) {
@@ -204,10 +217,29 @@ public class UmbrellaItem extends WearableRelicItem {
             player.setDeltaMovement(motion.x(), motion.y(), motion.z());
 
             if (!player.level().isClientSide()) {
-                this.getRelicData(player, stack).getLevelingData().addExperience("glider", "slow_fall_distance", motion.length());
+                if (getSlowFallProcessedTick(stack) != player.tickCount) {
+                    var distance = 0D;
 
-                if (player.tickCount % 20 == 0)
-                    ability.getStatisticData().getMetricData("flight_duration").addValue(1D);
+                    if (getSlowFallPosTick(stack) == player.tickCount - 1) {
+                        var lastX = getSlowFallPosX(stack);
+                        var lastY = getSlowFallPosY(stack);
+                        var lastZ = getSlowFallPosZ(stack);
+
+                        distance = player.position().distanceTo(new Vec3(lastX, lastY, lastZ));
+                    }
+
+                    if (distance > 0D)
+                        this.getRelicData(player, stack).getLevelingData().addExperience("glider", "slow_fall_distance", distance);
+
+                    if (player.tickCount % 20 == 0)
+                        ability.getStatisticData().getMetricData("flight_duration").addValue(1D);
+
+                    setSlowFallProcessedTick(stack, player.tickCount);
+                    setSlowFallPosTick(stack, player.tickCount);
+                    setSlowFallPosX(stack, player.getX());
+                    setSlowFallPosY(stack, player.getY());
+                    setSlowFallPosZ(stack, player.getZ());
+                }
             }
         }
 
@@ -285,6 +317,15 @@ public class UmbrellaItem extends WearableRelicItem {
         setShieldMaxHits(stack, maxHits);
 
         if (!isUsingShield(player, stack)) {
+            var spentHits = getShieldHitCount(stack);
+
+            if (!player.level().isClientSide() && spentHits > 0) {
+                var cooldownTicks = getShieldCooldownTicks(player, stack);
+
+                if (cooldownTicks > 0)
+                    player.getCooldowns().addCooldown(stack.getItem(), cooldownTicks);
+            }
+
             setShieldHitCount(stack, 0);
             return;
         }
@@ -360,7 +401,13 @@ public class UmbrellaItem extends WearableRelicItem {
     }
 
     private boolean isUsingShield(Player player, ItemStack stack) {
-        return player.isUsingItem() && player.getUseItem() == stack;
+        if (!player.isUsingItem() || !(player.getUseItem().getItem() instanceof UmbrellaItem))
+            return false;
+
+        return switch (player.getUsedItemHand()) {
+            case MAIN_HAND -> player.getMainHandItem() == stack;
+            case OFF_HAND -> player.getOffhandItem() == stack;
+        };
     }
 
     private boolean isHeld(Player player, ItemStack stack) {
@@ -438,6 +485,54 @@ public class UmbrellaItem extends WearableRelicItem {
         stack.set(DataComponentRegistry.UMBRELLA_SHOW_SHIELD_BAR.get(), value);
     }
 
+    private int getFallTicks(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_FALL_TICKS.get(), 0);
+    }
+
+    private void setFallTicks(ItemStack stack, int ticks) {
+        stack.set(DataComponentRegistry.UMBRELLA_FALL_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private long getSlowFallProcessedTick(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_SLOW_FALL_PROCESSED_TICK.get(), Long.MIN_VALUE);
+    }
+
+    private void setSlowFallProcessedTick(ItemStack stack, long tick) {
+        stack.set(DataComponentRegistry.UMBRELLA_SLOW_FALL_PROCESSED_TICK.get(), tick);
+    }
+
+    private long getSlowFallPosTick(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_TICK.get(), Long.MIN_VALUE);
+    }
+
+    private void setSlowFallPosTick(ItemStack stack, long tick) {
+        stack.set(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_TICK.get(), tick);
+    }
+
+    private double getSlowFallPosX(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_X.get(), 0D);
+    }
+
+    private void setSlowFallPosX(ItemStack stack, double value) {
+        stack.set(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_X.get(), value);
+    }
+
+    private double getSlowFallPosY(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_Y.get(), 0D);
+    }
+
+    private void setSlowFallPosY(ItemStack stack, double value) {
+        stack.set(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_Y.get(), value);
+    }
+
+    private double getSlowFallPosZ(ItemStack stack) {
+        return stack.getOrDefault(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_Z.get(), 0D);
+    }
+
+    private void setSlowFallPosZ(ItemStack stack, double value) {
+        stack.set(DataComponentRegistry.UMBRELLA_SLOW_FALL_POS_Z.get(), value);
+    }
+
     @Override
     public boolean isBarVisible(ItemStack stack) {
         if (isShowingShieldBar(stack))
@@ -472,6 +567,11 @@ public class UmbrellaItem extends WearableRelicItem {
     @Override
     public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
         return false;
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged;
     }
 
     @Override
@@ -542,7 +642,7 @@ public class UmbrellaItem extends WearableRelicItem {
                     if (horizontal.lengthSqr() > 1.0E-6D) {
                         var normalized = horizontal.normalize();
 
-                        target.knockback(distance, -normalized.x, -normalized.z);
+                        KnockbackHelper.apply(target, distance, new Vec3(-normalized.x, player.getY() - target.getY(), -normalized.z));
                     }
                 }
             }
@@ -627,4 +727,3 @@ public class UmbrellaItem extends WearableRelicItem {
         }
     }
 }
-

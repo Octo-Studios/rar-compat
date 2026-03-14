@@ -60,7 +60,7 @@ public class ShockPendantItem extends WearableRelicItem {
                                         .build())
                                 .stat(AbilityStatTemplate.builder("damage_modifier")
                                         .initialValue(0.15D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("tremor_chance")

@@ -18,6 +18,12 @@ public class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_BOUNCE_COUNT = construct("umbrella/bounce_count", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_MAX_BOUNCES = construct("umbrella/max_bounces", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_BOUNCE_RECHARGE_TIMER = construct("umbrella/bounce_recharge_timer", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_FALL_TICKS = construct("umbrella/fall_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> UMBRELLA_SLOW_FALL_PROCESSED_TICK = construct("umbrella/slow_fall_processed_tick", Codec.LONG);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> UMBRELLA_SLOW_FALL_POS_TICK = construct("umbrella/slow_fall_pos_tick", Codec.LONG);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> UMBRELLA_SLOW_FALL_POS_X = construct("umbrella/slow_fall_pos_x", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> UMBRELLA_SLOW_FALL_POS_Y = construct("umbrella/slow_fall_pos_y", Codec.DOUBLE);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> UMBRELLA_SLOW_FALL_POS_Z = construct("umbrella/slow_fall_pos_z", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> UMBRELLA_BOUNCE_NEEDS_LANDING = construct("umbrella/bounce_needs_landing", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_SHIELD_HITS = construct("umbrella/shield_hits", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> UMBRELLA_SHIELD_MAX_HITS = construct("umbrella/shield_max_hits", Codec.INT);
@@ -100,6 +106,7 @@ public class DataComponentRegistry {
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARM_OF_SINKING_STATIONARY_TICKS = construct("charm_of_sinking/stationary_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> CHARM_OF_SINKING_IMMORTALITY_ACTIVE = construct("charm_of_sinking/immortality_active", Codec.BOOL);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> CHARM_OF_SINKING_AIR_RESTORE_PROGRESS = construct("charm_of_sinking/air_restore_progress", Codec.DOUBLE);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> SHOCK_PENDANT_LAST_LIGHTNING_XP_TICK = construct("shock_pendant/last_lightning_xp_tick", Codec.LONG);
 

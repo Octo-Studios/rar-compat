@@ -47,7 +47,7 @@ public class FlamePendantItem extends WearableRelicItem {
                                         .build())
                                 .stat(AbilityStatTemplate.builder("burning_damage_bonus")
                                         .initialValue(0.15D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("healing")

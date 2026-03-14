@@ -38,17 +38,17 @@ public class VillagerHatItem extends WearableRelicItem {
                                 .rankModifier(5, "multicast")
                                 .stat(AbilityStatTemplate.builder("discount")
                                         .initialValue(0.1D, 0.25D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0571D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("multicast")
                                         .initialValue(1D, 3D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0667D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("preserve_chance")
-                                        .initialValue(0.1D, 0.3D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
@@ -88,6 +88,11 @@ public class VillagerHatItem extends WearableRelicItem {
                                         .initialValue(0.15D, 0.25D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0571D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("protection_trigger")
+                                                .rankModifierVisibilityState("protection", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("golem_damage_reduced")
@@ -158,7 +163,8 @@ public class VillagerHatItem extends WearableRelicItem {
             if (!(stack.getItem() instanceof VillagerHatItem relic))
                 return;
 
-            var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("golem_guard");
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("golem_guard");
 
             if (!ability.canPlayerUse(player))
                 return;
@@ -180,8 +186,10 @@ public class VillagerHatItem extends WearableRelicItem {
 
                         var prevented = Math.max(0F, previous - reduced);
 
-                        if (prevented > 0F)
+                        if (prevented > 0F) {
                             ability.getStatisticData().getMetricData("golem_damage_reduced").addValue(prevented);
+                            relicData.getLevelingData().addExperience("golem_guard", "protection_trigger", 1D);
+                        }
                     }
                 }
             }

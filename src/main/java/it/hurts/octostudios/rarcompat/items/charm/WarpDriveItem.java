@@ -46,7 +46,7 @@ public class WarpDriveItem extends WearableRelicItem {
                                 .rankModifier(5, "weightless")
                                 .stat(AbilityStatTemplate.builder("cooldown")
                                         .initialValue(3.5D, 5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0245D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0257D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("blind_radius")

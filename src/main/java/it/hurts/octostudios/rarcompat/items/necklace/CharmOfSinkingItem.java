@@ -34,8 +34,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
 public class CharmOfSinkingItem extends WearableRelicItem {
-    private static final double STILL_THRESHOLD = 1.0E-4D;
-
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
@@ -45,14 +43,14 @@ public class CharmOfSinkingItem extends WearableRelicItem {
                                 .rankModifier(3, "resistance")
                                 .rankModifier(5, "immortality")
                                 .stat(AbilityStatTemplate.builder("air_restore_speed")
-                                        .initialValue(2D, 4D) // TODO
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0667D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("resistance_per_block")
                                         .initialValue(0.01D, 0.025D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 1))
+                                        .formatValue(value -> MathUtils.round(value * 100D, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("immortality_delay")
                                         .initialValue(10D, 15D)
@@ -95,29 +93,39 @@ public class CharmOfSinkingItem extends WearableRelicItem {
 
         if (!ability.canPlayerUse(player)) {
             resetImmobilityState(player, stack);
+            setAirRestoreProgress(stack, 0D);
             return;
         }
 
         var onBottom = isStandingOnBottomUnderWater(player);
 
         if (onBottom && player.getAirSupply() < player.getMaxAirSupply()) {
-            var airRestoreSpeed = Math.max(0D, ability.getStatData("air_restore_speed").getValue());
+            var maxAir = player.getMaxAirSupply();
+            var beforeAir = player.getAirSupply();
+            var beforeBubbles = getAirBubbleCount(beforeAir, maxAir);
 
-            if (airRestoreSpeed > 0D) {
-                var airPerTick = Math.max(1, (int) Math.round(airRestoreSpeed));
-                var beforeAir = player.getAirSupply();
-                var beforeBubbles = getAirBubbleCount(beforeAir, player.getMaxAirSupply());
-                var afterAir = Math.min(player.getMaxAirSupply(), beforeAir + airPerTick);
-                var afterBubbles = getAirBubbleCount(afterAir, player.getMaxAirSupply());
-                var gainedBubbles = Math.max(0, afterBubbles - beforeBubbles);
+            var airAfterDrainCompensation = Math.min(maxAir, beforeAir + 1);
+            var airRestorePerSecond = Math.max(0D, ability.getStatData("air_restore_speed").getValue());
+            var progress = getAirRestoreProgress(stack) + airRestorePerSecond / 20D;
+            var extraAir = (int) Math.floor(progress);
 
-                player.setAirSupply(afterAir);
+            if (extraAir > 0)
+                progress -= extraAir;
 
-                if (gainedBubbles > 0) {
-                    ability.getStatisticData().getMetricData("air_bubbles_restored").addValue(gainedBubbles);
-                    this.getRelicData(player, stack).getLevelingData().addExperience("sinking", "air_bubble", gainedBubbles);
-                }
+            var afterAir = Math.min(maxAir, airAfterDrainCompensation + Math.max(0, extraAir));
+            var afterBubbles = getAirBubbleCount(afterAir, maxAir);
+            var gainedBubbles = Math.max(0, afterBubbles - beforeBubbles);
+
+            player.setAirSupply(afterAir);
+
+            if (gainedBubbles > 0) {
+                ability.getStatisticData().getMetricData("air_bubbles_restored").addValue(gainedBubbles);
+                this.getRelicData(player, stack).getLevelingData().addExperience("sinking", "air_bubble", gainedBubbles);
             }
+
+            setAirRestoreProgress(stack, progress);
+        } else {
+            setAirRestoreProgress(stack, 0D);
         }
 
         if (ability.isRankModifierUnlocked("fluid_collision") && player.isInWaterOrBubble())
@@ -128,7 +136,7 @@ public class CharmOfSinkingItem extends WearableRelicItem {
             return;
         }
 
-        if (!onBottom || player.getDeltaMovement().lengthSqr() > STILL_THRESHOLD) {
+        if (!onBottom || player.getDeltaMovement().lengthSqr() > 1.0E-4D) {
             resetImmobilityState(player, stack);
             return;
         }
@@ -223,6 +231,14 @@ public class CharmOfSinkingItem extends WearableRelicItem {
 
     private void setImmortalityActive(ItemStack stack, boolean active) {
         stack.set(DataComponentRegistry.CHARM_OF_SINKING_IMMORTALITY_ACTIVE.get(), active);
+    }
+
+    private double getAirRestoreProgress(ItemStack stack) {
+        return Math.max(0D, stack.getOrDefault(DataComponentRegistry.CHARM_OF_SINKING_AIR_RESTORE_PROGRESS.get(), 0D));
+    }
+
+    private void setAirRestoreProgress(ItemStack stack, double progress) {
+        stack.set(DataComponentRegistry.CHARM_OF_SINKING_AIR_RESTORE_PROGRESS.get(), Math.max(0D, progress));
     }
 
     @EventBusSubscriber(modid = RARCompat.MODID)

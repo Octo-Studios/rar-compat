@@ -46,7 +46,7 @@ public class SuperstitiousHatItem extends WearableRelicItem {
                                         .build())
                                 .stat(AbilityStatTemplate.builder("first_kill_window")
                                         .initialValue(60D, 50D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0229D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.02285D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("first_kill_bonus")

@@ -39,7 +39,7 @@ public class PowerGloveItem extends WearableRelicItem {
                                 .rankModifier(5, "echo_strike")
                                 .stat(AbilityStatTemplate.builder("hits_required")
                                         .initialValue(7D, 10D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0245D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0229D)
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("power_damage_bonus")

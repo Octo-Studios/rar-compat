@@ -58,7 +58,7 @@ public class VampiricGloveItem extends WearableRelicItem {
                                         .build())
                                 .stat(AbilityStatTemplate.builder("kill_heal")
                                         .initialValue(0.1D, 0.25D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 5.6857D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("overheal_absorption_cap")

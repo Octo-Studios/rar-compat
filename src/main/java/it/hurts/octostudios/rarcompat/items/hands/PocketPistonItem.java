@@ -4,6 +4,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.handlers.KnockbackHelper;
 import it.hurts.octostudios.rarcompat.items.WearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -48,14 +50,14 @@ public class PocketPistonItem extends WearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("empty_hand_knockback")
-                                        .initialValue(0.01D, 0.025D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.2571D)
+                                        .initialValue(0.25D, 0.5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1143D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("distance_bonus_per_block")
                                         .initialValue(0.01D, 0.025D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0857D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 1))
+                                        .formatValue(value -> MathUtils.round(value * 100D, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("stun_duration")
                                         .initialValue(1D, 2D)
@@ -262,7 +264,7 @@ public class PocketPistonItem extends WearableRelicItem {
             }
 
             if (emptyHandKnockback > 0D && event.getEntity() instanceof LivingEntity target)
-                target.knockback(emptyHandKnockback, player.getX() - target.getX(), player.getZ() - target.getZ());
+                KnockbackHelper.apply(target, emptyHandKnockback, new Vec3(player.getX() - target.getX(), player.getY() - target.getY(), player.getZ() - target.getZ()));
 
             if (!canApplyLongReachStun || stunTicks <= 0 || !(event.getEntity() instanceof LivingEntity target))
                 return;

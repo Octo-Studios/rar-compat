@@ -5,6 +5,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import artifacts.registry.ModSoundEvents;
 import it.hurts.octostudios.rarcompat.RARCompat;
+import it.hurts.octostudios.rarcompat.handlers.KnockbackHelper;
 import it.hurts.octostudios.rarcompat.entities.WhoopeeCloudEntity;
 import it.hurts.octostudios.rarcompat.init.DataComponentRegistry;
 import it.hurts.octostudios.rarcompat.init.EntityRegistry;
@@ -28,6 +29,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -46,7 +48,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                                 .rankModifier(5, "paralysis")
                                 .stat(AbilityStatTemplate.builder("chance")
                                         .initialValue(0.1D, 0.35D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.08D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("distance")
@@ -177,7 +179,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
             if (target.distanceToSqr(player) > maxDistanceSq)
                 continue;
 
-            target.knockback(strength, player.getX() - target.getX(), player.getZ() - target.getZ());
+            KnockbackHelper.apply(target, strength, new Vec3(player.getX() - target.getX(), player.getY() - target.getY(), player.getZ() - target.getZ()));
             affectedTargets.add(target.getUUID());
 
             if (target instanceof Mob mob) {

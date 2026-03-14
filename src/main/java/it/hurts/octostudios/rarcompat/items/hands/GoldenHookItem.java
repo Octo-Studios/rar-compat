@@ -56,7 +56,7 @@ public class GoldenHookItem extends WearableRelicItem {
                                 .stat(AbilityStatTemplate.builder("steal_chance")
                                         .initialValue(0.01D, 0.025D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .formatValue(value -> MathUtils.round(value * 100D, 0))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("xp_drop").build())

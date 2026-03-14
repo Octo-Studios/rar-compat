@@ -41,6 +41,7 @@ public class KittySlippersItem extends WearableRelicItem {
                 .abilities(AbilitiesTemplate.builder()
                         .ability(AbilityTemplate.builder("feline_aura")
                                 .rankModifier(1, "crouch_speed")
+                                .rankModifier(3, "soft_landing")
                                 .stat(AbilityStatTemplate.builder("radius")
                                         .initialValue(8D, 16D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
@@ -51,24 +52,27 @@ public class KittySlippersItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0531D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("fall_damage_reduction")
+                                        .initialValue(0.35D, 0.5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("crouch_movement_time")
                                                 .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
                                                 .rankModifierVisibilityState("crouch_speed", VisibilityState.OBFUSCATED)
                                                 .build())
+                                        .metric(AbilityMetricTemplate.builder("fall_damage_reduced")
+                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
+                                                .rankModifierVisibilityState("soft_landing", VisibilityState.OBFUSCATED)
+                                                .build())
                                         .build())
                                 .build())
                         .ability(AbilityTemplate.builder("nine_lives")
-                                .rankModifier(3, "soft_landing")
                                 .rankModifier(5, "evasion")
                                 .stat(AbilityStatTemplate.builder("survival_chance")
                                         .initialValue(0.025D, 0.1D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1143D)
-                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
-                                        .build())
-                                .stat(AbilityStatTemplate.builder("fall_damage_reduction")
-                                        .initialValue(0.35D, 0.5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("evasion_chance")
@@ -85,10 +89,6 @@ public class KittySlippersItem extends WearableRelicItem {
                                 .statistic(AbilityStatisticTemplate.builder()
                                         .metric(AbilityMetricTemplate.builder("survival_triggers")
                                                 .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
-                                                .build())
-                                        .metric(AbilityMetricTemplate.builder("fall_damage_reduced")
-                                                .formatValue(value -> String.valueOf(MathUtils.round(value, 2)))
-                                                .rankModifierVisibilityState("soft_landing", VisibilityState.OBFUSCATED)
                                                 .build())
                                         .metric(AbilityMetricTemplate.builder("evasion_misses")
                                                 .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
@@ -258,16 +258,15 @@ public class KittySlippersItem extends WearableRelicItem {
                 if (!(stack.getItem() instanceof KittySlippersItem relic))
                     continue;
 
-                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("nine_lives");
+                var abilities = relic.getRelicData(player, stack).getAbilitiesData();
+                var nineLives = abilities.getAbilityData("nine_lives");
+                var aura = abilities.getAbilityData("feline_aura");
 
-                if (!ability.canPlayerUse(player)) {
+                if (!nineLives.canPlayerUse(player)) {
                     relic.setDodgeReady(stack, false);
-                    continue;
-                }
-
-                if (ability.isRankModifierUnlocked("evasion") && relic.isDodgeReady(stack)) {
+                } else if (nineLives.isRankModifierUnlocked("evasion") && relic.isDodgeReady(stack)) {
                     hasDodgeRoll = true;
-                    var value = Math.max(0D, Math.min(1D, ability.getStatData("evasion_chance").getValue()));
+                    var value = Math.max(0D, Math.min(1D, nineLives.getStatData("evasion_chance").getValue()));
 
                     if (dodgeRelic == null || value > dodgeChance) {
                         dodgeChance = value;
@@ -278,8 +277,8 @@ public class KittySlippersItem extends WearableRelicItem {
                     relic.setDodgeReady(stack, false);
                 }
 
-                if (isFallDamage && ability.isRankModifierUnlocked("soft_landing")) {
-                    var value = Math.max(0D, Math.min(1D, ability.getStatData("fall_damage_reduction").getValue()));
+                if (isFallDamage && aura.canPlayerUse(player) && aura.isRankModifierUnlocked("soft_landing")) {
+                    var value = Math.max(0D, Math.min(1D, aura.getStatData("fall_damage_reduction").getValue()));
 
                     if (fallRelic == null || value > fallReduction) {
                         fallReduction = value;
@@ -311,7 +310,7 @@ public class KittySlippersItem extends WearableRelicItem {
                 var reduced = Math.max(0F, originalAmount - newAmount);
 
                 if (reduced > 0F && fallRelic != null && !fallStack.isEmpty())
-                    fallRelic.getRelicData(player, fallStack).getAbilitiesData().getAbilityData("nine_lives")
+                    fallRelic.getRelicData(player, fallStack).getAbilitiesData().getAbilityData("feline_aura")
                             .getStatisticData().getMetricData("fall_damage_reduced").addValue(reduced);
             }
         }
