@@ -1,5 +1,6 @@
 package it.hurts.octostudios.rarcompat.items.charm;
 
+import it.hurts.sskirillss.relics.api.relics.synergies.stats.SynergyStatTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
@@ -87,6 +88,10 @@ public class CloudInBottleItem extends WearableRelicItem {
                                         .build())
                                 .build())
                         .synergy(SynergyTemplate.builder("cloud_burst")
+                                .stat(SynergyStatTemplate.builder("chance")
+                                        .thresholdValue(0.25D, 1D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100, 0))
+                                        .build())
                                 .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.CLOUD_IN_A_BOTTLE.value())
                                         .container(RelicsRelicContainers.CURIOS.get())
                                         .condition(AbilityConditionTemplate.builder("jump").build())
@@ -203,6 +208,11 @@ public class CloudInBottleItem extends WearableRelicItem {
             var synergy = abilities.getSynergyData("cloud_burst");
 
             if (synergy.isUnlocked() && synergy.isEnabled()) {
+                var chance = Math.max(0D, Math.min(1D, synergy.getStatData("chance").getValue()));
+
+                if (chance <= 0D || player.getRandom().nextDouble() > chance)
+                    return true;
+
                 var whoopeeStack = EntityUtils.findEquippedCurio(player, ModItems.WHOOPEE_CUSHION.value());
 
                 if (whoopeeStack.getItem() instanceof WhoopeeCushionItem whoopee)

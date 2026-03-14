@@ -1,4 +1,10 @@
 {
+  "tooltip.rarcompat.modified" : "Modified by [Reliquified Artifacts]",
+
+  "tooltip.rarcompat.mimi_dust": "When used on a chest, it transforms it into a mimic that drops as many random relics as it originally contained before the transformation.",
+
+  "item.rarcompat.mimi_dust": "Mimi-Dust",
+
   "relics.description.umbrella.description": "At first glance, it looks like the most ordinary travel umbrella: worn fabric, creaking ribs, and a handle polished by long wanderings. But the moment the wind catches its canopy, the air itself begins to obey its owner. The umbrella gently slows the fall, allowing one to glide along the currents as if stepping on invisible stairs.",
   "relics.description.umbrella.ability.glider": "Gliding",
   "relics.description.umbrella.ability.glider.description": "While the umbrella is held in hand, it limits the holder's falling speed to %4$s.",
@@ -124,6 +130,8 @@
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.vein": "If there are nearby blocks of the same type, the activation chance is additionally increased by %5$s%% for each such block.",
   "relics.description.lucky_scarf.ability.fortune.experience_source.bonus_fortune": "+1 experience for each additional Fortune level.",
   "relics.description.lucky_scarf.ability.fortune.statistic.bonus_fortune_procs": "Bonus Fortune activations",
+  "relics.description.lucky_scarf.synergy.chest_mastery": "Chest Mastery",
+  "relics.description.lucky_scarf.synergy.chest_mastery.description": "Grants the Luck effect of level %1$s, increasing the quality of loot found in chests.",
 
   "relics.description.charm_of_shrinking.description": "A small amulet with a crystal in which the world is reflected slightly distorted, as if seen through poorly polished glass. Those who wore it long enough noticed something strange: the space around them seemed to change its attitude toward the owner's body. Footsteps grew quieter, falls gentler, and the wearer could alter their own scale, as if the world briefly forgot what size they were supposed to be.",
   "relics.description.charm_of_shrinking.ability.size": "Size Control",
@@ -312,6 +320,8 @@
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.combat_recovery_bonus_damage": "Bonus damage dealt thanks to restored additional jumps",
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.slow_fall_duration": "Time spent in slowed fall",
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.updraft_jumps_done": "Boosted jumps performed",
+  "relics.description.cloud_in_a_bottle.synergy.cloud_burst": "Jet Propulsion",
+  "relics.description.cloud_in_a_bottle.synergy.cloud_burst.description": "Each additional jump has a %1$s%% chance to automatically trigger the Whoopee Cushion.",
 
   "relics.description.helium_flamingo.description": "A bright inflatable flamingo filled with light gas and peculiar inventor's logic. The moment the holder jumps, the bird lifts them into the air, allowing them to move through the sky as if it had become a calm sheet of water.",
   "relics.description.helium_flamingo.ability.flying": "Aerial Swimming",

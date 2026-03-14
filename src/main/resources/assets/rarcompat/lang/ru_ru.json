@@ -1,4 +1,10 @@
 {
+  "tooltip.rarcompat.modified" : "Модифицировано [Reliquified Artifacts]",
+
+  "tooltip.rarcompat.mimi_dust": "При использовании на сундуке создаст из него мимика, дропающего столько случайных реликвий, сколько было в нём до превращения.",
+
+  "item.rarcompat.mimi_dust": "Мими-пыль",
+
   "relics.description.umbrella.description": "С виду - самый обыкновенный дорожный зонт: потёртая ткань, скрипящие спицы и рукоять, отполированная долгими странствиями. Но стоит ветру подхватить его купол - и воздух начинает слушаться владельца. Зонт мягко удерживает падение, позволяя скользить по потокам, словно по невидимым ступеням.",
   "relics.description.umbrella.ability.glider": "Планирование",
   "relics.description.umbrella.ability.glider.description": "Пока зонт находится в руке, ограничивает скорость падения носителя до %4$s.",
@@ -124,6 +130,8 @@
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.vein": "Если рядом есть блоки того же типа, шанс срабатывания дополнительно увеличивается на %5$s%% за каждый такой блок.",
   "relics.description.lucky_scarf.ability.fortune.experience_source.bonus_fortune": "+1 единица опыта за каждый дополнительный уровень удачи.",
   "relics.description.lucky_scarf.ability.fortune.statistic.bonus_fortune_procs": "Срабатываний дополнительной удачи",
+  "relics.description.lucky_scarf.synergy.chest_mastery": "Мастер сундуков",
+  "relics.description.lucky_scarf.synergy.chest_mastery.description": "Наделяет эффектом удачи %1$s уровня, повышающим качество добычи в сундуках.",
 
   "relics.description.charm_of_shrinking.description": "Небольшой амулет с кристаллом, в котором мир отражается слегка искажённым, будто смотрит на себя через неверно отшлифованное стекло. Те, кто носил его достаточно долго, замечали странную вещь: пространство вокруг будто меняет отношение к телу владельца. Шаги становятся тише, падения - мягче, а сам носитель может менять собственный масштаб, словно мир на мгновение забывает, каким он должен быть.",
   "relics.description.charm_of_shrinking.ability.size": "Контроль размера",
@@ -312,6 +320,8 @@
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.combat_recovery_bonus_damage": "Нанесено дополнительного урона благодаря восстанавливаемым дополнительным прыжкам",
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.slow_fall_duration": "Проведено времени в замедленном падении",
   "relics.description.cloud_in_a_bottle.ability.jump.statistic.updraft_jumps_done": "Совершено усиленных прыжков",
+  "relics.description.cloud_in_a_bottle.synergy.cloud_burst": "Реактивная тяга",
+  "relics.description.cloud_in_a_bottle.synergy.cloud_burst.description": "Каждый дополнительный прыжок с шансом в %1$s%% автоматически вызывает срабатывание Подушки-пердушки.",
 
   "relics.description.helium_flamingo.description": "Яркий надувной фламинго, наполненный лёгким газом и странной изобретательской логикой. Стоит носителю подпрыгнуть - и птица подхватывает его в воздухе, позволяя двигаться сквозь небо так, будто оно стало спокойной водной гладью.",
   "relics.description.helium_flamingo.ability.flying": "Воздушное плавание",

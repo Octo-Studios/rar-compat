@@ -18,6 +18,7 @@ import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate
 import it.hurts.sskirillss.relics.api.relics.synergies.SynergyTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditionTemplate;
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.RelicConditionTemplate;
+import it.hurts.sskirillss.relics.api.relics.synergies.stats.SynergyStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsRelicContainers;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
@@ -80,6 +81,10 @@ public class LuckyScarfItem extends WearableRelicItem {
                                         .build())
                                 .build())
                         .synergy(SynergyTemplate.builder("chest_mastery")
+                                .stat(SynergyStatTemplate.builder("amplifier")
+                                        .thresholdValue(0D, 49D)
+                                        .formatValue(value -> (int) MathUtils.round(value + 1, 0))
+                                        .build())
                                 .condition(RelicConditionTemplate.builder(() -> (IRelicItem) ModItems.LUCKY_SCARF.value())
                                         .container(RelicsRelicContainers.CURIOS.get())
                                         .condition(AbilityConditionTemplate.builder("fortune").build())
@@ -112,7 +117,9 @@ public class LuckyScarfItem extends WearableRelicItem {
         if (!synergy.isUnlocked() || !synergy.isEnabled())
             return;
 
-        player.addEffect(new MobEffectInstance(MobEffects.LUCK, 40, 49, false, false));
+        var amplifier = Math.max(0, (int) MathUtils.round(synergy.getStatData("amplifier").getValue(), 0));
+
+        player.addEffect(new MobEffectInstance(MobEffects.LUCK, 40, amplifier, false, false));
     }
 
     @Override
