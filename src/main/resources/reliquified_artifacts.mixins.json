@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "it.hurts.shatterbyte.reliquified_artifacts.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "reliquified_artifacts.refmap.json",
+  "mixins": [
+    "RollLootTableModifierMixin",
+    "AbstractFurnaceBlockEntityMixin",
+    "CampfireBlockEntityMixin",
+    "AbstractVillagerMixin",
+    "EntityMixin",
+    "LivingEntityMixin",
+    "CreeperMixin",
+    "VillagerMixin",
+    "config.ConfigManagerMixin",
+    "config.ModConfigMixin",
+    "init.ModItemsMixin",
+    "accessor.CampfireBlockEntityAccessor"
+  ],
+  "client": [
+    "render.BeltModelMixin",
+    "render.GameRendererMixin",
+    "render.HumanoidModelMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

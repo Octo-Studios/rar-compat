@@ -1,0 +1,249 @@
+package it.hurts.shatterbyte.reliquified_artifacts.items.hat;
+
+import artifacts.registry.ModItems;
+import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
+import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
+import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
+import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
+import it.hurts.sskirillss.relics.utils.EntityUtils;
+import it.hurts.sskirillss.relics.utils.MathUtils;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
+
+public class SuperstitiousHatItem extends WearableRelicItem {
+
+    @Override
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("looting")
+                                .rankModifier(1, "first_kill")
+                                .rankModifier(3, "beast_hunter")
+                                .rankModifier(5, "streak")
+                                .stat(AbilityStatTemplate.builder("chance")
+                                        .initialValue(0.05D, 0.15D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1143D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("first_kill_window")
+                                        .initialValue(60D, 50D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.02285D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("first_kill_bonus")
+                                        .initialValue(0.1D, 0.25D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("animal_bonus")
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0667D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("streak_window")
+                                        .initialValue(3D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("streak_bonus")
+                                        .initialValue(0.025D, 0.05D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0571D)
+                                        .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("streak_max_effects")
+                                        .initialValue(1D, 3D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.019D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("max_casts")
+                                        .initialValue(1D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.2571D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("bonus_looting").build())
+                                        .build())
+                                .statistic(AbilityStatisticTemplate.builder()
+                                        .metric(AbilityMetricTemplate.builder("bonus_looting_procs")
+                                                .formatValue(value -> String.valueOf(Math.max(0, (int) MathUtils.round(value, 0))))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .loot(LootTemplate.builder()
+                        .entry(LootEntries.MINESHAFT, LootEntries.CAVE)
+                        .build())
+                .build();
+    }
+
+    @Override
+    public int getLootingLevel(SlotContext slotContext, @Nullable LootContext lootContext, ItemStack stack) {
+        var baseLooting = super.getLootingLevel(slotContext, lootContext, stack);
+
+        if (!(slotContext.entity() instanceof Player player) || lootContext == null)
+            return baseLooting;
+
+        var relicData = this.getRelicData(player, stack);
+        var ability = relicData.getAbilitiesData().getAbilityData("looting");
+
+        if (!ability.canPlayerUse(player)) {
+            resetRuntimeState(stack);
+            return baseLooting;
+        }
+
+        var target = lootContext.getParamOrNull(LootContextParams.THIS_ENTITY);
+
+        if (!(target instanceof Mob mob))
+            return baseLooting;
+
+        var targetUuid = mob.getStringUUID();
+
+        if (targetUuid.equals(getLastTargetUuid(stack)))
+            return baseLooting + getLastLootingBonus(stack);
+
+        var baseChance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
+        var effectiveChance = baseChance;
+        var maxCasts = Math.max(1, (int) MathUtils.round(ability.getStatData("max_casts").getValue(), 0));
+        var animalBonus = 0;
+
+        var gameTime = player.level().getGameTime();
+        var lastKillTick = getLastKillTick(stack);
+        var ticksSinceLastKill = lastKillTick >= 0L ? gameTime - lastKillTick : Long.MAX_VALUE;
+
+        if (ability.isRankModifierUnlocked("first_kill")) {
+            var firstWindowTicks = secondsToTicks(ability.getStatData("first_kill_window").getValue());
+            var firstKillBonus = Math.max(0D, ability.getStatData("first_kill_bonus").getValue());
+
+            if (firstWindowTicks <= 0L || ticksSinceLastKill > firstWindowTicks)
+                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + firstKillBonus));
+        }
+
+        if (ability.isRankModifierUnlocked("beast_hunter") && mob instanceof Animal)
+            animalBonus = Math.max(0, (int) MathUtils.round(ability.getStatData("animal_bonus").getValue(), 0));
+
+        int lootingBonus;
+
+        if (ability.isRankModifierUnlocked("streak")) {
+            var streakWindowTicks = secondsToTicks(ability.getStatData("streak_window").getValue());
+            var streakBonus = Math.max(0D, ability.getStatData("streak_bonus").getValue());
+            var previousStreak = getKillStreak(stack);
+            var streak = lastKillTick >= 0L && ticksSinceLastKill <= streakWindowTicks ? previousStreak + 1 : 1;
+            var streakCap = Math.max(1, (int) MathUtils.round(ability.getStatData("streak_max_effects").getValue(), 0));
+
+            streak = Math.min(streak, streakCap);
+
+            if (streak > 1)
+                effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + streakBonus * (streak - 1)));
+
+            lootingBonus = MathUtils.multicast(player.getRandom(), effectiveChance, maxCasts);
+            setKillStreak(stack, streak);
+        } else {
+            lootingBonus = MathUtils.multicast(player.getRandom(), effectiveChance, maxCasts);
+            setKillStreak(stack, 0);
+        }
+
+        var totalBonus = lootingBonus + animalBonus;
+
+        setLastKillTick(stack, gameTime);
+        setLastTargetUuid(stack, targetUuid);
+        setLastLootingBonus(stack, totalBonus);
+
+
+        if (totalBonus <= 0)
+            return baseLooting;
+
+        return baseLooting + totalBonus;
+    }
+
+    private long getLastKillTick(ItemStack stack) {
+        return stack.getOrDefault(RADataComponent.SUPERSTITIOUS_HAT_LAST_KILL_TICK.get(), -1L);
+    }
+
+    private void setLastKillTick(ItemStack stack, long tick) {
+        stack.set(RADataComponent.SUPERSTITIOUS_HAT_LAST_KILL_TICK.get(), Math.max(-1L, tick));
+    }
+
+    private int getKillStreak(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(RADataComponent.SUPERSTITIOUS_HAT_STREAK_COUNT.get(), 0));
+    }
+
+    private void setKillStreak(ItemStack stack, int streak) {
+        stack.set(RADataComponent.SUPERSTITIOUS_HAT_STREAK_COUNT.get(), Math.max(0, streak));
+    }
+
+    private String getLastTargetUuid(ItemStack stack) {
+        return stack.getOrDefault(RADataComponent.SUPERSTITIOUS_HAT_LAST_TARGET_UUID.get(), "");
+    }
+
+    private void setLastTargetUuid(ItemStack stack, String uuid) {
+        stack.set(RADataComponent.SUPERSTITIOUS_HAT_LAST_TARGET_UUID.get(), uuid == null ? "" : uuid);
+    }
+
+    private int getLastLootingBonus(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(RADataComponent.SUPERSTITIOUS_HAT_LAST_LOOTING_BONUS.get(), 0));
+    }
+
+    private void setLastLootingBonus(ItemStack stack, int bonus) {
+        stack.set(RADataComponent.SUPERSTITIOUS_HAT_LAST_LOOTING_BONUS.get(), Math.max(0, bonus));
+    }
+
+    private void resetRuntimeState(ItemStack stack) {
+        setLastKillTick(stack, -1L);
+        setKillStreak(stack, 0);
+        setLastTargetUuid(stack, "");
+        setLastLootingBonus(stack, 0);
+    }
+
+    private static long secondsToTicks(double seconds) {
+        return Math.max(0L, Math.round(Math.max(0D, seconds) * 20D));
+    }
+
+    @EventBusSubscriber(modid = ReliquifiedArtifacts.MODID)
+    public static class CommonEvents {
+        @SubscribeEvent
+        public static void onLivingDrops(LivingDropsEvent event) {
+            if (!(event.getSource().getEntity() instanceof Player player) || player.level().isClientSide())
+                return;
+
+            var targetUuid = event.getEntity().getStringUUID();
+
+            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.SUPERSTITIOUS_HAT.value())) {
+                if (!(stack.getItem() instanceof SuperstitiousHatItem relic))
+                    continue;
+
+                var bonus = relic.getLastLootingBonus(stack);
+
+                if (bonus <= 0 || !targetUuid.equals(relic.getLastTargetUuid(stack)))
+                    continue;
+
+                var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("looting");
+
+                if (!ability.canPlayerUse(player))
+                    continue;
+
+                relic.getRelicData(player, stack).getLevelingData().addExperience("looting", "bonus_looting", bonus);
+                ability.getStatisticData().getMetricData("bonus_looting_procs").addValue(bonus);
+                relic.setLastLootingBonus(stack, 0);
+            }
+        }
+    }
+}
