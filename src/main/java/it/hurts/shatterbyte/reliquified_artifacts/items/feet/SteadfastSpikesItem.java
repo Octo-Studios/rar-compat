@@ -86,8 +86,6 @@ public class SteadfastSpikesItem extends WearableRelicItem {
         NetworkHandler.sendToServer(new SteadfastSpikesPacket());
 
         player.setDeltaMovement(player.getDeltaMovement().x, -0.05D, player.getDeltaMovement().z);
-        player.level().addParticle(ParticleUtils.constructSimpleSpark(new Color(50, 20 + player.getRandom().nextInt(50), 0), 0.5F, 50, 0.9F),
-                player.getX(), player.getY(), player.getZ(), 0D, 0D, 0D);
     }
 
     public static boolean isStandingStill(Player player) {
