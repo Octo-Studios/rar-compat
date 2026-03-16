@@ -19,7 +19,9 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -41,6 +43,8 @@ import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.awt.*;
+
 public class UmbrellaItem extends WearableRelicItem {
     private static final int BOUNCE_ITEM_COOLDOWN_TICKS = 10;
 
@@ -58,7 +62,7 @@ public class UmbrellaItem extends WearableRelicItem {
                                         .build())
                                 .stat(AbilityStatTemplate.builder("strength")
                                         .initialValue(0.5D, 0.75D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0071D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0095D)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("vanishing_duration")
@@ -279,6 +283,7 @@ public class UmbrellaItem extends WearableRelicItem {
         player.setDeltaMovement(motion);
         player.hasImpulse = true;
         player.fallDistance = 0F;
+        spawnBounceParticles(player, direction, force);
 
         setBounceCount(stack, getBounceCount(stack) + 1);
         setBounceLandingRequired(stack, true);
@@ -288,6 +293,33 @@ public class UmbrellaItem extends WearableRelicItem {
         this.getRelicData(player, stack).getLevelingData().addExperience("glider", "bounce", 1D);
 
         return true;
+    }
+
+    private static void spawnBounceParticles(Player player, Vec3 direction, double force) {
+        if (!(player.level() instanceof ServerLevel level))
+            return;
+
+        var random = player.getRandom();
+        var normal = direction.normalize();
+
+        var side = new Vec3(-normal.z, 0D, normal.x).normalize();
+        var up = normal.cross(side).normalize();
+
+        var origin = player.position().add(0D, player.getBbHeight() * 0.55D, 0D);
+        var center = origin.add(normal.scale(0.65D));
+
+        var radius = 1D + Math.min(0.6D, force * 0.4D);
+        var count = 100;
+
+        for (var i = 0; i < count; i++) {
+            var angle = (Math.PI * 2D) * (i / (double) count);
+
+            var radial = side.scale(Math.cos(angle)).add(up.scale(Math.sin(angle)));
+
+            var pos = center.add(radial.scale(radius + (random.nextDouble() - 0.5D) * 0.06D));
+
+            level.sendParticles(ParticleUtils.constructSimpleSpark(new Color(255, 255, 255), 1.25F + random.nextFloat() * 0.55F, 18 + random.nextInt(6), 0.95F), pos.x, pos.y, pos.z, 1, 0, 0, 0, 0D);
+        }
     }
 
     private static Vec3 calculateBounceDirection(Vec3 look, float yaw) {
