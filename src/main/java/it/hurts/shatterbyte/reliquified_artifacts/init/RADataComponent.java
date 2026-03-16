@@ -70,6 +70,7 @@ public class RADataComponent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> BUNNY_HOPPERS_JUMP_START_Y = construct("bunny_hoppers/jump_start_y", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> BUNNY_HOPPERS_JUMP_PEAK_Y = construct("bunny_hoppers/jump_peak_y", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_JUMP_LOCKED = construct("bunny_hoppers/jump_locked", Codec.BOOL);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BUNNY_HOPPERS_FALLING_STARTED = construct("bunny_hoppers/falling_started", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> KITTY_SLIPPERS_DODGE_READY = construct("kitty_slippers/dodge_ready", Codec.BOOL);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> RUNNING_SHOES_CHARGE = construct("running_shoes/charge", Codec.DOUBLE);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> SNOWSHOES_SPEED_CHARGE = construct("snowshoes/speed_charge", Codec.DOUBLE);

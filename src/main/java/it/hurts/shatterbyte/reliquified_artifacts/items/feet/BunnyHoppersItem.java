@@ -30,6 +30,7 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -144,7 +145,15 @@ public class BunnyHoppersItem extends WearableRelicItem {
                 setJumpStartY(stack, 0D);
                 setJumpPeakY(stack, 0D);
                 setJumpLocked(stack, false);
+                setFallingStarted(stack, false);
+                return;
             }
+
+            if (!getFallingStarted(stack) && player.getKnownMovement().y < -0.01D)
+                setFallingStarted(stack, true);
+
+            if (!getFallingStarted(stack) && getToggled(stack) && getTime(stack) > 0 && !player.onGround() && !player.isFallFlying() && !player.getAbilities().flying)
+                spawnJumpParticles(player);
 
             return;
         }
@@ -172,21 +181,43 @@ public class BunnyHoppersItem extends WearableRelicItem {
         NetworkHandler.sendToServer(new PowerJumpPacket());
 
         player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.6D, player.getDeltaMovement().z));
+    }
+
+    private static void spawnJumpParticles(Player player) {
+        if (!(player.level() instanceof ServerLevel level))
+            return;
 
         var random = player.getRandom();
-        var level = player.getCommandSenderWorld();
 
-        for (int i = 0; i < 10; i++) {
-            double offsetX = (random.nextDouble() - 0.5D) * 0.5D;
-            double offsetY = (random.nextDouble() - 0.5D) * 0.5D;
-            double offsetZ = (random.nextDouble() - 0.5D) * 0.5D;
+        var centerX = player.getX();
+        var centerY = player.getBoundingBox().minY + 0.04D;
+        var centerZ = player.getZ();
 
-            level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 200 + random.nextInt(56), 200 + random.nextInt(56)),
-                            0.5F, 40, 0.9F),
-                    player.getX() + offsetX,
-                    player.getY() + 0.1D + offsetY,
-                    player.getZ() + offsetZ,
-                    0D, 0D, 0D);
+        var particle = ParticleUtils.constructSimpleSpark(
+                new Color(235 + random.nextInt(12), 242 + random.nextInt(10), 255),
+                0.48F + random.nextFloat() * 0.16F,
+                16 + random.nextInt(6),
+                0.92F);
+
+        for (var i = 0; i < 16; i++) {
+            var angle = random.nextDouble() * Math.PI * 2D;
+            var radius = Math.pow(random.nextDouble(), 0.6D) * 0.42D;
+
+            var x = centerX + Math.cos(angle) * radius;
+            var z = centerZ + Math.sin(angle) * radius;
+            var y = centerY + random.nextDouble() * 0.10D;
+
+            level.sendParticles(
+                    particle,
+                    x,
+                    y,
+                    z,
+                    1,
+                    0.03D,
+                    0.02D,
+                    0.03D,
+                    0D
+            );
         }
     }
 
@@ -223,6 +254,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
         setTime(stack, next);
         setJumpPeakY(stack, Math.max(getJumpPeakY(stack), player.getY()));
+        setFallingStarted(stack, false);
 
         if (next >= maxDurationTicks)
             setUsedMaxDuration(stack, true);
@@ -239,6 +271,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
         setJumpStartY(stack, 0D);
         setJumpPeakY(stack, 0D);
         setJumpLocked(stack, false);
+        setFallingStarted(stack, false);
     }
 
     public void armHighJump(Player player, ItemStack stack) {
@@ -253,6 +286,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
         setJumpStartY(stack, player.getY());
         setJumpPeakY(stack, player.getY());
         setJumpLocked(stack, false);
+        setFallingStarted(stack, false);
     }
 
     public void armHighJumpFromCloudSynergy(Player player, ItemStack stack) {
@@ -306,6 +340,14 @@ public class BunnyHoppersItem extends WearableRelicItem {
 
     public boolean getJumpLocked(ItemStack stack) {
         return stack.getOrDefault(RADataComponent.BUNNY_HOPPERS_JUMP_LOCKED.get(), false);
+    }
+
+    public void setFallingStarted(ItemStack stack, boolean value) {
+        stack.set(RADataComponent.BUNNY_HOPPERS_FALLING_STARTED.get(), value);
+    }
+
+    public boolean getFallingStarted(ItemStack stack) {
+        return stack.getOrDefault(RADataComponent.BUNNY_HOPPERS_FALLING_STARTED.get(), false);
     }
 
     private void setUsedMaxDuration(ItemStack stack, boolean value) {
@@ -448,6 +490,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
             relic.setToggled(stack, false);
             relic.setJumpStartY(stack, 0D);
             relic.setJumpPeakY(stack, 0D);
+            relic.setFallingStarted(stack, false);
         }
 
         @SubscribeEvent

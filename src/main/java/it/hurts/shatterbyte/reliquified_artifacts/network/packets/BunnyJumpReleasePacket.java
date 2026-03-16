@@ -40,6 +40,7 @@ public class BunnyJumpReleasePacket implements CustomPacketPayload {
 
                 relic.setJumpLocked(stack, true);
                 relic.setToggled(stack, false);
+                relic.setFallingStarted(stack, false);
             }
         });
     }
