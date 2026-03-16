@@ -169,7 +169,6 @@ public class CloudInBottleItem extends WearableRelicItem {
 
         var relicData = this.getRelicData(player, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("jump");
-        var previousY = player.getDeltaMovement().y;
 
         addCount(stack, 1);
 
@@ -185,10 +184,11 @@ public class CloudInBottleItem extends WearableRelicItem {
         if (ability.isRankModifierUnlocked("updraft") && player.getLookAngle().y > 0.70D) {
             var bonus = Math.max(0D, ability.getStatData("updraft_bonus").getValue());
             var currentMotion = player.getDeltaMovement();
-            var jumpImpulse = currentMotion.y - previousY;
 
-            if (bonus > 0D && jumpImpulse > 0D) {
-                player.setDeltaMovement(currentMotion.x, previousY + jumpImpulse * (1D + bonus), currentMotion.z);
+            if (bonus > 0D) {
+                var boostedY = currentMotion.y + 0.42D * bonus;
+
+                player.setDeltaMovement(currentMotion.x, boostedY, currentMotion.z);
 
                 if (!player.level().isClientSide())
                     ability.getStatisticData().getMetricData("updraft_jumps_done").addValue(1D);
