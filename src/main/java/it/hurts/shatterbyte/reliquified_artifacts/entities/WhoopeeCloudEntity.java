@@ -1,11 +1,13 @@
 package it.hurts.shatterbyte.reliquified_artifacts.entities;
 
+import it.hurts.sskirillss.relics.utils.FlawlessUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -23,9 +25,18 @@ public class WhoopeeCloudEntity extends Entity {
     private static final EntityDataAccessor<Float> RADIUS = SynchedEntityData.defineId(WhoopeeCloudEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> INITIAL_RADIUS = SynchedEntityData.defineId(WhoopeeCloudEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DURATION = SynchedEntityData.defineId(WhoopeeCloudEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> FLAWLESS = SynchedEntityData.defineId(WhoopeeCloudEntity.class, EntityDataSerializers.BOOLEAN);
 
     @Nullable
     private UUID ownerUuid;
+
+    public void setFlawless(boolean flawless) {
+        this.getEntityData().set(FLAWLESS, flawless);
+    }
+
+    public boolean isFlawless() {
+        return this.getEntityData().get(FLAWLESS);
+    }
 
     public WhoopeeCloudEntity(EntityType<? extends WhoopeeCloudEntity> entityType, Level level) {
         super(entityType, level);
@@ -89,7 +100,7 @@ public class WhoopeeCloudEntity extends Entity {
 
             this.level().addParticle(
                     ParticleUtils.constructSimpleSpark(
-                            new Color(120 + this.random.nextInt(50), 255, 80 + this.random.nextInt(40)),
+                            FlawlessUtils.getColor(isFlawless(), new Color(120 + this.random.nextInt(50), 255, 80 + this.random.nextInt(40))),
                             0.34F + this.random.nextFloat() * 0.14F,
                             14 + this.random.nextInt(6),
                             0.9F),
@@ -164,6 +175,7 @@ public class WhoopeeCloudEntity extends Entity {
         builder.define(RADIUS, 0.5F);
         builder.define(INITIAL_RADIUS, 0.5F);
         builder.define(DURATION, 120);
+        builder.define(FLAWLESS, false);
     }
 
     @Override
@@ -171,6 +183,7 @@ public class WhoopeeCloudEntity extends Entity {
         setRadius(tag.getFloat("radius"));
         setInitialRadius(tag.getFloat("initial_radius"));
         setDuration(tag.getInt("duration"));
+        setFlawless(tag.getBoolean("flawless"));
 
         if (tag.hasUUID("owner"))
             this.ownerUuid = tag.getUUID("owner");
@@ -183,6 +196,7 @@ public class WhoopeeCloudEntity extends Entity {
         tag.putFloat("radius", getRadius());
         tag.putFloat("initial_radius", getInitialRadius());
         tag.putInt("duration", getDuration());
+        tag.putBoolean("flawless", isFlawless());
 
         if (this.ownerUuid != null)
             tag.putUUID("owner", this.ownerUuid);
@@ -199,7 +213,7 @@ public class WhoopeeCloudEntity extends Entity {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 }

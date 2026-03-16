@@ -3,6 +3,7 @@ package it.hurts.shatterbyte.reliquified_artifacts.entities;
 import it.hurts.octostudios.octolib.module.particle.trail.EntityTrailProvider;
 import it.hurts.shatterbyte.reliquified_artifacts.items.hands.FireGauntletItem;
 import it.hurts.sskirillss.relics.entities.misc.ITargetableEntity;
+import it.hurts.sskirillss.relics.utils.FlawlessUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import lombok.Getter;
@@ -30,12 +31,21 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
     private static final EntityDataAccessor<Float> DAMAGE = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> FIRE_DURATION = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ItemStack> RELIC_STACK = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<Boolean> FLAWLESS = SynchedEntityData.defineId(SparkEntity.class, EntityDataSerializers.BOOLEAN);
 
     @Getter
     @Setter
     private LivingEntity target;
 
     private boolean hitProcessed;
+
+    public void setFlawless(boolean flawless) {
+        this.getEntityData().set(FLAWLESS, flawless);
+    }
+
+    public boolean isFlawless() {
+        return this.getEntityData().get(FLAWLESS);
+    }
 
     public SparkEntity(EntityType<? extends ThrowableProjectile> type, Level worldIn) {
         super(type, worldIn);
@@ -56,7 +66,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         var level = getCommandSenderWorld();
         var particleCenter = this.getPosition(1).add(0, 0.5, 0);
 
-        level.addParticle(ParticleUtils.constructSimpleSpark(new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0), 0.01F + random.nextFloat() * 0.1F, 5 + random.nextInt(3), 0.9F),
+        level.addParticle(ParticleUtils.constructSimpleSpark(FlawlessUtils.getColor(isFlawless(), new Color(200 + random.nextInt(56), 100 + random.nextInt(156), 0)), 0.01F + random.nextFloat() * 0.1F, 5 + random.nextInt(3), 0.9F),
                 particleCenter.x() + MathUtils.randomFloat(random) * 0.05F, particleCenter.y() + MathUtils.randomFloat(random) * 0.05F, particleCenter.z() + MathUtils.randomFloat(random) * 0.05F, 0F, 0F, 0F);
 
         if (level.isClientSide())
@@ -166,6 +176,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         tag.put("relic_stack", getRelicStack().save(this.registryAccess()));
         tag.putFloat("damage", getDamage());
         tag.putFloat("fire_duration", getFireDuration());
+        tag.putBoolean("flawless", isFlawless());
     }
 
     @Override
@@ -175,6 +186,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         setRelicStack(ItemStack.parseOptional(this.registryAccess(), tag.getCompound("relic_stack")));
         setDamage(tag.getFloat("damage"));
         setFireDuration(tag.getFloat("fire_duration"));
+        setFlawless(tag.getBoolean("flawless"));
     }
 
     @Override
@@ -217,12 +229,12 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
 
         @Override
         public int getTrailFadeInColor() {
-            return 0xFFB22222;
+            return FlawlessUtils.getColor(entity.isFlawless(), 0xFFB22222);
         }
 
         @Override
         public int getTrailFadeOutColor() {
-            return 0x80FF8C00;
+            return FlawlessUtils.getColor(entity.isFlawless(), 0x80FF8C00);
         }
 
         @Override

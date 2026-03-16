@@ -1,7 +1,5 @@
 package it.hurts.shatterbyte.reliquified_artifacts.items.feet;
 
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
@@ -9,11 +7,7 @@ import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
 import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.BunnyJumpReleasePacket;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.PowerJumpPacket;
-import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
-import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
-import it.hurts.sskirillss.relics.api.relics.IRelicItem;
-import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
-import it.hurts.sskirillss.relics.api.relics.VisibilityState;
+import it.hurts.sskirillss.relics.api.relics.*;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -24,8 +18,11 @@ import it.hurts.sskirillss.relics.api.relics.synergies.conditions.AbilityConditi
 import it.hurts.sskirillss.relics.api.relics.synergies.conditions.RelicConditionTemplate;
 import it.hurts.sskirillss.relics.init.RelicsRelicContainers;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
+import it.hurts.sskirillss.relics.utils.FlawlessUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.Minecraft;
@@ -153,7 +150,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
                 setFallingStarted(stack, true);
 
             if (!getFallingStarted(stack) && getToggled(stack) && getTime(stack) > 0 && !player.onGround() && !player.isFallFlying() && !player.getAbilities().flying)
-                spawnJumpParticles(player);
+                spawnJumpParticles(player, stack);
 
             return;
         }
@@ -183,7 +180,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
         player.setDeltaMovement(new Vec3(player.getDeltaMovement().x, 0.6D, player.getDeltaMovement().z));
     }
 
-    private static void spawnJumpParticles(Player player) {
+    private static void spawnJumpParticles(Player player, ItemStack stack) {
         if (!(player.level() instanceof ServerLevel level))
             return;
 
@@ -194,7 +191,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
         var centerZ = player.getZ();
 
         var particle = ParticleUtils.constructSimpleSpark(
-                new Color(235 + random.nextInt(12), 242 + random.nextInt(10), 255),
+                FlawlessUtils.getColor(player, stack, new Color(235 + random.nextInt(12), 242 + random.nextInt(10), 255)),
                 0.48F + random.nextFloat() * 0.16F,
                 16 + random.nextInt(6),
                 0.92F);

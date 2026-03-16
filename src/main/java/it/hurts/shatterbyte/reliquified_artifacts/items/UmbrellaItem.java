@@ -18,6 +18,7 @@ import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
+import it.hurts.sskirillss.relics.utils.FlawlessUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.model.HumanoidModel;
@@ -283,7 +284,7 @@ public class UmbrellaItem extends WearableRelicItem {
         player.setDeltaMovement(motion);
         player.hasImpulse = true;
         player.fallDistance = 0F;
-        spawnBounceParticles(player, direction, force);
+        spawnBounceParticles(player, stack, direction, force);
 
         setBounceCount(stack, getBounceCount(stack) + 1);
         setBounceLandingRequired(stack, true);
@@ -295,14 +296,15 @@ public class UmbrellaItem extends WearableRelicItem {
         return true;
     }
 
-    private static void spawnBounceParticles(Player player, Vec3 direction, double force) {
+    private static void spawnBounceParticles(Player player, ItemStack stack, Vec3 direction, double force) {
         if (!(player.level() instanceof ServerLevel level))
             return;
 
         var random = player.getRandom();
         var normal = direction.normalize();
 
-        var side = new Vec3(-normal.z, 0D, normal.x).normalize();
+        var referenceAxis = Math.abs(normal.y) > 0.98D ? new Vec3(1D, 0D, 0D) : new Vec3(0D, 1D, 0D);
+        var side = normal.cross(referenceAxis).normalize();
         var up = normal.cross(side).normalize();
 
         var origin = player.position().add(0D, player.getBbHeight() * 0.55D, 0D);
@@ -318,7 +320,7 @@ public class UmbrellaItem extends WearableRelicItem {
 
             var pos = center.add(radial.scale(radius + (random.nextDouble() - 0.5D) * 0.06D));
 
-            level.sendParticles(ParticleUtils.constructSimpleSpark(new Color(255, 255, 255), 1.25F + random.nextFloat() * 0.55F, 18 + random.nextInt(6), 0.95F), pos.x, pos.y, pos.z, 1, 0, 0, 0, 0D);
+            level.sendParticles(ParticleUtils.constructSimpleSpark(FlawlessUtils.getColor(player, stack, new Color(255, 255, 255)), 1.25F + random.nextFloat() * 0.55F, 18 + random.nextInt(6), 0.95F), pos.x, pos.y, pos.z, 1, 0, 0, 0, 0D);
         }
     }
 

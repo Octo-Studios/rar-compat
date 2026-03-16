@@ -301,7 +301,7 @@ public class CloudInBottleItem extends WearableRelicItem {
             if (!relic.performAirJump(player, stack))
                 return;
 
-            NetworkHandler.sendToServer(new DoubleJumpPacket());
+            NetworkHandler.sendToServer(new DoubleJumpPacket(relic.getRelicData(player, stack).getAbilitiesData().getSynergyData("cloud_burst").isUnlocked()));
         }
     }
 

@@ -1,5 +1,6 @@
 package it.hurts.shatterbyte.reliquified_artifacts.items.hands;
 
+import it.hurts.sskirillss.relics.api.relics.*;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
@@ -7,10 +8,6 @@ import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.entities.SparkEntity;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RAEntities;
 import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
-import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
-import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
-import it.hurts.sskirillss.relics.api.relics.VisibilityState;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -362,6 +359,7 @@ public class FireGauntletItem extends WearableRelicItem {
                 spark.setFireDuration((float) sparkFireDuration);
                 spark.setRelicStack(sparkStack.copy());
                 spark.setPos(startPos.x(), startPos.y(), startPos.z());
+                spark.setFlawless(((IRelicItem) sparkStack.getItem()).getRelicData(owner, sparkStack).isFlawless());
 
                 var direction = target.position().add(0D, target.getBbHeight() / 2F, 0D).subtract(startPos);
 

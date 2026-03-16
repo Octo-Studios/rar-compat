@@ -1,19 +1,15 @@
 package it.hurts.shatterbyte.reliquified_artifacts.items.hat;
 
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
-import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import artifacts.registry.ModSoundEvents;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
-import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
 import it.hurts.shatterbyte.reliquified_artifacts.entities.WhoopeeCloudEntity;
+import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RAEntities;
+import it.hurts.shatterbyte.reliquified_artifacts.items.charm.CloudInBottleItem;
 import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
-import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
-import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
-import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
-import it.hurts.sskirillss.relics.api.relics.VisibilityState;
+import it.hurts.sskirillss.relics.api.relics.*;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -21,6 +17,8 @@ import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate
 import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
 import it.hurts.sskirillss.relics.init.RelicsMobEffects;
 import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import net.minecraft.sounds.SoundSource;
@@ -197,7 +195,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
             }
 
             if (spawnCloud) {
-                spawnToxicCloud(player, Math.max(1.5F, (float) Math.min(6D, distance * 0.75D)));
+                spawnToxicCloud(player, stack, Math.max(1.5F, (float) Math.min(6D, distance * 0.75D)));
                 cloudsCreated = 1;
             }
         }
@@ -241,12 +239,13 @@ public class WhoopeeCushionItem extends WearableRelicItem {
             relicData.getLevelingData().addExperience("push", "paralyzed_target", paralyzedTargets);
     }
 
-    private static void spawnToxicCloud(Player player, float radius) {
+    private static void spawnToxicCloud(Player player, ItemStack stack, float radius) {
         var level = player.level();
         var cloud = new WhoopeeCloudEntity(RAEntities.WHOOPEE_CLOUD.get(), level);
 
         cloud.setPos(player.getX(), player.getY(), player.getZ());
         cloud.configure(player, Math.max(0.5F, radius), 120);
+        cloud.setFlawless(((IRelicItem) stack.getItem()).getRelicData(player, stack).isFlawless());
 
         level.addFreshEntity(cloud);
     }
