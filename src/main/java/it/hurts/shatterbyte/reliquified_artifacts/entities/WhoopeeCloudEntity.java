@@ -1,11 +1,10 @@
 package it.hurts.shatterbyte.reliquified_artifacts.entities;
 
+import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.core.particles.ColorParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -17,6 +16,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.UUID;
 
 public class WhoopeeCloudEntity extends Entity {
@@ -71,19 +71,35 @@ public class WhoopeeCloudEntity extends Entity {
     }
 
     private void spawnParticles(float radius) {
-        var count = Math.max(4, (int) Math.ceil(radius * 8F));
+        var centerX = this.getX();
+        var centerY = this.getY() + 0.35D;
+        var centerZ = this.getZ();
 
-        for (var index = 0; index < count; index++) {
+        var count = Math.ceil(radius * 10F);
+
+        for (var i = 0; i < count; i++) {
             var theta = this.random.nextDouble() * Math.PI * 2D;
             var phi = Math.acos(2D * this.random.nextDouble() - 1D);
-            var distance = this.random.nextDouble() * radius;
 
-            var x = Math.sin(phi) * Math.cos(theta) * distance;
-            var y = Math.cos(phi) * distance;
-            var z = Math.sin(phi) * Math.sin(theta) * distance;
+            var r = Math.cbrt(this.random.nextDouble()) * radius;
 
-            this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, 0.2F, 0.85F, 0.2F),
-                    this.getX() + x, this.getY() + 0.35D + y, this.getZ() + z, 0D, 0D, 0D);
+            var x = Math.sin(phi) * Math.cos(theta) * r;
+            var y = Math.cos(phi) * r;
+            var z = Math.sin(phi) * Math.sin(theta) * r;
+
+            this.level().addParticle(
+                    ParticleUtils.constructSimpleSpark(
+                            new Color(120 + this.random.nextInt(50), 255, 80 + this.random.nextInt(40)),
+                            0.34F + this.random.nextFloat() * 0.14F,
+                            14 + this.random.nextInt(6),
+                            0.9F),
+                    centerX + x,
+                    centerY + y,
+                    centerZ + z,
+                    0D,
+                    0.003D,
+                    0D
+            );
         }
     }
 
