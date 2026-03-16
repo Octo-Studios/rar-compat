@@ -23,6 +23,8 @@ import it.hurts.sskirillss.relics.utils.MathUtils;
 import it.hurts.sskirillss.relics.utils.ParticleUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -292,6 +294,8 @@ public class UmbrellaItem extends WearableRelicItem {
         applyVanishingOnBounce(player, stack);
         ability.getStatisticData().getMetricData("bounces_done").addValue(1D);
         this.getRelicData(player, stack).getLevelingData().addExperience("glider", "bounce", 1D);
+
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.MASTER, 1F, 2F);
 
         return true;
     }
