@@ -433,7 +433,7 @@ public class BunnyHoppersItem extends WearableRelicItem {
                 if (nearby.distanceToSqr(player) > maxDistanceSq)
                     continue;
 
-                KnockbackHelper.apply(nearby, 0.325D, new Vec3(player.getX() - nearby.getX(), player.getY() - nearby.getY(), player.getZ() - nearby.getZ()));
+                KnockbackHelper.apply(nearby, 1D, new Vec3(player.getX() - nearby.getX(), player.getY() - nearby.getY(), player.getZ() - nearby.getZ()));
 
                 if (nearby instanceof Mob mob) {
                     mob.setTarget(null);
