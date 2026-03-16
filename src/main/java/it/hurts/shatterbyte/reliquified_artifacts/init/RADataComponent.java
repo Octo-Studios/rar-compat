@@ -79,6 +79,7 @@ public class RADataComponent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> SNOWSHOES_LINGER_TICKS = construct("snowshoes/linger_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_COOLDOWN_TICKS = construct("rooted_boots/cooldown_ticks", Codec.INT);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ROOTED_BOOTS_BONEMEAL_TICKS = construct("rooted_boots/bonemeal_ticks", Codec.INT);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> WHOOPEE_CUSHION_COOLDOWN_TICKS = construct("whoopee_cushion/cooldown_ticks", Codec.INT);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> EVERLASTING_FOOD_REGEN_TICKS = construct("everlasting_food/regen_ticks", Codec.INT);
 

@@ -28,6 +28,8 @@ import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
+import artifacts.registry.ModSoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -208,15 +210,21 @@ public class CloudInBottleItem extends WearableRelicItem {
             var synergy = abilities.getSynergyData("cloud_burst");
 
             if (synergy.isUnlocked() && synergy.isEnabled()) {
-                var chance = Math.max(0D, Math.min(1D, synergy.getStatData("chance").getValue()));
-
-                if (chance <= 0D || player.getRandom().nextDouble() > chance)
-                    return true;
-
                 var whoopeeStack = EntityUtils.findEquippedCurio(player, ModItems.WHOOPEE_CUSHION.value());
 
-                if (whoopeeStack.getItem() instanceof WhoopeeCushionItem whoopee)
-                    whoopee.activateFromCloudSynergy(player, whoopeeStack);
+                if (whoopeeStack.getItem() instanceof WhoopeeCushionItem whoopee) {
+                    var chance = Math.max(0D, Math.min(1D, synergy.getStatData("chance").getValue()));
+                    var triggerWhoopee = chance > 0D && player.getRandom().nextDouble() <= chance;
+                    var activated = false;
+
+                    if (triggerWhoopee)
+                        activated = whoopee.activateFromCloudSynergy(player, whoopeeStack);
+
+                    if (!activated) {
+                        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), ModSoundEvents.FART, SoundSource.PLAYERS, 1F,
+                                0.9F + player.getRandom().nextFloat() * 0.2F);
+                    }
+                }
             }
         }
 

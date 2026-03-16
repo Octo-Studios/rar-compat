@@ -420,7 +420,7 @@
 
   "relics.description.whoopee_cushion.description": "A prank cushion with a small gas mechanism hidden inside. The moment the owner awkwardly sits down, the device releases a powerful burst of air accompanied by a loud sound. What looks like a silly joke is, in fact, capable of much more...",
   "relics.description.whoopee_cushion.ability.push": "Gas Burst",
-  "relics.description.whoopee_cushion.ability.push.description": "When sneaking once, has a %1$s%% chance to play its signature sound and push all targets around the relic holder up to %2$s blocks away.",
+  "relics.description.whoopee_cushion.ability.push.description": "When sneaking once, has a %1$s%% chance to play its signature sound and push all targets around the relic holder up to %2$s blocks away, after which it goes on cooldown for %7$s seconds.",
   "relics.description.whoopee_cushion.ability.push.rank_modifier.paralysis": "When the ability activates, all targets within %4$s blocks are paralyzed for %5$s seconds.",
   "relics.description.whoopee_cushion.ability.push.rank_modifier.retaliation": "The ability can also activate when taking damage, with a %3$s%% chance.",
   "relics.description.whoopee_cushion.ability.push.rank_modifier.toxic_cloud": "When the ability activates, there is a %6$s%% chance that a gas cloud remains behind, poisoning targets, inflicting nausea, and causing creatures inside it to lose sight of the relic holder.",

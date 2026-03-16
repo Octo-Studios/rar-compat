@@ -74,6 +74,11 @@ public class WhoopeeCushionItem extends WearableRelicItem {
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
+                                .stat(AbilityStatTemplate.builder("cooldown")
+                                        .initialValue(7.5D, 10D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.02487D)
+                                        .formatValue(value -> MathUtils.round(value, 1))
+                                        .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("activation").build())
                                         .source(ExperienceSourceTemplate.builder("cloud_created")
@@ -108,6 +113,9 @@ public class WhoopeeCushionItem extends WearableRelicItem {
         if (!(slotContext.entity() instanceof Player player) || player.level().isClientSide())
             return;
 
+        if (getCooldownTicks(stack) > 0)
+            addCooldownTicks(stack, -1);
+
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("push");
 
         if (!ability.canPlayerUse(player)) {
@@ -118,7 +126,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
         var crouching = player.isCrouching();
         var wasCrouching = stack.getOrDefault(RADataComponent.TOGGLED, false);
 
-        if (crouching && !wasCrouching) {
+        if (crouching && !wasCrouching && getCooldownTicks(stack) <= 0) {
             var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
 
             if (chance > 0D && player.getRandom().nextDouble() <= chance)
@@ -138,29 +146,29 @@ public class WhoopeeCushionItem extends WearableRelicItem {
         stack.set(RADataComponent.TOGGLED, false);
     }
 
-    public void activateFromCloudSynergy(Player player, ItemStack stack) {
+    public boolean activateFromCloudSynergy(Player player, ItemStack stack) {
         if (player.level().isClientSide())
-            return;
+            return false;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("push");
 
         if (!ability.canPlayerUse(player))
-            return;
+            return false;
 
-        activateAbility(player, stack);
+        return activateAbility(player, stack);
     }
 
-    private void activateAbility(Player player, ItemStack stack) {
+    private boolean activateAbility(Player player, ItemStack stack) {
         var relicData = this.getRelicData(player, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("push");
 
-        if (!ability.canPlayerUse(player))
-            return;
+        if (!ability.canPlayerUse(player) || getCooldownTicks(stack) > 0)
+            return false;
 
         var distance = Math.max(0D, ability.getStatData("distance").getValue());
 
         if (distance <= 0D)
-            return;
+            return false;
 
         var level = player.level();
         var affectedTargets = new HashSet<java.util.UUID>();
@@ -237,6 +245,13 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
         if (paralyzedTargets > 0)
             relicData.getLevelingData().addExperience("push", "paralyzed_target", paralyzedTargets);
+
+        var cooldownTicks = Math.max(0, (int) Math.round(Math.max(0D, ability.getStatData("cooldown").getValue()) * 20D));
+
+        if (cooldownTicks > 0)
+            setCooldownTicks(stack, cooldownTicks);
+
+        return true;
     }
 
     private static void spawnToxicCloud(Player player, ItemStack stack, float radius) {
@@ -252,6 +267,18 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
     private static int secondsToTicks(double seconds) {
         return Math.max(0, (int) Math.round(Math.max(0D, seconds) * 20D));
+    }
+
+    private int getCooldownTicks(ItemStack stack) {
+        return Math.max(0, stack.getOrDefault(RADataComponent.WHOOPEE_CUSHION_COOLDOWN_TICKS.get(), 0));
+    }
+
+    private void setCooldownTicks(ItemStack stack, int ticks) {
+        stack.set(RADataComponent.WHOOPEE_CUSHION_COOLDOWN_TICKS.get(), Math.max(0, ticks));
+    }
+
+    private void addCooldownTicks(ItemStack stack, int ticks) {
+        setCooldownTicks(stack, getCooldownTicks(stack) + ticks);
     }
 
     @EventBusSubscriber(modid = ReliquifiedArtifacts.MODID)
@@ -271,7 +298,7 @@ public class WhoopeeCushionItem extends WearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("push");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("retaliation"))
+                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("retaliation") || relic.getCooldownTicks(stack) > 0)
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("retaliation_chance").getValue()));
