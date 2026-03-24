@@ -6,7 +6,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.shatterbyte.reliquified_artifacts.items.feet.BunnyHoppersItem;
 import it.hurts.shatterbyte.reliquified_artifacts.items.hat.WhoopeeCushionItem;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.DoubleJumpPacket;
@@ -40,7 +40,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
-public class CloudInBottleItem extends WearableRelicItem {
+public class CloudInBottleItem extends RAWearableRelicItem {
 
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {

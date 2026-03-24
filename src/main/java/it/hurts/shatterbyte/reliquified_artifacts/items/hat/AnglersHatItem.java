@@ -4,7 +4,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -42,7 +42,7 @@ import net.neoforged.neoforge.event.entity.player.ItemFishedEvent;
 
 import java.util.List;
 
-public class AnglersHatItem extends WearableRelicItem {
+public class AnglersHatItem extends RAWearableRelicItem {
     private static final TagKey<Item> ANGLERS_HAT_VALUABLES = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ReliquifiedArtifacts.MODID, "anglers_hat_valuables"));
 
     @Override

@@ -7,7 +7,7 @@ import be.florens.expandability.api.EventResult;
 import be.florens.expandability.api.forge.PlayerSwimEvent;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.FlamingoSwimPacket;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
@@ -38,7 +38,7 @@ import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import top.theillusivec4.curios.api.SlotContext;
 
-public class HeliumFlamingoItem extends WearableRelicItem {
+public class HeliumFlamingoItem extends RAWearableRelicItem {
 
     private static final double STATIONARY_HORIZONTAL_SPEED_SQR = 0.0016D;
     private static final double STATIONARY_VERTICAL_SPEED = 0.04D;

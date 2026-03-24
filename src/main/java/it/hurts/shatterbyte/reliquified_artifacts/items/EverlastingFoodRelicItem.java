@@ -2,6 +2,7 @@ package it.hurts.shatterbyte.reliquified_artifacts.items;
 
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RARelicItem;
 import it.hurts.sskirillss.relics.init.RelicsCreativeTabs;
 import it.hurts.sskirillss.relics.items.misc.CreativeContentConstructor;
 import it.hurts.sskirillss.relics.items.relics.base.RelicItem;
@@ -26,7 +27,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class EverlastingFoodRelicItem extends RelicItem {
+public abstract class EverlastingFoodRelicItem extends RARelicItem {
     protected EverlastingFoodRelicItem(FoodProperties foodProperties) {
         super(new Item.Properties()
                 .rarity(Rarity.EPIC)
@@ -41,23 +42,8 @@ public abstract class EverlastingFoodRelicItem extends RelicItem {
     }
 
     @Override
-    public List<Component> getAttributesTooltip(List<Component> tooltips, Item.TooltipContext context, ItemStack stack) {
-        return new ArrayList<>();
-    }
-
-    @Override
     public String getConfigRoute() {
         return ReliquifiedArtifacts.MODID;
-    }
-
-    @Override
-    public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-        return false;
-    }
-
-    @Override
-    public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
-        return false;
     }
 
     @Override

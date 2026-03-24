@@ -7,7 +7,7 @@ import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.entities.SparkEntity;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RAEntities;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
@@ -26,7 +26,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.util.Comparator;
 
-public class FireGauntletItem extends WearableRelicItem {
+public class FireGauntletItem extends RAWearableRelicItem {
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()

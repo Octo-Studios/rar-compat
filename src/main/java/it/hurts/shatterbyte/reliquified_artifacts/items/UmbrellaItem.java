@@ -4,6 +4,8 @@ import artifacts.network.NetworkHandler;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RARelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.UmbrellaBouncePacket;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
@@ -48,7 +50,7 @@ import top.theillusivec4.curios.api.SlotContext;
 
 import java.awt.*;
 
-public class UmbrellaItem extends WearableRelicItem {
+public class UmbrellaItem extends RARelicItem {
     private static final int BOUNCE_ITEM_COOLDOWN_TICKS = 10;
 
     @Override
@@ -600,11 +602,6 @@ public class UmbrellaItem extends WearableRelicItem {
         var remaining = Math.max(0, maxBounces - getBounceCount(stack));
 
         return Math.max(0, Math.min(13, Math.round(13F * remaining / (float) maxBounces)));
-    }
-
-    @Override
-    public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
-        return false;
     }
 
     @Override

@@ -4,7 +4,7 @@ import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.BunnyJumpReleasePacket;
 import it.hurts.shatterbyte.reliquified_artifacts.network.packets.PowerJumpPacket;
 import it.hurts.sskirillss.relics.api.relics.*;
@@ -47,7 +47,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class BunnyHoppersItem extends WearableRelicItem {
+public class BunnyHoppersItem extends RAWearableRelicItem {
     private static final Set<UUID> CLIENT_JUMP_LOCK = new HashSet<>();
 
     @Override

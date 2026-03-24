@@ -4,7 +4,7 @@ import it.hurts.sskirillss.relics.items.relics.base.data.loot.LootTemplate;
 import it.hurts.sskirillss.relics.items.relics.base.data.loot.misc.LootEntries;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -35,7 +35,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RootedBootsItem extends WearableRelicItem {
+public class RootedBootsItem extends RAWearableRelicItem {
     private static final Map<ResourceKey<Level>, Map<BlockPos, Long>> PENDING_GRASS_RESTORE = new HashMap<>();
 
     @Override

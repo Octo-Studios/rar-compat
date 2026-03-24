@@ -1,28 +1,27 @@
-package it.hurts.shatterbyte.reliquified_artifacts.items;
+package it.hurts.shatterbyte.reliquified_artifacts.items.base;
 
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
-import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.init.RelicsCreativeTabs;
 import it.hurts.sskirillss.relics.items.misc.CreativeContentConstructor;
 import it.hurts.sskirillss.relics.items.relics.base.RelicItem;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import top.theillusivec4.curios.api.type.capability.ICurioItem;
+import net.minecraft.world.item.Rarity;
 
-import java.util.ArrayList;
-import java.util.List;
+public abstract class RARelicItem extends RelicItem {
+    public RARelicItem(Item.Properties properties) {
+        super(properties);
+    }
 
-public abstract class WearableRelicItem extends RelicItem implements IRelicItem, ICurioItem {
-    @Override
-    public void gatherCreativeTabContent(CreativeContentConstructor constructor) {
-        constructor.entry(RelicsCreativeTabs.RELICS_TAB.get(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY, this);
+    public RARelicItem() {
+        super(new Item.Properties()
+                .rarity(Rarity.EPIC)
+                .stacksTo(1));
     }
 
     @Override
-    public List<Component> getAttributesTooltip(List<Component> tooltips, Item.TooltipContext context, ItemStack stack) {
-        return new ArrayList<>();
+    public void gatherCreativeTabContent(CreativeContentConstructor constructor) {
+        constructor.entry(RelicsCreativeTabs.RELICS_TAB.get(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY, this);
     }
 
     @Override

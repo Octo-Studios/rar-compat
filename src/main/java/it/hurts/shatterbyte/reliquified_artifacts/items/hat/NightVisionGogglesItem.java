@@ -2,7 +2,7 @@ package it.hurts.shatterbyte.reliquified_artifacts.items.hat;
 
 import artifacts.registry.ModItems;
 import it.hurts.shatterbyte.reliquified_artifacts.ReliquifiedArtifacts;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.AbilityMetricTemplate;
 import it.hurts.sskirillss.relics.api.relics.AbilityStatisticTemplate;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class NightVisionGogglesItem extends WearableRelicItem {
+public class NightVisionGogglesItem extends RAWearableRelicItem {
     private static final Map<UUID, Integer> DARK_MOVEMENT_TICKS = new HashMap<>();
 
     @Override

@@ -1,7 +1,7 @@
 package it.hurts.shatterbyte.reliquified_artifacts.handlers;
 
 import artifacts.Artifacts;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 public class TooltipHandler {
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
-        if (!(event.getItemStack().getItem() instanceof WearableRelicItem))
+        if (!(event.getItemStack().getItem() instanceof RAWearableRelicItem))
             return;
 
         var tooltip = event.getToolTip();

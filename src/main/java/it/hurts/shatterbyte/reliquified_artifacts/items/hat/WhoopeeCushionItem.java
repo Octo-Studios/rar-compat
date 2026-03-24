@@ -7,8 +7,7 @@ import it.hurts.shatterbyte.reliquified_artifacts.entities.WhoopeeCloudEntity;
 import it.hurts.shatterbyte.reliquified_artifacts.handlers.KnockbackHelper;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RADataComponent;
 import it.hurts.shatterbyte.reliquified_artifacts.init.RAEntities;
-import it.hurts.shatterbyte.reliquified_artifacts.items.charm.CloudInBottleItem;
-import it.hurts.shatterbyte.reliquified_artifacts.items.WearableRelicItem;
+import it.hurts.shatterbyte.reliquified_artifacts.items.base.RAWearableRelicItem;
 import it.hurts.sskirillss.relics.api.relics.*;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
@@ -35,7 +34,7 @@ import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.HashSet;
 
-public class WhoopeeCushionItem extends WearableRelicItem {
+public class WhoopeeCushionItem extends RAWearableRelicItem {
     @Override
     public RelicTemplate constructDefaultRelicTemplate() {
         return RelicTemplate.builder()
