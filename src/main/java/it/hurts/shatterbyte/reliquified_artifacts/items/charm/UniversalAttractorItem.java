@@ -180,6 +180,35 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
         data.putUUID("reliquified_artifacts_universal_attractor_pulled_xp_owner", player.getUUID());
     }
 
+    public static void awardPulledItemPickup(Player player, ItemEntity itemEntity) {
+        if (player.level().isClientSide())
+            return;
+
+        var data = itemEntity.getPersistentData();
+
+        if (!data.getBoolean("reliquified_artifacts_universal_attractor_pulled_item"))
+            return;
+
+        if (!data.hasUUID("reliquified_artifacts_universal_attractor_pulled_item_owner") || !player.getUUID().equals(data.getUUID("reliquified_artifacts_universal_attractor_pulled_item_owner")))
+            return;
+
+        for (var stack : EntityUtils.findEquippedCurios(player, ModItems.UNIVERSAL_ATTRACTOR.value())) {
+            if (!(stack.getItem() instanceof UniversalAttractorItem relic))
+                continue;
+
+            var relicData = relic.getRelicData(player, stack);
+            var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
+
+            if (!ability.canPlayerUse(player))
+                continue;
+
+            relicData.getLevelingData().addExperience("magnetism", "pulled_item", 1D);
+            ability.getStatisticData().getMetricData("pulled_items_picked").addValue(1D);
+
+            break;
+        }
+    }
+
     private static void applyDirectionalForce(Entity entity, Player player, double radius, double baseForce, double maxSpeed, boolean pull, boolean horizontalOnly) {
         var delta = pull ? player.position().subtract(entity.position()) : entity.position().subtract(player.position());
 
@@ -260,34 +289,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
     public static class CommonEvents {
         @SubscribeEvent
         public static void onItemPickup(ItemEntityPickupEvent.Post event) {
-            var player = event.getPlayer();
-
-            if (player.level().isClientSide())
-                return;
-
-            var data = event.getItemEntity().getPersistentData();
-
-            if (!data.getBoolean("reliquified_artifacts_universal_attractor_pulled_item"))
-                return;
-
-            if (!data.hasUUID("reliquified_artifacts_universal_attractor_pulled_item_owner") || !player.getUUID().equals(data.getUUID("reliquified_artifacts_universal_attractor_pulled_item_owner")))
-                return;
-
-            for (var stack : EntityUtils.findEquippedCurios(player, ModItems.UNIVERSAL_ATTRACTOR.value())) {
-                if (!(stack.getItem() instanceof UniversalAttractorItem relic))
-                    continue;
-
-                var relicData = relic.getRelicData(player, stack);
-                var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
-
-                if (!ability.canPlayerUse(player))
-                    continue;
-
-                relicData.getLevelingData().addExperience("magnetism", "pulled_item", 1D);
-                ability.getStatisticData().getMetricData("pulled_items_picked").addValue(1D);
-
-                break;
-            }
+            awardPulledItemPickup(event.getPlayer(), event.getItemEntity());
         }
 
         @SubscribeEvent

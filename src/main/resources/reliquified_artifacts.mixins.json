@@ -13,6 +13,7 @@
     "LivingEntityMixin",
     "CreeperMixin",
     "VillagerMixin",
+    "compat.sophisticatedbackpacks.CommonEventHandlerMixin",
     "config.ConfigManagerMixin",
     "config.ModConfigMixin",
     "init.ModItemsMixin",
