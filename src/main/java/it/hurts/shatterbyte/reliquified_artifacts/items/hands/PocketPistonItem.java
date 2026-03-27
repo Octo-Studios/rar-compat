@@ -266,7 +266,7 @@ public class PocketPistonItem extends RAWearableRelicItem {
             if (emptyHandKnockback > 0D && event.getEntity() instanceof LivingEntity target)
                 KnockbackHelper.apply(target, emptyHandKnockback, new Vec3(player.getX() - target.getX(), player.getY() - target.getY(), player.getZ() - target.getZ()));
 
-            if (!canApplyLongReachStun || stunTicks <= 0 || !(event.getEntity() instanceof LivingEntity target))
+            if (!canApplyLongReachStun || stunTicks <= 0 || player.getAttackStrengthScale(0.5F) < 1F || !(event.getEntity() instanceof LivingEntity target))
                 return;
 
             var maxRange = player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);

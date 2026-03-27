@@ -166,7 +166,12 @@ public class DrinkingHatItem extends RAWearableRelicItem {
 
         @SubscribeEvent
         public static void onUseItem(LivingEntityUseItemEvent.Finish event) {
-            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide() || event.getItem().getUseAnimation() != UseAnim.DRINK)
+            if (!(event.getEntity() instanceof Player player) || player.level().isClientSide())
+                return;
+
+            var startTick = DRINK_START_TICKS.remove(player.getUUID());
+
+            if (startTick == null && event.getItem().getUseAnimation() != UseAnim.DRINK)
                 return;
 
             var stack = getEquippedDrinkingHat(player);
@@ -182,8 +187,6 @@ public class DrinkingHatItem extends RAWearableRelicItem {
 
             ability.getStatisticData().getMetricData("consumed_items").addValue(1D);
             relicData.getLevelingData().addExperience("drinking", "consume", 1D);
-
-            var startTick = DRINK_START_TICKS.remove(player.getUUID());
 
             if (startTick != null) {
                 var durationSeconds = Math.max(0D, (player.level().getGameTime() - startTick) / 20D);

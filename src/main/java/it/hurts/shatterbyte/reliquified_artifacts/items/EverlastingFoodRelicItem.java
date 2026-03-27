@@ -32,6 +32,7 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
         super(new Item.Properties()
                 .rarity(Rarity.EPIC)
                 .food(foodProperties)
+                .durability(1)
                 .stacksTo(1)
                 .setNoRepair());
     }
