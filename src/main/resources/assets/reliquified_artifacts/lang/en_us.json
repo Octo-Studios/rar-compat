@@ -125,7 +125,7 @@
   "relics.description.lucky_scarf.description": "A thin scarf of prospectors and vein-seekers, faded by stone dust and long days underground. They say its threads are woven so as to pull rare luck straight from the ore. Where others find only a barren vein, the owner of such a scarf often draws a far more generous harvest from the rock.",
   "relics.description.lucky_scarf.ability.fortune": "Lucky Vein",
   "relics.description.lucky_scarf.ability.fortune.description": "When mining ores and other fortune-dependent blocks, has a %1$s%% chance to apply an additional Fortune level up to %2$s activations.",
-  "relics.description.lucky_scarf.ability.fortune.rank_modifier.chain": "Each successful activation increases the activation limit for the next block by %4$s.",
+  "relics.description.lucky_scarf.ability.fortune.rank_modifier.chain": "Each successful activation increases the activation limit for the next block by %4$s, but the stored bonus cannot exceed %6$s triggers.",
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.pity": "Each block mined without bonus drops builds a hidden %3$s%% chance for the next activation.",
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.vein": "If there are nearby blocks of the same type, the activation chance is additionally increased by %5$s%% for each such block.",
   "relics.description.lucky_scarf.ability.fortune.experience_source.bonus_fortune": "+1 experience for each additional Fortune level.",

@@ -125,7 +125,7 @@
   "relics.description.lucky_scarf.description": "Тонкий шарф старателей и искателей жил, выцветший от каменной пыли и долгих дней под землёй. Говорят, его нити переплетены так, что будто тянут редкую удачу из самой породы. Там, где другие находят лишь пустую жилу, владелец такого шарфа нередко поднимает из камня куда более щедрый урожай.",
   "relics.description.lucky_scarf.ability.fortune": "Прожилка удачи",
   "relics.description.lucky_scarf.ability.fortune.description": "При добыче руд и других блоков, зависящих от удачи, с шансом %1$s%% накладывает дополнительный уровень удачи вплоть до %2$s срабатываний.",
-  "relics.description.lucky_scarf.ability.fortune.rank_modifier.chain": "Каждое успешное срабатывание увеличивает лимит срабатываний для следующего блока на %4$s.",
+  "relics.description.lucky_scarf.ability.fortune.rank_modifier.chain": "Каждое успешное срабатывание увеличивает лимит срабатываний для следующего блока на %4$s, но накопленный бонус не может превышать %6$s срабатываний.",
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.pity": "Каждый блок без бонусной добычи накапливает скрытый шанс в %3$s%% к следующему срабатыванию.",
   "relics.description.lucky_scarf.ability.fortune.rank_modifier.vein": "Если рядом есть блоки того же типа, шанс срабатывания дополнительно увеличивается на %5$s%% за каждый такой блок.",
   "relics.description.lucky_scarf.ability.fortune.experience_source.bonus_fortune": "+1 единица опыта за каждый дополнительный уровень удачи.",
