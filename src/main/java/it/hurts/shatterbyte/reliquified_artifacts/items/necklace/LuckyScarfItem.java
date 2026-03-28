@@ -67,9 +67,14 @@ public class LuckyScarfItem extends RAWearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("vein_efficiency_per_block")
-                                        .initialValue(0.05D, 0.15D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.019D)
+                                        .initialValue(0.01D, 0.05D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
+                                        .build())
+                                .stat(AbilityStatTemplate.builder("chain_max_bonus_casts")
+                                        .initialValue(1D, 5D)
+                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.1143D)
+                                        .formatValue(value -> (int) MathUtils.round(value, 0))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
                                         .source(ExperienceSourceTemplate.builder("bonus_fortune").build())
@@ -157,6 +162,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
 
         var chance = Math.max(0D, Math.min(1D, ability.getStatData("chance").getValue()));
         var maxCasts = Math.max(0, (int) MathUtils.round(ability.getStatData("max_casts").getValue(), 0));
+        var chainMaxBonusCasts = Math.max(0, (int) MathUtils.round(ability.getStatData("chain_max_bonus_casts").getValue(), 0));
 
         if (chance <= 0D || maxCasts <= 0) {
             setLastBlockPos(stack, blockPos.asLong());
@@ -172,7 +178,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
         }
 
         if (ability.isRankModifierUnlocked("chain")) {
-            maxCasts += getNextMaxCastsBonus(stack);
+            maxCasts += Math.min(getNextMaxCastsBonus(stack), chainMaxBonusCasts);
         } else {
             setNextMaxCastsBonus(stack, 0);
         }
@@ -211,7 +217,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             var chainPerProc = Math.max(0, (int) MathUtils.round(ability.getStatData("chain_max_casts_per_proc").getValue(), 0));
             var nextBonus = procs > 0 && chainPerProc > 0 ? procs * chainPerProc : 0;
 
-            setNextMaxCastsBonus(stack, nextBonus);
+            setNextMaxCastsBonus(stack, Math.min(nextBonus, chainMaxBonusCasts));
         }
 
         setLastBlockPos(stack, blockPos.asLong());

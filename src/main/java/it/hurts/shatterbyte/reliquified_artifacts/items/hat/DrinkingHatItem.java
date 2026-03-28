@@ -204,15 +204,12 @@ public class DrinkingHatItem extends RAWearableRelicItem {
 
                     player.setAirSupply(Math.min(player.getMaxAirSupply(), beforeAir + air));
 
-                    var restoredAir = Math.max(0, player.getAirSupply() - beforeAir);
                     var afterBubbles = getAirBubbleCount(player.getAirSupply(), player.getMaxAirSupply());
                     var restoredBubbles = Math.max(0, afterBubbles - beforeBubbles);
 
-                    if (restoredAir > 0) {
-                        ability.getStatisticData().getMetricData("air_restored").addValue(restoredAir);
-
-                        if (restoredBubbles > 0)
-                            relicData.getLevelingData().addExperience("drinking", "breathing", restoredBubbles);
+                    if (restoredBubbles > 0) {
+                        ability.getStatisticData().getMetricData("air_restored").addValue(restoredBubbles);
+                        relicData.getLevelingData().addExperience("drinking", "breathing", restoredBubbles);
                     }
                 }
             }
