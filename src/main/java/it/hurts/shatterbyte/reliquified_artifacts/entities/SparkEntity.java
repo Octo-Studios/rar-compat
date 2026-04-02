@@ -194,6 +194,7 @@ public class SparkEntity extends ThrowableProjectile implements ITargetableEntit
         builder.define(DAMAGE, 1F);
         builder.define(FIRE_DURATION, 0F);
         builder.define(RELIC_STACK, ItemStack.EMPTY);
+        builder.define(FLAWLESS, false);
     }
 
     @OnlyIn(Dist.CLIENT)
