@@ -176,7 +176,7 @@
 
   "relics.description.scarf_of_invisibility.description": "Лёгкий тёмный шарф из необычной ткани, которая будто размывает границы между телом и воздухом. Когда его владелец замирает, нити начинают тихо колебаться, и силуэт постепенно растворяется в окружающем мире.",
   "relics.description.scarf_of_invisibility.ability.invisibility": "Исчезновение",
-  "relics.description.scarf_of_invisibility.ability.invisibility.description": "Если носитель реликвии стоит неподвижно более %1$s секунд, он получает эффект исчезновения. Способность прерывается любым взаимодействием с миром, и повторно активировать её можно не раньше, чем через %2$s секунд при условии что рядом нет существ, считающих грока своей целью.",
+  "relics.description.scarf_of_invisibility.ability.invisibility.description": "Если носитель реликвии стоит неподвижно более %1$s секунд, он получает эффект исчезновения. Способность прерывается любым взаимодействием с миром, и повторно активировать её можно не раньше, чем через %2$s секунд при условии что рядом нет существ, считающих игрока своей целью.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.regeneration": "Во время действия исчезновения носитель реликвии восстанавливает %5$s здоровья в секунду.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.strike": "Первая атака после выхода из исчезновения наносит на %3$s%% больше урона.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.stun": "Первая атака после выхода из исчезновения оглушает цель на %4$s секунд",

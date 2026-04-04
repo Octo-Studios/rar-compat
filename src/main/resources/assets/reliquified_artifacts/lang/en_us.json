@@ -176,7 +176,7 @@
 
   "relics.description.scarf_of_invisibility.description": "A light dark scarf woven from unusual fabric that seems to blur the boundary between body and air. When its wearer stands still, the threads begin to tremble softly, and the silhouette gradually dissolves into the surrounding world.",
   "relics.description.scarf_of_invisibility.ability.invisibility": "Vanishing",
-  "relics.description.scarf_of_invisibility.ability.invisibility.description": "If the relic holder stands still for more than %1$s seconds, they gain the Vanishing effect. The ability is interrupted by any interaction with the world, and it cannot be reactivated for at least %2$s seconds, provided there are no creatures nearby that consider the grok their target.",
+  "relics.description.scarf_of_invisibility.ability.invisibility.description": "If the relic holder stands still for more than %1$s seconds, they gain the Vanishing effect. The ability is interrupted by any interaction with the world, and it cannot be reactivated for at least %2$s seconds, provided there are no creatures nearby that consider the player their target.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.regeneration": "While Vanishing is active, the relic holder restores %5$s health per second.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.strike": "The first attack after leaving Vanishing deals %3$s%% more damage.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.stun": "The first attack after leaving Vanishing stuns the target for %4$s seconds",
