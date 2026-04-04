@@ -176,7 +176,7 @@
 
   "relics.description.scarf_of_invisibility.description": "Um cachecol escuro e leve, tecido de um tecido incomum que parece borrar a fronteira entre o corpo e o ar. Quando o seu portador fica parado, os fios começam a tremer suavemente, e a silhueta se dissolve gradualmente no mundo ao seu redor.",
   "relics.description.scarf_of_invisibility.ability.invisibility": "Desaparecimento",
-  "relics.description.scarf_of_invisibility.ability.invisibility.description": "Se o portador da relíquia ficar parado por mais de %1$s segundos, ele ganha o efeito Desaparecimento. A habilidade é interrompida por qualquer interação com o mundo, e não pode ser reativada por pelo menos %2$s segundos, desde que não haja criaturas próximas que considerem o portador como seu alvo.",
+  "relics.description.scarf_of_invisibility.ability.invisibility.description": "Se o portador da relíquia ficar parado por mais de %1$s segundos, ele ganha o efeito Desaparecimento. A habilidade é interrompida por qualquer interação com o mundo, e não pode ser reativada por pelo menos %2$s segundos, desde que não haja criaturas próximas que considerem o jogador como seu alvo.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.regeneration": "Enquanto Desaparecimento estiver ativo, o portador da relíquia restaura %5$s de vida por segundo.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.strike": "O primeiro ataque após sair do Desaparecimento causa %3$s%% a mais de dano.",
   "relics.description.scarf_of_invisibility.ability.invisibility.rank_modifier.stun": "O primeiro ataque após sair do Desaparecimento atordoa o alvo por %4$s segundos",
