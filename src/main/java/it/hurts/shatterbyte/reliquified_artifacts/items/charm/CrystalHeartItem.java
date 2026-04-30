@@ -49,7 +49,7 @@ public class CrystalHeartItem extends RAWearableRelicItem {
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("cooldown")
-                                        .initialValue(50D, 60D)
+                                        .initialValue(60D, 50D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.02379D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())

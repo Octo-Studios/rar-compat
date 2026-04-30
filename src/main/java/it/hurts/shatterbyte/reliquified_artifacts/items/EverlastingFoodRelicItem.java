@@ -38,16 +38,6 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
     }
 
     @Override
-    public void gatherCreativeTabContent(CreativeContentConstructor constructor) {
-        constructor.entry(RelicsCreativeTabs.RELICS_TAB.get(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY, this);
-    }
-
-    @Override
-    public String getConfigRoute() {
-        return ReliquifiedArtifacts.MODID;
-    }
-
-    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         var stack = player.getItemInHand(hand);
 
