@@ -45,7 +45,7 @@ public class WarpDriveItem extends RAWearableRelicItem {
                                 .rankModifier(3, "disorientation")
                                 .rankModifier(5, "weightless")
                                 .stat(AbilityStatTemplate.builder("cooldown")
-                                        .initialValue(3.5D, 5D)
+                                        .initialValue(5D, 3.5D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.0257D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())

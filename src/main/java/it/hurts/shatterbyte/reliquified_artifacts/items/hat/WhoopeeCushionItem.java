@@ -74,7 +74,7 @@ public class WhoopeeCushionItem extends RAWearableRelicItem {
                                         .formatValue(value -> (int) MathUtils.round(value * 100D, 0))
                                         .build())
                                 .stat(AbilityStatTemplate.builder("cooldown")
-                                        .initialValue(7.5D, 10D)
+                                        .initialValue(10D, 7.5D)
                                         .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), -0.02487D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
