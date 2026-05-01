@@ -143,7 +143,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
             return;
         }
 
-        var absorption = Math.max(0D, ability.getStatData("absorption").getValue());
+        var absorption = (int) ability.getStatData("absorption").getValue();
 
         if (absorption > 0D) {
             var previousRemaining = getRiderAbsorptionRemaining(stack);
