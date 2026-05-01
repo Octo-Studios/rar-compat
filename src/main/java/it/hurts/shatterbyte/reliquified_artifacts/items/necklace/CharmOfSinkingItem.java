@@ -128,10 +128,10 @@ public class CharmOfSinkingItem extends RAWearableRelicItem {
             setAirRestoreProgress(stack, 0D);
         }
 
-        if (ability.getRankModifierData("fluid_collision").isUnlocked() && player.isInWaterOrBubble())
+        if (ability.getRankModifierData("fluid_collision").isEnabled() && player.isInWaterOrBubble())
             player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 10, 0, false, false));
 
-        if (!ability.getRankModifierData("immortality").isUnlocked()) {
+        if (!ability.getRankModifierData("immortality").isEnabled()) {
             resetImmobilityState(player, stack);
             return;
         }
@@ -300,7 +300,7 @@ public class CharmOfSinkingItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("sinking");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resistance").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resistance").isEnabled())
                     continue;
 
                 var perBlock = Math.max(0D, Math.min(1D, ability.getStatData("resistance_per_block").getValue()));

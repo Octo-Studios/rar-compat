@@ -101,12 +101,12 @@ public class FlippersItem extends RAWearableRelicItem {
         else
             EntityUtils.applyAttribute(player, stack, NeoForgeMod.SWIM_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_VALUE);
 
-        if (inWater && ability.getRankModifierData("buoyancy").isUnlocked())
+        if (inWater && ability.getRankModifierData("buoyancy").isEnabled())
             EntityUtils.resetAttribute(player, stack, Attributes.GRAVITY, -1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         else
             EntityUtils.removeAttribute(player, stack, Attributes.GRAVITY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        if (!inWater || !ability.getRankModifierData("breathing").isUnlocked() || !player.isEyeInFluid(FluidTags.WATER) || player.getAirSupply() >= player.getMaxAirSupply())
+        if (!inWater || !ability.getRankModifierData("breathing").isEnabled() || !player.isEyeInFluid(FluidTags.WATER) || player.getAirSupply() >= player.getMaxAirSupply())
             return;
 
         var reduction = Math.max(0D, Math.min(1D, ability.getStatData("air_loss_reduction").getValue()));
@@ -187,7 +187,7 @@ public class FlippersItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("swim");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("evasion").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("evasion").isEnabled())
                     continue;
 
                 var chance = Math.max(0D, Math.min(1D, ability.getStatData("evasion").getValue()));

@@ -117,7 +117,7 @@ public class KittySlippersItem extends RAWearableRelicItem {
                 applyFelineAura(player, radius);
         }
 
-        if (aura.canPlayerUse(player) && aura.getRankModifierData("crouch_speed").isUnlocked()) {
+        if (aura.canPlayerUse(player) && aura.getRankModifierData("crouch_speed").isEnabled()) {
             var bonus = Math.max(0D, aura.getStatData("crouch_speed_bonus").getValue());
 
             if (bonus > 0D)
@@ -138,7 +138,7 @@ public class KittySlippersItem extends RAWearableRelicItem {
             return;
         }
 
-        if (!nineLives.getRankModifierData("evasion").isUnlocked())
+        if (!nineLives.getRankModifierData("evasion").isEnabled())
             setDodgeReady(stack, false);
     }
 
@@ -264,7 +264,7 @@ public class KittySlippersItem extends RAWearableRelicItem {
 
                 if (!nineLives.canPlayerUse(player)) {
                     relic.setDodgeReady(stack, false);
-                } else if (nineLives.getRankModifierData("evasion").isUnlocked() && relic.isDodgeReady(stack)) {
+                } else if (nineLives.getRankModifierData("evasion").isEnabled() && relic.isDodgeReady(stack)) {
                     hasDodgeRoll = true;
                     var value = Math.max(0D, Math.min(1D, nineLives.getStatData("evasion_chance").getValue()));
 
@@ -277,7 +277,7 @@ public class KittySlippersItem extends RAWearableRelicItem {
                     relic.setDodgeReady(stack, false);
                 }
 
-                if (isFallDamage && aura.canPlayerUse(player) && aura.getRankModifierData("soft_landing").isUnlocked()) {
+                if (isFallDamage && aura.canPlayerUse(player) && aura.getRankModifierData("soft_landing").isEnabled()) {
                     var value = Math.max(0D, Math.min(1D, aura.getStatData("fall_damage_reduction").getValue()));
 
                     if (fallRelic == null || value > fallReduction) {
@@ -380,7 +380,7 @@ public class KittySlippersItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("nine_lives");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("evasion").isUnlocked()) {
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("evasion").isEnabled()) {
                     relic.setDodgeReady(stack, false);
                     continue;
                 }

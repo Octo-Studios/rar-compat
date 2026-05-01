@@ -129,7 +129,7 @@ public class VillagerHatItem extends RAWearableRelicItem {
 
         var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge");
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("preserve").isUnlocked())
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("preserve").isEnabled())
             return;
 
         ability.getStatisticData().getMetricData("trades_preserved").addValue(1D);
@@ -169,7 +169,7 @@ public class VillagerHatItem extends RAWearableRelicItem {
             if (!ability.canPlayerUse(player))
                 return;
 
-            if (ability.getRankModifierData("protection").isUnlocked()) {
+            if (ability.getRankModifierData("protection").isEnabled()) {
                 var reductionPerGolem = Math.max(0D, Math.min(1D, ability.getStatData("damage_reduction_per_golem").getValue()));
                 var radius = Math.max(0D, ability.getStatData("radius").getValue());
                 var maxReduction = Math.max(0D, Math.min(1D, ability.getStatData("max_damage_reduction").getValue()));
@@ -222,7 +222,7 @@ public class VillagerHatItem extends RAWearableRelicItem {
             ability.getStatisticData().getMetricData("trades_done").addValue(1D);
             relicData.getLevelingData().addExperience("trade_surge", "trade", 1D);
 
-            if (!ability.getRankModifierData("multicast").isUnlocked())
+            if (!ability.getRankModifierData("multicast").isEnabled())
                 return;
 
             var multicast = Math.max(0, (int) MathUtils.round(ability.getStatData("multicast").getValue(), 0));

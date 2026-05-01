@@ -34,7 +34,7 @@ public abstract class AbstractVillagerMixin {
 
         var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge");
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("preserve").isUnlocked()) {
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("preserve").isEnabled()) {
             offer.increaseUses();
             return;
         }

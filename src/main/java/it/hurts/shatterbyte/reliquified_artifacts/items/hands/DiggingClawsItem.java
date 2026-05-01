@@ -181,14 +181,14 @@ public class DiggingClawsItem extends RAWearableRelicItem {
 
             var speedMultiplier = 1D + Math.max(0D, ability.getStatData("speed").getValue());
 
-            if (ability.getRankModifierData("bare_hands").isUnlocked()) {
+            if (ability.getRankModifierData("bare_hands").isEnabled()) {
                 var heldItem = player.getMainHandItem();
 
                 if (!heldItem.has(DataComponents.TOOL))
                     speedMultiplier += Math.max(0D, ability.getStatData("bare_hands_speed").getValue());
             }
 
-            if (ability.getRankModifierData("momentum").isUnlocked()) {
+            if (ability.getRankModifierData("momentum").isEnabled()) {
                 var streak = relic.getStreakCount(relicStack);
 
                 if (streak > 0)
@@ -250,7 +250,7 @@ public class DiggingClawsItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, relicStack).getAbilitiesData().getAbilityData("digging");
 
-            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("mastery").isUnlocked())
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("mastery").isEnabled())
                 return;
 
             if (canHarvestWithTierBonus(player.getMainHandItem(), event.getTargetBlock()))

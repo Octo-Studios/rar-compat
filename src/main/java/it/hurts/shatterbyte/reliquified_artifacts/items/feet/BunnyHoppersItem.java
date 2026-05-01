@@ -295,7 +295,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
 
         var synergy = abilities.getSynergyData("cloud_jump");
 
-        if (!synergy.isUnlocked() || !synergy.isEnabled())
+        if (!synergy.isEnabled() || !synergy.isEnabled())
             return;
 
         armHighJump(player, stack);
@@ -418,7 +418,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
                     relic.armHighJump(player, stack);
                 }
 
-                if (player.level().isClientSide() || !ability.getRankModifierData("repel").isUnlocked())
+                if (player.level().isClientSide() || !ability.getRankModifierData("repel").isEnabled())
                     continue;
 
                 repelRadius = Math.max(repelRadius, Math.max(0D, ability.getStatData("repel_radius").getValue()));
@@ -479,7 +479,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
 
             event.setDistance(Math.max(0F, event.getDistance() - safeHeight));
 
-            if (ability.getRankModifierData("safe_landing").isUnlocked())
+            if (ability.getRankModifierData("safe_landing").isEnabled())
                 event.setCanceled(true);
 
             relic.setTime(stack, 0);
@@ -505,7 +505,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("impact").isUnlocked() || player.onGround() || player.isFallFlying() || player.getAbilities().flying)
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("impact").isEnabled() || player.onGround() || player.isFallFlying() || player.getAbilities().flying)
                     continue;
 
                 var jumpStartY = relic.getJumpStartY(stack);

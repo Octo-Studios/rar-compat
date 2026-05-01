@@ -94,7 +94,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
 
         var radius = Math.max(1D, ability.getStatData("radius").getValue());
         var pull = "pull".equals(mode);
-        var teleportPullItems = pull && ability.getRankModifierData("teleport").isUnlocked();
+        var teleportPullItems = pull && ability.getRankModifierData("teleport").isEnabled();
 
         var items = player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
@@ -118,7 +118,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
             }
         }
 
-        if (pull && ability.getRankModifierData("experience").isUnlocked()) {
+        if (pull && ability.getRankModifierData("experience").isEnabled()) {
             var orbs = player.level().getEntitiesOfClass(ExperienceOrb.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
             for (var orb : orbs) {
@@ -127,7 +127,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
             }
         }
 
-        if (!pull && ability.getRankModifierData("projectiles").isUnlocked()) {
+        if (!pull && ability.getRankModifierData("projectiles").isEnabled()) {
             var projectiles = player.level().getEntitiesOfClass(Projectile.class, player.getBoundingBox().inflate(radius), projectile -> projectile.isAlive() && isHostileProjectile(player, projectile));
 
             for (var projectile : projectiles) {
@@ -314,7 +314,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("experience").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("experience").isEnabled())
                     continue;
 
                 relicData.getLevelingData().addExperience("magnetism", "pulled_xp", 1D);

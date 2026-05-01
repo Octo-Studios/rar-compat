@@ -15,6 +15,6 @@ public abstract class RAWearableRelicItem extends WearableRelicItem {
 
     @Override
     public @Nullable String getURI(LivingEntity entity, ItemStack stack) {
-        return "https://shatterbyte.com/docs/mods/reliquified_artifacts/relics/" + BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath() + "/";
+        return "https://shatterbyte.com/docs/mods/reliquified-artifacts/relics/" + BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath() + "/";
     }
 }

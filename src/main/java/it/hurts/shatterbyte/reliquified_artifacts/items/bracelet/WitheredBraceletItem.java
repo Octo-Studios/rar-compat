@@ -171,7 +171,7 @@ public class WitheredBraceletItem extends RAWearableRelicItem {
 
                     var ability = relic.getRelicData(entity, stack).getAbilitiesData().getAbilityData("withering");
 
-                    if (ability.canPlayerUse(entity) && ability.getRankModifierData("resistance").isUnlocked()) {
+                    if (ability.canPlayerUse(entity) && ability.getRankModifierData("resistance").isEnabled()) {
                         witherImmune = true;
                         break;
                     }
@@ -241,7 +241,7 @@ public class WitheredBraceletItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(owner, stack).getAbilitiesData().getAbilityData("withering");
 
-                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spread").isUnlocked())
+                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spread").isEnabled())
                     continue;
 
                 var localDuration = secondsToTicks(ability.getStatData("spread_duration").getValue());
@@ -297,7 +297,7 @@ public class WitheredBraceletItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(owner, stack).getAbilitiesData().getAbilityData("withering");
 
-                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("leech").isUnlocked())
+                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("leech").isEnabled())
                     continue;
 
                 leechRelic = relic;

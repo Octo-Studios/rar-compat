@@ -149,7 +149,7 @@ public class WarpDriveItem extends RAWearableRelicItem {
             visualStack.setCount(1);
             pearl.setItem(visualStack);
 
-            if (ability.getRankModifierData("weightless").isUnlocked())
+            if (ability.getRankModifierData("weightless").isEnabled())
                 pearl.setNoGravity(true);
 
             pearl.shootFromRotation(player, player.getXRot(), player.getYRot(), 0F, 1.5F, 1F);
@@ -185,7 +185,7 @@ public class WarpDriveItem extends RAWearableRelicItem {
             if (!ability.canPlayerUse(player))
                 return;
 
-            if (ability.getRankModifierData("protection").isUnlocked()) {
+            if (ability.getRankModifierData("protection").isEnabled()) {
                 var pearlDamage = Math.max(0F, event.getAttackDamage());
 
                 if (pearlDamage > 0F) {
@@ -194,7 +194,7 @@ public class WarpDriveItem extends RAWearableRelicItem {
                 }
             }
 
-            if (!ability.getRankModifierData("disorientation").isUnlocked())
+            if (!ability.getRankModifierData("disorientation").isEnabled())
                 return;
 
             var radius = Math.max(0D, ability.getStatData("blind_radius").getValue());

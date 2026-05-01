@@ -211,7 +211,7 @@ public class ChorusTotemItem extends RAWearableRelicItem {
 
                 var disorientedTargets = 0;
 
-                if (ability.getRankModifierData("disorient").isUnlocked()) {
+                if (ability.getRankModifierData("disorient").isEnabled()) {
                     var radius = Math.max(0D, ability.getStatData("blind_radius").getValue());
                     var durationTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("blind_duration").getValue()));
 
@@ -228,7 +228,7 @@ public class ChorusTotemItem extends RAWearableRelicItem {
                 if (cooldownTicks > 0)
                     relic.setCooldownTicks(stack, cooldownTicks);
 
-                if (ability.getRankModifierData("recovery").isUnlocked()) {
+                if (ability.getRankModifierData("recovery").isEnabled()) {
                     var regenBoostTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("regen_boost_duration").getValue()));
 
                     relic.setRegenBoostTicks(stack, regenBoostTicks);
@@ -236,7 +236,7 @@ public class ChorusTotemItem extends RAWearableRelicItem {
                     relic.setRegenBoostTicks(stack, 0);
                 }
 
-                if (ability.getRankModifierData("vanishing").isUnlocked()) {
+                if (ability.getRankModifierData("vanishing").isEnabled()) {
                     var vanishingTicks = Math.max(0, (int) secondsToTicks(ability.getStatData("vanishing_duration").getValue()));
 
                     if (vanishingTicks > 0)
@@ -273,7 +273,7 @@ public class ChorusTotemItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("chorus");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("recovery").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("recovery").isEnabled())
                     continue;
 
                 var value = Math.max(0D, ability.getStatData("regen_boost").getValue());

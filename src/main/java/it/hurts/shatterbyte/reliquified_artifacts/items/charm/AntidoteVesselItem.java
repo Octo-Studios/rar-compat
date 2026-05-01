@@ -101,7 +101,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("limiter").isUnlocked())
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("limiter").isEnabled())
             return;
 
         enforceNegativeAmplifierCap(player);
@@ -249,13 +249,13 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
                     bestStack = stack;
                 }
 
-                if (ability.getRankModifierData("recovery").isUnlocked() && relic.getImmunityUntil(stack, effectId) > gameTime) {
+                if (ability.getRankModifierData("recovery").isEnabled() && relic.getImmunityUntil(stack, effectId) > gameTime) {
                     blockedByImmunity = true;
                     recoveryRelic = relic;
                     recoveryStack = stack;
                 }
 
-                if (ability.getRankModifierData("limiter").isUnlocked())
+                if (ability.getRankModifierData("limiter").isEnabled())
                     hasAmplifierCap = true;
             }
 
@@ -320,7 +320,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("recovery").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("recovery").isEnabled())
                     continue;
 
                 var protectionTicks = secondsToTicks(ability.getStatData("immunity_duration").getValue());
@@ -352,7 +352,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resilience").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resilience").isEnabled())
                     continue;
 
                 var perEffect = Math.max(0D, Math.min(1D, ability.getStatData("resistance_per_effect").getValue()));

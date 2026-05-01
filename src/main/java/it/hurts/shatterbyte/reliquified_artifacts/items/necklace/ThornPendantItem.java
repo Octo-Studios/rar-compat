@@ -115,7 +115,7 @@ public class ThornPendantItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (ability.getRankModifierData("resistance").isUnlocked() && isPoisonDamage(event, entity))
+                if (ability.getRankModifierData("resistance").isEnabled() && isPoisonDamage(event, entity))
                     poisonImmune = true;
 
                 if (attacker == null)
@@ -139,7 +139,7 @@ public class ThornPendantItem extends RAWearableRelicItem {
                 relicData.getLevelingData().addExperience("poison", "reflect_proc", 1D);
                 ability.getStatisticData().getMetricData("procs").addValue(1D);
 
-                if (!ability.getRankModifierData("poison").isUnlocked())
+                if (!ability.getRankModifierData("poison").isEnabled())
                     continue;
 
                 var seconds = Math.max(0D, ability.getStatData("poison_duration").getValue());
@@ -180,12 +180,12 @@ public class ThornPendantItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(source))
                     continue;
 
-                if (experienceRelic == null && ability.getRankModifierData("poison").isUnlocked()) {
+                if (experienceRelic == null && ability.getRankModifierData("poison").isEnabled()) {
                     experienceRelic = relic;
                     experienceStack = stack;
                 }
 
-                if (!ability.getRankModifierData("damage").isUnlocked())
+                if (!ability.getRankModifierData("damage").isEnabled())
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("poisoned_damage_bonus").getValue()));

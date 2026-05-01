@@ -123,7 +123,7 @@ public class AnglersHatItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("catch");
 
-            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("quick_bite").isUnlocked())
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("quick_bite").isEnabled())
                 return;
 
             var duration = event.getDuration();
@@ -156,7 +156,7 @@ public class AnglersHatItem extends RAWearableRelicItem {
             ability.getStatisticData().getMetricData("fish_eaten").addValue(1D);
             relicData.getLevelingData().addExperience("catch", "fish_eaten", 1D);
 
-            if (!ability.getRankModifierData("healing").isUnlocked())
+            if (!ability.getRankModifierData("healing").isEnabled())
                 return;
 
             var heal = (float) Math.max(0D, ability.getStatData("heal").getValue());
@@ -197,7 +197,7 @@ public class AnglersHatItem extends RAWearableRelicItem {
             var treasureChance = 0D;
             var valuables = List.<Item>of();
 
-            if (ability.getRankModifierData("treasure").isUnlocked()) {
+            if (ability.getRankModifierData("treasure").isEnabled()) {
                 treasureChance = Math.max(0D, Math.min(1D, ability.getStatData("treasure_chance").getValue()));
 
                 if (treasureChance > 0D) {

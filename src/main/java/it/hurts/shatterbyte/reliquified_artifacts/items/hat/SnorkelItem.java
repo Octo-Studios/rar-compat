@@ -135,7 +135,7 @@ public class SnorkelItem extends RAWearableRelicItem {
             return;
         }
 
-        if (!ability.getRankModifierData("reserve").isUnlocked() || isReserveTriggered(stack)) {
+        if (!ability.getRankModifierData("reserve").isEnabled() || isReserveTriggered(stack)) {
             if (underwater) {
                 var spentBubbles = getSpentBubbles(previousAir, player.getAirSupply(), player.getMaxAirSupply());
 
@@ -207,7 +207,7 @@ public class SnorkelItem extends RAWearableRelicItem {
     private int getReserveDurationTicks(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("reserve").isUnlocked())
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("reserve").isEnabled())
             return 0;
 
         var seconds = Math.max(0D, ability.getStatData("reserve_duration").getValue());
@@ -255,7 +255,7 @@ public class SnorkelItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
 
-            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resistance").isUnlocked())
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resistance").isEnabled())
                 return;
 
             var reduction = Math.max(0D, Math.min(1D, ability.getStatData("drowning_resistance").getValue()));
@@ -289,7 +289,7 @@ public class SnorkelItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snorkeling");
 
-            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("vision").isUnlocked())
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("vision").isEnabled())
                 return;
 
             event.setNearPlaneDistance(-8F);

@@ -127,7 +127,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
             removeMountedBuff(stack, mounted);
         }
 
-        if (!ability.getRankModifierData("reach").isUnlocked()) {
+        if (!ability.getRankModifierData("reach").isEnabled()) {
             removeRiderReachBuff(player, stack);
         } else {
             var reach = Math.max(0F, (float) ability.getStatData("reach").getValue());
@@ -138,7 +138,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
                 removeRiderReachBuff(player, stack);
         }
 
-        if (!ability.getRankModifierData("mounted_absorption").isUnlocked()) {
+        if (!ability.getRankModifierData("mounted_absorption").isEnabled()) {
             removeRiderAbsorptionBonus(player, stack);
             return;
         }
@@ -391,7 +391,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
             var relicData = relic.getRelicData(player, stack);
             var ability = relicData.getAbilitiesData().getAbilityData("riding");
 
-            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("taming").isUnlocked())
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("taming").isEnabled())
                 return;
 
             horse.tameWithName(player);

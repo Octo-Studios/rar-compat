@@ -147,7 +147,7 @@ public class PanicNecklaceItem extends RAWearableRelicItem {
         else
             EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) nextBonus, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("frenzy").isUnlocked()) {
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("frenzy").isEnabled()) {
             EntityUtils.removeAttribute(player, stack, Attributes.ATTACK_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
             return;
         }
@@ -240,7 +240,7 @@ public class PanicNecklaceItem extends RAWearableRelicItem {
                 if (fromTargetingMob)
                     relicData.getLevelingData().addExperience("panic", "targeted_hit", 1D);
 
-                if (!ability.getRankModifierData("resistance").isUnlocked())
+                if (!ability.getRankModifierData("resistance").isEnabled())
                     continue;
 
                 if (hasThreatInView(player, Math.max(1D, ability.getStatData("radius").getValue())))
@@ -294,7 +294,7 @@ public class PanicNecklaceItem extends RAWearableRelicItem {
 
                     var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("panic");
 
-                    if (!ability.canPlayerUse(player) || !ability.getRankModifierData("healing").isUnlocked())
+                    if (!ability.canPlayerUse(player) || !ability.getRankModifierData("healing").isEnabled())
                         continue;
 
                     var radius = Math.max(1D, ability.getStatData("radius").getValue());

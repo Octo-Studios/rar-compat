@@ -92,7 +92,7 @@ public class FlamePendantItem extends RAWearableRelicItem {
 
         var ability = this.getRelicData(living, stack).getAbilitiesData().getAbilityData("fire");
 
-        if (!ability.canPlayerUse(living) || !ability.getRankModifierData("healing").isUnlocked() || !living.isOnFire())
+        if (!ability.canPlayerUse(living) || !ability.getRankModifierData("healing").isEnabled() || !living.isOnFire())
             return;
 
         if (living.tickCount % 20 != 0)
@@ -135,7 +135,7 @@ public class FlamePendantItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (ability.getRankModifierData("resistance").isUnlocked())
+                if (ability.getRankModifierData("resistance").isEnabled())
                     fireImmune = true;
 
                 if (attacker == null)
@@ -193,7 +193,7 @@ public class FlamePendantItem extends RAWearableRelicItem {
                     experienceStack = stack;
                 }
 
-                if (!ability.getRankModifierData("burning_damage").isUnlocked())
+                if (!ability.getRankModifierData("burning_damage").isEnabled())
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("burning_damage_bonus").getValue()));

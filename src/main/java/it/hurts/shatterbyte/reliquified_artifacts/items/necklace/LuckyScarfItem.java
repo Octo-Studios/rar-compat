@@ -119,7 +119,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
 
         var synergy = abilities.getSynergyData("chest_mastery");
 
-        if (!synergy.isUnlocked() || !synergy.isEnabled())
+        if (!synergy.isEnabled() || !synergy.isEnabled())
             return;
 
         var amplifier = Math.max(0, (int) MathUtils.round(synergy.getStatData("amplifier").getValue(), 0));
@@ -171,13 +171,13 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             return baseFortune;
         }
 
-        if (ability.getRankModifierData("pity").isUnlocked()) {
+        if (ability.getRankModifierData("pity").isEnabled()) {
             chance = Math.max(0D, Math.min(1D, chance + getPityChanceBonus(stack)));
         } else {
             setPityChanceBonus(stack, 0D);
         }
 
-        if (ability.getRankModifierData("chain").isUnlocked()) {
+        if (ability.getRankModifierData("chain").isEnabled()) {
             maxCasts += Math.min(getNextMaxCastsBonus(stack), chainMaxBonusCasts);
         } else {
             setNextMaxCastsBonus(stack, 0);
@@ -190,7 +190,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             return baseFortune;
         }
 
-        if (ability.getRankModifierData("vein").isUnlocked()) {
+        if (ability.getRankModifierData("vein").isEnabled()) {
             var nearbySameBlocks = countNearbySameBlocks(slotContext, lootContext);
 
             if (nearbySameBlocks > 0) {
@@ -203,7 +203,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
 
         var procs = MathUtils.multicast(player.getRandom(), chance, maxCasts);
 
-        if (ability.getRankModifierData("pity").isUnlocked()) {
+        if (ability.getRankModifierData("pity").isEnabled()) {
             if (procs > 0) {
                 setPityChanceBonus(stack, 0D);
             } else {
@@ -213,7 +213,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.getRankModifierData("chain").isUnlocked()) {
+        if (ability.getRankModifierData("chain").isEnabled()) {
             var chainPerProc = Math.max(0, (int) MathUtils.round(ability.getStatData("chain_max_casts_per_proc").getValue(), 0));
             var nextBonus = procs > 0 && chainPerProc > 0 ? procs * chainPerProc : 0;
 

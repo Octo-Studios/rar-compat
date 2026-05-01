@@ -149,7 +149,7 @@ public class HeliumFlamingoItem extends RAWearableRelicItem {
             ability.getStatisticData().getMetricData("hover_duration").addValue(1D);
         }
 
-        if (!shouldConsumeHoverTime(player, ability.getRankModifierData("efficient_hover").isUnlocked()) || player.tickCount % 20 != 0)
+        if (!shouldConsumeHoverTime(player, ability.getRankModifierData("efficient_hover").isEnabled()) || player.tickCount % 20 != 0)
             return;
 
         addTime(stack, 1);
@@ -411,7 +411,7 @@ public class HeliumFlamingoItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("aerial_archery").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("aerial_archery").isEnabled())
                     continue;
 
                 var localBonus = Math.max(0D, ability.getStatData("ranged_damage_bonus").getValue());
@@ -453,7 +453,7 @@ public class HeliumFlamingoItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("flying");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("aerial_guard").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("aerial_guard").isEnabled())
                     continue;
 
                 var localReduction = Math.max(0D, Math.min(1D, ability.getStatData("resistance").getValue()));

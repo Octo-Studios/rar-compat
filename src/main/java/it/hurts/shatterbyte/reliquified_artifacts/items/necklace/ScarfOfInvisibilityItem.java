@@ -147,7 +147,7 @@ public class ScarfOfInvisibilityItem extends RAWearableRelicItem {
             if (entity.tickCount % 20 == 0)
                 ability.getStatisticData().getMetricData("duration").addValue(1D);
 
-            if (ability.getRankModifierData("regeneration").isUnlocked() && entity.tickCount % 20 == 0) {
+            if (ability.getRankModifierData("regeneration").isEnabled() && entity.tickCount % 20 == 0) {
                 var heal = (float) Math.max(0D, ability.getStatData("regeneration").getValue());
 
                 if (heal > 0F) {
@@ -226,7 +226,7 @@ public class ScarfOfInvisibilityItem extends RAWearableRelicItem {
         var relicData = this.getRelicData(entity, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("invisibility");
 
-        if (!ability.getRankModifierData("strike").isUnlocked())
+        if (!ability.getRankModifierData("strike").isEnabled())
             return;
 
         ability.getStatisticData().getMetricData("attacks").addValue(1D);
@@ -341,7 +341,7 @@ public class ScarfOfInvisibilityItem extends RAWearableRelicItem {
                 if (prepareStrike)
                     relic.onInvisibilityAttack(entity, stack);
 
-                if (prepareStrike && (ability.getRankModifierData("strike").isUnlocked() || ability.getRankModifierData("stun").isUnlocked()))
+                if (prepareStrike && (ability.getRankModifierData("strike").isEnabled() || ability.getRankModifierData("stun").isEnabled()))
                     relic.setStrikeTicks(stack, 2);
 
                 relic.onInvisibilityExit(entity, stack);
@@ -374,7 +374,7 @@ public class ScarfOfInvisibilityItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity) || relic.getStrikeTicks(stack) <= 0)
                     continue;
 
-                if (ability.getRankModifierData("strike").isUnlocked()) {
+                if (ability.getRankModifierData("strike").isEnabled()) {
                     var bonus = Math.max(0D, ability.getStatData("damage").getValue());
 
                     if (bonus > 0D) {
@@ -389,7 +389,7 @@ public class ScarfOfInvisibilityItem extends RAWearableRelicItem {
                     }
                 }
 
-                if (ability.getRankModifierData("stun").isUnlocked() && event.getEntity() instanceof LivingEntity target) {
+                if (ability.getRankModifierData("stun").isEnabled() && event.getEntity() instanceof LivingEntity target) {
                     var stunSeconds = Math.max(0D, ability.getStatData("stun").getValue());
                     var stunTicks = Math.max(0, (int) Math.round(stunSeconds * 20D));
 

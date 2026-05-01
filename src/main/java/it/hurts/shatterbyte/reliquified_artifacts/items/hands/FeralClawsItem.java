@@ -104,7 +104,7 @@ public class FeralClawsItem extends RAWearableRelicItem {
 
             if (timeout > 0) {
                 setTimeoutTicks(stack, timeout - 1);
-            } else if (ability.getRankModifierData("linger").isUnlocked()) {
+            } else if (ability.getRankModifierData("linger").isEnabled()) {
                 var decay = getDecayTicks(stack) - 1;
 
                 if (decay <= 0) {
@@ -183,7 +183,7 @@ public class FeralClawsItem extends RAWearableRelicItem {
         var previousCharges = getCharges(stack);
         var charges = previousCharges;
 
-        if (charges > 0 && (getTimeoutTicks(stack) > 0 || ability.getRankModifierData("linger").isUnlocked()))
+        if (charges > 0 && (getTimeoutTicks(stack) > 0 || ability.getRankModifierData("linger").isEnabled()))
             charges++;
         else
             charges = 1;
@@ -205,7 +205,7 @@ public class FeralClawsItem extends RAWearableRelicItem {
     private void refreshTimeout(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("feral");
 
-        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("retaliation").isUnlocked() || getCharges(stack) <= 0)
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("retaliation").isEnabled() || getCharges(stack) <= 0)
             return;
 
         setTimeoutTicks(stack, secondsToTicks(ability.getStatData("window").getValue()));
@@ -252,7 +252,7 @@ public class FeralClawsItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("feral");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("rend").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("rend").isEnabled())
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("invulnerability_reduction").getValue()));

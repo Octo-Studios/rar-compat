@@ -114,7 +114,7 @@ public class FireGauntletItem extends RAWearableRelicItem {
             if (!ability.canPlayerUse(owner))
                 continue;
 
-            if (requireSparkRank && !ability.getRankModifierData("spark").isUnlocked())
+            if (requireSparkRank && !ability.getRankModifierData("spark").isEnabled())
                 continue;
 
             var score = requireSparkRank
@@ -140,7 +140,7 @@ public class FireGauntletItem extends RAWearableRelicItem {
             if (!ability.canPlayerUse(owner))
                 continue;
 
-            if (requireSparkRank && !ability.getRankModifierData("spark").isUnlocked())
+            if (requireSparkRank && !ability.getRankModifierData("spark").isEnabled())
                 continue;
 
             return equipped;
@@ -203,7 +203,7 @@ public class FireGauntletItem extends RAWearableRelicItem {
         var relicData = relic.getRelicData(owner, trackedStack);
         var ability = relicData.getAbilitiesData().getAbilityData("flame");
 
-        if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spark").isUnlocked())
+        if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spark").isEnabled())
             return;
 
         relicData.getLevelingData().addExperience("flame", "spark_damage_hit", 1D);
@@ -246,13 +246,13 @@ public class FireGauntletItem extends RAWearableRelicItem {
                 if (!wasOnFire)
                     continue;
 
-                if (ability.getRankModifierData("burning_damage").isUnlocked()) {
+                if (ability.getRankModifierData("burning_damage").isEnabled()) {
                     var value = Math.max(0D, Math.min(1D, ability.getStatData("burning_damage_bonus").getValue()));
 
                     burningDamageBonus = Math.max(burningDamageBonus, value);
                 }
 
-                if (ability.getRankModifierData("spread").isUnlocked()) {
+                if (ability.getRankModifierData("spread").isEnabled()) {
                     var localSpreadRadius = Math.max(0D, ability.getStatData("spread_radius").getValue());
                     var localSpreadFireDuration = Math.max(0D, ability.getStatData("spread_fire_duration").getValue());
 
@@ -319,7 +319,7 @@ public class FireGauntletItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(owner, stack).getAbilitiesData().getAbilityData("flame");
 
-                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spark").isUnlocked())
+                if (!ability.canPlayerUse(owner) || !ability.getRankModifierData("spark").isEnabled())
                     continue;
 
                 var count = Math.max(0, (int) MathUtils.round(ability.getStatData("spark_count").getValue(), 0));
@@ -373,7 +373,7 @@ public class FireGauntletItem extends RAWearableRelicItem {
             if (spawnedSparks > 0 && sparkStack.getItem() instanceof FireGauntletItem relic) {
                 var ability = relic.getRelicData(owner, sparkStack).getAbilitiesData().getAbilityData("flame");
 
-                if (ability.canPlayerUse(owner) && ability.getRankModifierData("spark").isUnlocked())
+                if (ability.canPlayerUse(owner) && ability.getRankModifierData("spark").isEnabled())
                     ability.getStatisticData().getMetricData("sparks_created").addValue(spawnedSparks);
             }
         }

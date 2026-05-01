@@ -88,8 +88,8 @@ public class StriderShoesItem extends RAWearableRelicItem {
             return;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
-        var freeStride = ability.getRankModifierData("free_stride").isUnlocked();
-        var jumpBonus = ability.getRankModifierData("lava_jump").isUnlocked() ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
+        var freeStride = ability.getRankModifierData("free_stride").isEnabled();
+        var jumpBonus = ability.getRankModifierData("lava_jump").isEnabled() ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
 
         if (!ability.canPlayerUse(player)) {
             resetStrideState(player, stack);
@@ -242,7 +242,7 @@ public class StriderShoesItem extends RAWearableRelicItem {
                     if (!ability.canPlayerUse(player))
                         continue;
 
-                    if (!isStrideActive(player, ability.getRankModifierData("free_stride").isUnlocked()))
+                    if (!isStrideActive(player, ability.getRankModifierData("free_stride").isEnabled()))
                         continue;
 
                     activeRelic = relic;
@@ -295,7 +295,7 @@ public class StriderShoesItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                var freeStride = ability.getRankModifierData("free_stride").isUnlocked();
+                var freeStride = ability.getRankModifierData("free_stride").isEnabled();
 
                 if (!freeStride && !entity.isShiftKeyDown())
                     continue;
@@ -320,7 +320,7 @@ public class StriderShoesItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("lava_stride");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("lava_jump").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("lava_jump").isEnabled())
                     continue;
 
                 if (!isOnLavaSurface(player))
@@ -351,10 +351,10 @@ public class StriderShoesItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava_stride");
 
-                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("fire_immunity").isUnlocked())
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("fire_immunity").isEnabled())
                     continue;
 
-                if (!isStrideActive(player, ability.getRankModifierData("free_stride").isUnlocked()))
+                if (!isStrideActive(player, ability.getRankModifierData("free_stride").isEnabled()))
                     continue;
 
                 event.setAmount(0F);
