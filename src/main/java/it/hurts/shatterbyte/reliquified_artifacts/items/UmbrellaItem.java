@@ -377,13 +377,13 @@ public class UmbrellaItem extends RARelicItem {
     private boolean canUseBounce(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
 
-        return ability.canPlayerUse(player) && ability.isRankModifierUnlocked("bounce");
+        return ability.canPlayerUse(player) && ability.getRankModifierData("bounce").isUnlocked();
     }
 
     private void applyVanishingOnBounce(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("vanishing"))
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("vanishing").isUnlocked())
             return;
 
         var durationSeconds = Math.max(0D, ability.getStatData("vanishing_duration").getValue());
@@ -414,7 +414,7 @@ public class UmbrellaItem extends RARelicItem {
     private int getMaxBounces(Player player, ItemStack stack) {
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("glider");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("bounce"))
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("bounce").isUnlocked())
             return 0;
 
         return Math.max(0, (int) MathUtils.round(ability.getStatData("bounces").getValue(), 0));
@@ -661,7 +661,7 @@ public class UmbrellaItem extends RARelicItem {
             ability.getStatisticData().getMetricData("blocked_hits").addValue(1D);
             relic.getRelicData(player, stack).getLevelingData().addExperience("shield", "blocked_hit", 1D);
 
-            if (ability.isRankModifierUnlocked("repel") && event.getDamageSource().getDirectEntity() instanceof LivingEntity target && target != player) {
+            if (ability.getRankModifierData("repel").isUnlocked() && event.getDamageSource().getDirectEntity() instanceof LivingEntity target && target != player) {
                 var distance = Math.max(0D, ability.getStatData("repel_distance").getValue());
 
                 if (distance > 0D) {
@@ -762,3 +762,4 @@ public class UmbrellaItem extends RARelicItem {
         }
     }
 }
+

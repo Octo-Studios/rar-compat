@@ -83,11 +83,11 @@ public class SnowshoesItem extends RAWearableRelicItem {
         var active = onSnow;
 
         if (onSnow) {
-            if (ability.isRankModifierUnlocked("linger"))
+            if (ability.getRankModifierData("linger").isUnlocked())
                 setLingerTicks(stack, getLingerDurationTicks(ability.getStatData("linger_duration").getValue()));
             else
                 setLingerTicks(stack, 0);
-        } else if (ability.isRankModifierUnlocked("linger")) {
+        } else if (ability.getRankModifierData("linger").isUnlocked()) {
             var ticks = getLingerTicks(stack);
 
             if (ticks > 0) {
@@ -100,7 +100,7 @@ public class SnowshoesItem extends RAWearableRelicItem {
             setLingerTicks(stack, 0);
         }
 
-        if (ability.isRankModifierUnlocked("frost_immunity") && player.getTicksFrozen() > 0)
+        if (ability.getRankModifierData("frost_immunity").isUnlocked() && player.getTicksFrozen() > 0)
             player.setTicksFrozen(0);
 
         var targetCharge = active ? 1D : 0D;
@@ -128,7 +128,7 @@ public class SnowshoesItem extends RAWearableRelicItem {
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("snow");
 
-        return ability.canPlayerUse(player) && ability.isRankModifierUnlocked("powder_walk");
+        return ability.canPlayerUse(player) && ability.getRankModifierData("powder_walk").isUnlocked();
     }
 
     @Override
@@ -239,7 +239,7 @@ public class SnowshoesItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("snow");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("frost_immunity"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("frost_immunity").isUnlocked())
                     continue;
 
                 event.setAmount(0F);
@@ -251,3 +251,4 @@ public class SnowshoesItem extends RAWearableRelicItem {
         }
     }
 }
+

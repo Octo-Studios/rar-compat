@@ -94,7 +94,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
 
         var radius = Math.max(1D, ability.getStatData("radius").getValue());
         var pull = "pull".equals(mode);
-        var teleportPullItems = pull && ability.isRankModifierUnlocked("teleport");
+        var teleportPullItems = pull && ability.getRankModifierData("teleport").isUnlocked();
 
         var items = player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
@@ -118,7 +118,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
             }
         }
 
-        if (pull && ability.isRankModifierUnlocked("experience")) {
+        if (pull && ability.getRankModifierData("experience").isUnlocked()) {
             var orbs = player.level().getEntitiesOfClass(ExperienceOrb.class, player.getBoundingBox().inflate(radius), Entity::isAlive);
 
             for (var orb : orbs) {
@@ -127,7 +127,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
             }
         }
 
-        if (!pull && ability.isRankModifierUnlocked("projectiles")) {
+        if (!pull && ability.getRankModifierData("projectiles").isUnlocked()) {
             var projectiles = player.level().getEntitiesOfClass(Projectile.class, player.getBoundingBox().inflate(radius), projectile -> projectile.isAlive() && isHostileProjectile(player, projectile));
 
             for (var projectile : projectiles) {
@@ -314,7 +314,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("magnetism");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("experience"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("experience").isUnlocked())
                     continue;
 
                 relicData.getLevelingData().addExperience("magnetism", "pulled_xp", 1D);
@@ -325,3 +325,4 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
         }
     }
 }
+

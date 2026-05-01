@@ -171,13 +171,13 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             return baseFortune;
         }
 
-        if (ability.isRankModifierUnlocked("pity")) {
+        if (ability.getRankModifierData("pity").isUnlocked()) {
             chance = Math.max(0D, Math.min(1D, chance + getPityChanceBonus(stack)));
         } else {
             setPityChanceBonus(stack, 0D);
         }
 
-        if (ability.isRankModifierUnlocked("chain")) {
+        if (ability.getRankModifierData("chain").isUnlocked()) {
             maxCasts += Math.min(getNextMaxCastsBonus(stack), chainMaxBonusCasts);
         } else {
             setNextMaxCastsBonus(stack, 0);
@@ -190,7 +190,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             return baseFortune;
         }
 
-        if (ability.isRankModifierUnlocked("vein")) {
+        if (ability.getRankModifierData("vein").isUnlocked()) {
             var nearbySameBlocks = countNearbySameBlocks(slotContext, lootContext);
 
             if (nearbySameBlocks > 0) {
@@ -203,7 +203,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
 
         var procs = MathUtils.multicast(player.getRandom(), chance, maxCasts);
 
-        if (ability.isRankModifierUnlocked("pity")) {
+        if (ability.getRankModifierData("pity").isUnlocked()) {
             if (procs > 0) {
                 setPityChanceBonus(stack, 0D);
             } else {
@@ -213,7 +213,7 @@ public class LuckyScarfItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.isRankModifierUnlocked("chain")) {
+        if (ability.getRankModifierData("chain").isUnlocked()) {
             var chainPerProc = Math.max(0, (int) MathUtils.round(ability.getStatData("chain_max_casts_per_proc").getValue(), 0));
             var nextBonus = procs > 0 && chainPerProc > 0 ? procs * chainPerProc : 0;
 
@@ -339,3 +339,4 @@ public class LuckyScarfItem extends RAWearableRelicItem {
         }
     }
 }
+

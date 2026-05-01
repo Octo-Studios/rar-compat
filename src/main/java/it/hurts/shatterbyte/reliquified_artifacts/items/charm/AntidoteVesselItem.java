@@ -101,7 +101,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("limiter"))
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("limiter").isUnlocked())
             return;
 
         enforceNegativeAmplifierCap(player);
@@ -249,13 +249,13 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
                     bestStack = stack;
                 }
 
-                if (ability.isRankModifierUnlocked("recovery") && relic.getImmunityUntil(stack, effectId) > gameTime) {
+                if (ability.getRankModifierData("recovery").isUnlocked() && relic.getImmunityUntil(stack, effectId) > gameTime) {
                     blockedByImmunity = true;
                     recoveryRelic = relic;
                     recoveryStack = stack;
                 }
 
-                if (ability.isRankModifierUnlocked("limiter"))
+                if (ability.getRankModifierData("limiter").isUnlocked())
                     hasAmplifierCap = true;
             }
 
@@ -320,7 +320,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("recovery"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("recovery").isUnlocked())
                     continue;
 
                 var protectionTicks = secondsToTicks(ability.getStatData("immunity_duration").getValue());
@@ -352,7 +352,7 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("antidote");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("resilience"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("resilience").isUnlocked())
                     continue;
 
                 var perEffect = Math.max(0D, Math.min(1D, ability.getStatData("resistance_per_effect").getValue()));
@@ -381,4 +381,5 @@ public class AntidoteVesselItem extends RAWearableRelicItem {
         }
     }
 }
+
 

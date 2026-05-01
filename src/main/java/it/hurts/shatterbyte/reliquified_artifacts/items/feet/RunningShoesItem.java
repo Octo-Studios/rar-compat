@@ -130,7 +130,7 @@ public class RunningShoesItem extends RAWearableRelicItem {
         else
             EntityUtils.resetAttribute(player, stack, Attributes.MOVEMENT_SPEED, (float) speedBonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        if (ability.isRankModifierUnlocked("step_up")) {
+        if (ability.getRankModifierData("step_up").isUnlocked()) {
             var stepBonus = Math.max(0D, ability.getStatData("max_step_bonus").getValue()) * charge;
 
             if (stepBonus <= 0D)
@@ -141,7 +141,7 @@ public class RunningShoesItem extends RAWearableRelicItem {
             EntityUtils.removeAttribute(player, stack, Attributes.STEP_HEIGHT, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
 
-        if (ability.isRankModifierUnlocked("immortality") && running && charge >= 0.999D) {
+        if (ability.getRankModifierData("immortality").isUnlocked() && running && charge >= 0.999D) {
             player.addEffect(new MobEffectInstance(RelicsMobEffects.IMMORTALITY, 10, 0, false, false));
 
             if (player.tickCount % 20 == 0)
@@ -187,7 +187,7 @@ public class RunningShoesItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("runner");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("jump_boost") || !relic.isRunning(player))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("jump_boost").isUnlocked() || !relic.isRunning(player))
                     continue;
 
                 var bonus = Math.max(0D, Math.min(1D, ability.getStatData("jump_charge_bonus").getValue()));
@@ -202,3 +202,4 @@ public class RunningShoesItem extends RAWearableRelicItem {
         }
     }
 }
+

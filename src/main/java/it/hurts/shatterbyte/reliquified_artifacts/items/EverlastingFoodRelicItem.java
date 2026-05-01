@@ -81,7 +81,7 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
             this.getRelicData(livingEntity, stack).getLevelingData().addExperience("meal", "consume", 1D);
         }
 
-        if (ability.canPlayerUse(livingEntity) && ability.isRankModifierUnlocked("restoration")) {
+        if (ability.canPlayerUse(livingEntity) && ability.getRankModifierData("restoration").isUnlocked()) {
             var heal = (float) Math.max(0D, ability.getStatData("healing").getValue());
 
             if (heal > 0F) {
@@ -100,7 +100,7 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
 
         var consumeDurability = true;
 
-        if (ability.canPlayerUse(livingEntity) && ability.isRankModifierUnlocked("preservation")) {
+        if (ability.canPlayerUse(livingEntity) && ability.getRankModifierData("preservation").isUnlocked()) {
             var chance = Math.max(0D, Math.min(1D, ability.getStatData("preservation_chance").getValue()));
 
             if (chance > 0D)
@@ -172,7 +172,7 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
         var durationTicks = Math.max(1, this.getUseDuration(stack, livingEntity));
         var ability = this.getRelicData(livingEntity, stack).getAbilitiesData().getAbilityData("meal");
 
-        if (ability.canPlayerUse(livingEntity) && ability.isRankModifierUnlocked("quick_meal")) {
+        if (ability.canPlayerUse(livingEntity) && ability.getRankModifierData("quick_meal").isUnlocked()) {
             var speed = Math.max(0D, Math.min(0.95D, ability.getStatData("consume_speed").getValue()));
 
             if (speed > 0D)
@@ -214,7 +214,7 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
 
             var ability = relic.getRelicData(event.getEntity(), stack).getAbilitiesData().getAbilityData("meal");
 
-            if (!ability.canPlayerUse(event.getEntity()) || !ability.isRankModifierUnlocked("quick_meal"))
+            if (!ability.canPlayerUse(event.getEntity()) || !ability.getRankModifierData("quick_meal").isUnlocked())
                 return;
 
             var speed = Math.max(0D, Math.min(0.95D, ability.getStatData("consume_speed").getValue()));
@@ -229,3 +229,4 @@ public abstract class EverlastingFoodRelicItem extends RARelicItem {
         }
     }
 }
+

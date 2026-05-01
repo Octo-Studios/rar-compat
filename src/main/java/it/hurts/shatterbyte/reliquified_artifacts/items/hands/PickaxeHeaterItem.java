@@ -123,7 +123,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
         var relicData = this.getRelicData(player, stack);
         var ability = relicData.getAbilitiesData().getAbilityData("heating");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("molten_luck")) {
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("molten_luck").isUnlocked()) {
             clearPendingSmeltRoll(stack);
             return baseFortune;
         }
@@ -136,7 +136,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
 
         var smeltChance = Math.max(0D, Math.min(1D, ability.getStatData("smelt_chance").getValue()));
 
-        if (ability.isRankModifierUnlocked("overheat"))
+        if (ability.getRankModifierData("overheat").isUnlocked())
             smeltChance = Math.max(0D, Math.min(1D, smeltChance + getSmeltPityStacks(stack) * Math.max(0D, ability.getStatData("stack_bonus").getValue())));
         else
             setSmeltPityStacks(stack, 0);
@@ -144,7 +144,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
         var smeltSuccess = player.getRandom().nextDouble() <= smeltChance;
 
         if (!smeltSuccess) {
-            if (ability.isRankModifierUnlocked("overheat"))
+            if (ability.getRankModifierData("overheat").isUnlocked())
                 setSmeltPityStacks(stack, getSmeltPityStacks(stack) + 1);
 
             setPendingSmeltResult(stack, 0);
@@ -152,7 +152,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
             return baseFortune;
         }
 
-        if (ability.isRankModifierUnlocked("overheat"))
+        if (ability.getRankModifierData("overheat").isUnlocked())
             setSmeltPityStacks(stack, 0);
 
         var chance = Math.max(0D, Math.min(1D, ability.getStatData("fortune_chance").getValue()));
@@ -260,7 +260,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
             } else {
                 var chance = Math.max(0D, Math.min(1D, ability.getStatData("smelt_chance").getValue()));
 
-                if (ability.isRankModifierUnlocked("overheat"))
+                if (ability.getRankModifierData("overheat").isUnlocked())
                     chance = Math.max(0D, Math.min(1D, chance + relic.getSmeltPityStacks(relicStack) * Math.max(0D, ability.getStatData("stack_bonus").getValue())));
                 else
                     relic.setSmeltPityStacks(relicStack, 0);
@@ -268,13 +268,13 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
                 success = player.getRandom().nextDouble() <= chance;
 
                 if (!success) {
-                    if (ability.isRankModifierUnlocked("overheat"))
+                    if (ability.getRankModifierData("overheat").isUnlocked())
                         relic.setSmeltPityStacks(relicStack, relic.getSmeltPityStacks(relicStack) + 1);
 
                     return;
                 }
 
-                if (ability.isRankModifierUnlocked("overheat"))
+                if (ability.getRankModifierData("overheat").isUnlocked())
                     relic.setSmeltPityStacks(relicStack, 0);
             }
 
@@ -321,7 +321,7 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("heating");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("blazing_strike"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("blazing_strike").isUnlocked())
                     continue;
 
                 var localDuration = Math.max(0D, ability.getStatData("ignite_duration").getValue());
@@ -352,3 +352,4 @@ public class PickaxeHeaterItem extends RAWearableRelicItem {
         }
     }
 }
+

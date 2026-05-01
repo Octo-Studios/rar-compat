@@ -195,7 +195,7 @@ public class DrinkingHatItem extends RAWearableRelicItem {
                     ability.getStatisticData().getMetricData("consumed_duration").addValue(durationSeconds);
             }
 
-            if (ability.isRankModifierUnlocked("breathing")) {
+            if (ability.getRankModifierData("breathing").isUnlocked()) {
                 var air = Math.max(0, (int) MathUtils.round(ability.getStatData("air").getValue(), 0));
 
                 if (air > 0) {
@@ -214,7 +214,7 @@ public class DrinkingHatItem extends RAWearableRelicItem {
                 }
             }
 
-            if (ability.isRankModifierUnlocked("nutrition")) {
+            if (ability.getRankModifierData("nutrition").isUnlocked()) {
                 var hunger = Math.max(0, (int) MathUtils.round(ability.getStatData("hunger").getValue(), 0));
 
                 if (hunger > 0) {
@@ -231,7 +231,7 @@ public class DrinkingHatItem extends RAWearableRelicItem {
                 }
             }
 
-            if (ability.isRankModifierUnlocked("healing")) {
+            if (ability.getRankModifierData("healing").isUnlocked()) {
                 var heal = (float) Math.max(0D, ability.getStatData("health").getValue());
 
                 if (heal > 0F) {
@@ -259,3 +259,4 @@ public class DrinkingHatItem extends RAWearableRelicItem {
         }
     }
 }
+

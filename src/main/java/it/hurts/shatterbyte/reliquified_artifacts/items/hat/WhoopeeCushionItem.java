@@ -193,10 +193,10 @@ public class WhoopeeCushionItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.isRankModifierUnlocked("toxic_cloud")) {
+        if (ability.getRankModifierData("toxic_cloud").isUnlocked()) {
             var spawnCloud = true;
 
-            if (ability.isRankModifierUnlocked("paralysis")) {
+            if (ability.getRankModifierData("paralysis").isUnlocked()) {
                 var cloudChance = Math.max(0D, Math.min(1D, ability.getStatData("cloud_spawn_chance").getValue()));
                 spawnCloud = player.getRandom().nextDouble() <= cloudChance;
             }
@@ -207,7 +207,7 @@ public class WhoopeeCushionItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.isRankModifierUnlocked("paralysis")) {
+        if (ability.getRankModifierData("paralysis").isUnlocked()) {
             var radius = Math.max(0D, ability.getStatData("paralysis_radius").getValue());
             var durationTicks = secondsToTicks(ability.getStatData("paralysis_duration").getValue());
 
@@ -297,7 +297,7 @@ public class WhoopeeCushionItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("push");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("retaliation") || relic.getCooldownTicks(stack) > 0)
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("retaliation").isUnlocked() || relic.getCooldownTicks(stack) > 0)
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("retaliation_chance").getValue()));
@@ -317,3 +317,4 @@ public class WhoopeeCushionItem extends RAWearableRelicItem {
         }
     }
 }
+

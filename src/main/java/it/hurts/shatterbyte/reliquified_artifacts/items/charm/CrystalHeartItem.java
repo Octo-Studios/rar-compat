@@ -220,12 +220,12 @@ public class CrystalHeartItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(player) || relic.getCooldownTicks(stack) > 0)
                     continue;
 
-                if (ability.isRankModifierUnlocked("bastion") && player.getHealth() >= player.getMaxHealth() - 1.0E-3F) {
+                if (ability.getRankModifierData("bastion").isUnlocked() && player.getHealth() >= player.getMaxHealth() - 1.0E-3F) {
                     var resist = Math.max(0D, Math.min(1D, ability.getStatData("full_health_resistance").getValue()));
                     reduction = Math.max(reduction, resist);
                 }
 
-                if (ability.isRankModifierUnlocked("survival")) {
+                if (ability.getRankModifierData("survival").isUnlocked()) {
                     var threshold = Math.max(0D, Math.min(1D, ability.getStatData("heavy_hit_threshold").getValue()));
 
                     if (incomingAmount >= player.getMaxHealth() * threshold) {
@@ -287,7 +287,7 @@ public class CrystalHeartItem extends RAWearableRelicItem {
                     experienceStack = stack;
                 }
 
-                if (!ability.isRankModifierUnlocked("recuperation"))
+                if (!ability.getRankModifierData("recuperation").isUnlocked())
                     continue;
 
                 var healBonus = Math.max(0D, ability.getStatData("low_health_heal_bonus").getValue());
@@ -328,3 +328,4 @@ public class CrystalHeartItem extends RAWearableRelicItem {
         }
     }
 }
+

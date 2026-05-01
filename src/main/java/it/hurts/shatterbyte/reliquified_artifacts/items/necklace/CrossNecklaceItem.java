@@ -115,7 +115,7 @@ public class CrossNecklaceItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(entity, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
-                if (!ability.canPlayerUse(entity) || !ability.isRankModifierUnlocked("salvation"))
+                if (!ability.canPlayerUse(entity) || !ability.getRankModifierData("salvation").isUnlocked())
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("survival_chance").getValue()));
@@ -180,7 +180,7 @@ public class CrossNecklaceItem extends RAWearableRelicItem {
                 if (invulnerabilityTicks > 0)
                     ability.getStatisticData().getMetricData("invulnerability_time").addValue(invulnerabilitySeconds);
 
-                if (attacker != null && attacker.isInvertedHealAndHarm() && ability.isRankModifierUnlocked("holy_fire")) {
+                if (attacker != null && attacker.isInvertedHealAndHarm() && ability.getRankModifierData("holy_fire").isUnlocked()) {
                     var value = (float) Math.max(0D, ability.getStatData("fire_duration").getValue());
 
                     if (value > fireSeconds) {
@@ -254,7 +254,7 @@ public class CrossNecklaceItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(source, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("protection");
 
-                if (!ability.canPlayerUse(source) || !ability.isRankModifierUnlocked("smite"))
+                if (!ability.canPlayerUse(source) || !ability.getRankModifierData("smite").isUnlocked())
                     continue;
 
                 relicData.getLevelingData().addExperience("protection", "smite_hit", 1D);
@@ -284,3 +284,4 @@ public class CrossNecklaceItem extends RAWearableRelicItem {
         }
     }
 }
+

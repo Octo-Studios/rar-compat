@@ -147,10 +147,10 @@ public class OnionRingItem extends RAWearableRelicItem {
 
                 speedPerHunger = Math.max(speedPerHunger, Math.max(0D, ability.getStatData("speed_per_hunger").getValue()));
 
-                if (ability.isRankModifierUnlocked("food_rush") && relic.getFoodBoostTicks(stack) > 0)
+                if (ability.getRankModifierData("food_rush").isUnlocked() && relic.getFoodBoostTicks(stack) > 0)
                     foodRushBonus = Math.max(foodRushBonus, Math.max(0D, ability.getStatData("food_boost").getValue()));
 
-                if (ability.isRankModifierUnlocked("perfect_focus") && hunger >= 20)
+                if (ability.getRankModifierData("perfect_focus").isUnlocked() && hunger >= 20)
                     instantBreak = true;
             }
 
@@ -187,7 +187,7 @@ public class OnionRingItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("hunger_mining");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("food_rush")) {
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("food_rush").isUnlocked()) {
                     relic.setFoodBoostTicks(stack, 0);
                     continue;
                 }
@@ -234,7 +234,7 @@ public class OnionRingItem extends RAWearableRelicItem {
                     bestMiningWeight = miningWeight;
                 }
 
-                if (!ability.isRankModifierUnlocked("sustenance"))
+                if (!ability.getRankModifierData("sustenance").isUnlocked())
                     continue;
 
                 var value = Math.max(0D, Math.min(1D, ability.getStatData("hunger_restore_chance").getValue()));
@@ -276,3 +276,4 @@ public class OnionRingItem extends RAWearableRelicItem {
         }
     }
 }
+

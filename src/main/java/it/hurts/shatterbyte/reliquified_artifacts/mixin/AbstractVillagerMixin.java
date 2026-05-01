@@ -34,7 +34,7 @@ public abstract class AbstractVillagerMixin {
 
         var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("trade_surge");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("preserve")) {
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("preserve").isUnlocked()) {
             offer.increaseUses();
             return;
         }
@@ -49,3 +49,4 @@ public abstract class AbstractVillagerMixin {
         VillagerHatItem.onTradePreserved(player, stack);
     }
 }
+

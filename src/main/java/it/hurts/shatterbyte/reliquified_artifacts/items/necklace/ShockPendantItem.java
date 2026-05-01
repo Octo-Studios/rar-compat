@@ -164,7 +164,7 @@ public class ShockPendantItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (lightningDamage && ability.isRankModifierUnlocked("resistance")) {
+                if (lightningDamage && ability.getRankModifierData("resistance").isUnlocked()) {
                     lightningImmune = true;
 
                     if (lightningRelic == null) {
@@ -184,7 +184,7 @@ public class ShockPendantItem extends RAWearableRelicItem {
                         if (distance > 0F && bounces > 0 && damage > 0F) {
                             var spark = new ElectricSparkEntity(RelicsEntities.ELECTRIC_SPARK.get(), entity.level());
 
-                            if (ability.isRankModifierUnlocked("conductor"))
+                            if (ability.getRankModifierData("conductor").isUnlocked())
                                 spark.setDamageModifier((float) Math.max(0D, ability.getStatData("damage_modifier").getValue()));
 
                             spark.setDistance(distance);
@@ -204,7 +204,7 @@ public class ShockPendantItem extends RAWearableRelicItem {
                     }
                 }
 
-                if (ability.isRankModifierUnlocked("tremor")) {
+                if (ability.getRankModifierData("tremor").isUnlocked()) {
                     var currentChance = Math.max(0D, Math.min(1D, ability.getStatData("tremor_chance").getValue()));
                     var currentDuration = Math.max(0D, ability.getStatData("tremor_duration").getValue());
 

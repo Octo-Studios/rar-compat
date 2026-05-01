@@ -103,7 +103,7 @@ public class SteadfastSpikesItem extends RAWearableRelicItem {
 
         var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("resistance");
 
-        return ability.canPlayerUse(player) && ability.isRankModifierUnlocked("anchor") && isStandingStill(player);
+        return ability.canPlayerUse(player) && ability.getRankModifierData("anchor").isUnlocked() && isStandingStill(player);
     }
 
     private static double getEffectiveResistance(Player player, double baseResistance, boolean crouchUnlocked, boolean anchorUnlocked) {
@@ -154,7 +154,7 @@ public class SteadfastSpikesItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("wall_slide");
 
-            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("damage_resistance"))
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.getRankModifierData("damage_resistance").isUnlocked())
                 return;
 
             var resistance = Math.max(0D, Math.min(1D, ability.getStatData("damage_resistance").getValue()));
@@ -182,8 +182,8 @@ public class SteadfastSpikesItem extends RAWearableRelicItem {
 
             var resistance = getEffectiveResistance(player,
                     ability.getStatData("modifier").getValue(),
-                    ability.isRankModifierUnlocked("crouch"),
-                    ability.isRankModifierUnlocked("anchor"));
+                    ability.getRankModifierData("crouch").isUnlocked(),
+                    ability.getRankModifierData("anchor").isUnlocked());
 
             if (resistance <= 0D)
                 return;
@@ -212,8 +212,8 @@ public class SteadfastSpikesItem extends RAWearableRelicItem {
 
             var resistance = getEffectiveResistance(player,
                     ability.getStatData("modifier").getValue(),
-                    ability.isRankModifierUnlocked("crouch"),
-                    ability.isRankModifierUnlocked("anchor"));
+                    ability.getRankModifierData("crouch").isUnlocked(),
+                    ability.getRankModifierData("anchor").isUnlocked());
 
             if (resistance <= 0D)
                 return;
@@ -225,3 +225,4 @@ public class SteadfastSpikesItem extends RAWearableRelicItem {
         }
     }
 }
+

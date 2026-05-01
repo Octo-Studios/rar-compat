@@ -99,7 +99,7 @@ public class VampiricGloveItem extends RAWearableRelicItem {
             return;
         }
 
-        if (!ability.isRankModifierUnlocked("overheal_absorption")) {
+        if (!ability.getRankModifierData("overheal_absorption").isUnlocked()) {
             removeAbsorptionCap(player, stack);
             return;
         }
@@ -236,7 +236,7 @@ public class VampiricGloveItem extends RAWearableRelicItem {
                     continue;
                 }
 
-                if (ability.isRankModifierUnlocked("overheal_absorption")) {
+                if (ability.getRankModifierData("overheal_absorption").isUnlocked()) {
                     var cap = Math.max(0D, ability.getStatData("overheal_absorption_cap").getValue());
 
                     if (cap > 0D)
@@ -249,7 +249,7 @@ public class VampiricGloveItem extends RAWearableRelicItem {
 
                 var streak = 0;
 
-                if (ability.isRankModifierUnlocked("streak")) {
+                if (ability.getRankModifierData("streak").isUnlocked()) {
                     var windowTicks = secondsToTicks(ability.getStatData("streak_window").getValue());
                     var maxStacks = Math.max(0, (int) MathUtils.round(ability.getStatData("max_streak_bonuses").getValue(), 0));
 
@@ -268,7 +268,7 @@ public class VampiricGloveItem extends RAWearableRelicItem {
 
                 var healingPercent = Math.max(0D, ability.getStatData("lifesteal").getValue());
 
-                if (ability.isRankModifierUnlocked("streak") && streak > 0) {
+                if (ability.getRankModifierData("streak").isUnlocked() && streak > 0) {
                     var streakBonus = Math.max(0D, ability.getStatData("streak_heal_bonus").getValue());
 
                     healingPercent += streakBonus * streak;
@@ -276,15 +276,15 @@ public class VampiricGloveItem extends RAWearableRelicItem {
 
                 var healing = Math.max(0D, event.getNewDamage()) * healingPercent;
 
-                if (killed && ability.isRankModifierUnlocked("execution_heal")) {
+                if (killed && ability.getRankModifierData("execution_heal").isUnlocked()) {
                     var killHeal = Math.max(0D, Math.min(1D, ability.getStatData("kill_heal").getValue()));
 
                     healing += player.getMaxHealth() * killHeal;
                 }
 
-                if (healing > bestHealing || (healing == bestHealing && ability.isRankModifierUnlocked("overheal_absorption") && !bestUsesOverheal)) {
+                if (healing > bestHealing || (healing == bestHealing && ability.getRankModifierData("overheal_absorption").isUnlocked() && !bestUsesOverheal)) {
                     bestHealing = healing;
-                    bestUsesOverheal = ability.isRankModifierUnlocked("overheal_absorption");
+                    bestUsesOverheal = ability.getRankModifierData("overheal_absorption").isUnlocked();
                     bestOverhealCap = bestUsesOverheal ? Math.max(0D, ability.getStatData("overheal_absorption_cap").getValue()) : 0D;
                     bestStack = stack;
                     bestRelic = relic;
@@ -323,3 +323,4 @@ public class VampiricGloveItem extends RAWearableRelicItem {
         }
     }
 }
+

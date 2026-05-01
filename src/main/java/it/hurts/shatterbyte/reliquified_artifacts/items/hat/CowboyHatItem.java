@@ -127,7 +127,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
             removeMountedBuff(stack, mounted);
         }
 
-        if (!ability.isRankModifierUnlocked("reach")) {
+        if (!ability.getRankModifierData("reach").isUnlocked()) {
             removeRiderReachBuff(player, stack);
         } else {
             var reach = Math.max(0F, (float) ability.getStatData("reach").getValue());
@@ -138,7 +138,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
                 removeRiderReachBuff(player, stack);
         }
 
-        if (!ability.isRankModifierUnlocked("mounted_absorption")) {
+        if (!ability.getRankModifierData("mounted_absorption").isUnlocked()) {
             removeRiderAbsorptionBonus(player, stack);
             return;
         }
@@ -236,7 +236,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
     }
 
     private void applyMountedBuff(ItemStack stack, LivingEntity mounted, float amount) {
-        resetLivingAttribute(mounted, stack, Attributes.MAX_HEALTH, amount);
+        resetMountedMaxHealthKeepingRatio(mounted, stack, amount);
         resetLivingAttribute(mounted, stack, Attributes.MOVEMENT_SPEED, amount);
         resetLivingAttribute(mounted, stack, Attributes.JUMP_STRENGTH, amount);
         resetLivingAttribute(mounted, stack, Attributes.ATTACK_DAMAGE, amount);
@@ -248,7 +248,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
     }
 
     private void removeMountedBuff(ItemStack stack, LivingEntity mounted) {
-        removeLivingAttribute(mounted, stack, Attributes.MAX_HEALTH);
+        removeMountedMaxHealthKeepingRatio(mounted, stack);
         removeLivingAttribute(mounted, stack, Attributes.MOVEMENT_SPEED);
         removeLivingAttribute(mounted, stack, Attributes.JUMP_STRENGTH);
         removeLivingAttribute(mounted, stack, Attributes.ATTACK_DAMAGE);
@@ -257,6 +257,34 @@ public class CowboyHatItem extends RAWearableRelicItem {
         removeLivingAttribute(mounted, stack, Attributes.ARMOR);
         removeLivingAttribute(mounted, stack, Attributes.ARMOR_TOUGHNESS);
         removeLivingAttribute(mounted, stack, Attributes.KNOCKBACK_RESISTANCE);
+    }
+
+    private void resetMountedMaxHealthKeepingRatio(LivingEntity mounted, ItemStack stack, float amount) {
+        var oldMaxHealth = Math.max(1.0E-4F, mounted.getMaxHealth());
+        var healthRatio = Math.max(0D, Math.min(1D, mounted.getHealth() / oldMaxHealth));
+
+        resetLivingAttribute(mounted, stack, Attributes.MAX_HEALTH, amount);
+
+        var newMaxHealth = mounted.getMaxHealth();
+
+        if (newMaxHealth <= 0F)
+            return;
+
+        mounted.setHealth((float) Math.max(0F, Math.min(newMaxHealth, newMaxHealth * healthRatio)));
+    }
+
+    private void removeMountedMaxHealthKeepingRatio(LivingEntity mounted, ItemStack stack) {
+        var oldMaxHealth = Math.max(1.0E-4F, mounted.getMaxHealth());
+        var healthRatio = Math.max(0D, Math.min(1D, mounted.getHealth() / oldMaxHealth));
+
+        removeLivingAttribute(mounted, stack, Attributes.MAX_HEALTH);
+
+        var newMaxHealth = mounted.getMaxHealth();
+
+        if (newMaxHealth <= 0F)
+            return;
+
+        mounted.setHealth((float) Math.max(0F, Math.min(newMaxHealth, newMaxHealth * healthRatio)));
     }
 
     private void applyRiderReachBuff(Player player, ItemStack stack, float amount) {
@@ -363,7 +391,7 @@ public class CowboyHatItem extends RAWearableRelicItem {
             var relicData = relic.getRelicData(player, stack);
             var ability = relicData.getAbilitiesData().getAbilityData("riding");
 
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("taming"))
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("taming").isUnlocked())
                 return;
 
             horse.tameWithName(player);
@@ -375,3 +403,4 @@ public class CowboyHatItem extends RAWearableRelicItem {
         }
     }
 }
+

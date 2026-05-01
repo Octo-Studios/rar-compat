@@ -418,7 +418,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
                     relic.armHighJump(player, stack);
                 }
 
-                if (player.level().isClientSide() || !ability.isRankModifierUnlocked("repel"))
+                if (player.level().isClientSide() || !ability.getRankModifierData("repel").isUnlocked())
                     continue;
 
                 repelRadius = Math.max(repelRadius, Math.max(0D, ability.getStatData("repel_radius").getValue()));
@@ -479,7 +479,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
 
             event.setDistance(Math.max(0F, event.getDistance() - safeHeight));
 
-            if (ability.isRankModifierUnlocked("safe_landing"))
+            if (ability.getRankModifierData("safe_landing").isUnlocked())
                 event.setCanceled(true);
 
             relic.setTime(stack, 0);
@@ -505,7 +505,7 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("jump");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("impact") || player.onGround() || player.isFallFlying() || player.getAbilities().flying)
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("impact").isUnlocked() || player.onGround() || player.isFallFlying() || player.getAbilities().flying)
                     continue;
 
                 var jumpStartY = relic.getJumpStartY(stack);
@@ -545,3 +545,4 @@ public class BunnyHoppersItem extends RAWearableRelicItem {
         }
     }
 }
+

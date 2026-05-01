@@ -97,8 +97,8 @@ public class AquaDashersItem extends RAWearableRelicItem {
             return;
 
         var ability = this.getRelicData(player, stack).getAbilitiesData().getAbilityData("water_dash");
-        var freeDash = ability.isRankModifierUnlocked("free_dash");
-        var jumpBonus = ability.isRankModifierUnlocked("water_jump") ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
+        var freeDash = ability.getRankModifierData("free_dash").isUnlocked();
+        var jumpBonus = ability.getRankModifierData("water_jump").isUnlocked() ? Math.max(0D, Math.min(1D, ability.getStatData("jump_bonus").getValue())) : 0D;
 
         if (!ability.canPlayerUse(player)) {
             resetDashState(player, stack);
@@ -257,7 +257,7 @@ public class AquaDashersItem extends RAWearableRelicItem {
                     if (!ability.canPlayerUse(player))
                         continue;
 
-                    if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
+                    if (!isDashActive(player, ability.getRankModifierData("free_dash").isUnlocked()))
                         continue;
 
                     activeRelic = relic;
@@ -310,7 +310,7 @@ public class AquaDashersItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(entity))
                     continue;
 
-                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
+                if (!isDashActive(player, ability.getRankModifierData("free_dash").isUnlocked()))
                     continue;
 
                 event.setCanceled(true);
@@ -330,7 +330,7 @@ public class AquaDashersItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("water_dash");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("water_jump"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("water_jump").isUnlocked())
                     continue;
 
                 if (!isOnWaterSurface(player))
@@ -365,10 +365,10 @@ public class AquaDashersItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("water_dash");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("projectile_phase"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("projectile_phase").isUnlocked())
                     continue;
 
-                if (!isDashActive(player, ability.isRankModifierUnlocked("free_dash")))
+                if (!isDashActive(player, ability.getRankModifierData("free_dash").isUnlocked()))
                     continue;
 
                 event.setCanceled(true);

@@ -224,10 +224,10 @@ public class PocketPistonItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(player))
                     continue;
 
-                if (ability.isRankModifierUnlocked("repulse") && player.getMainHandItem().isEmpty())
+                if (ability.getRankModifierData("repulse").isUnlocked() && player.getMainHandItem().isEmpty())
                     emptyHandKnockback = Math.max(emptyHandKnockback, Math.max(0D, ability.getStatData("empty_hand_knockback").getValue()));
 
-                if (ability.isRankModifierUnlocked("distance_power")) {
+                if (ability.getRankModifierData("distance_power").isUnlocked()) {
                     var localBonus = Math.max(0D, Math.min(1D, ability.getStatData("distance_bonus_per_block").getValue()));
 
                     if (localBonus > distanceBonusPerBlock) {
@@ -237,7 +237,7 @@ public class PocketPistonItem extends RAWearableRelicItem {
                     }
                 }
 
-                if (ability.isRankModifierUnlocked("long_reach_stun")) {
+                if (ability.getRankModifierData("long_reach_stun").isUnlocked()) {
                     var ticks = Math.max(0, (int) Math.round(Math.max(0D, ability.getStatData("stun_duration").getValue()) * 20D));
 
                     if (ticks > stunTicks) {
@@ -324,7 +324,7 @@ public class PocketPistonItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("piston");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("distance_power"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("distance_power").isUnlocked())
                     continue;
 
                 bonusPerBlock = Math.max(bonusPerBlock, Math.max(0D, Math.min(1D, ability.getStatData("distance_bonus_per_block").getValue())));
@@ -383,3 +383,4 @@ public class PocketPistonItem extends RAWearableRelicItem {
         }
     }
 }
+

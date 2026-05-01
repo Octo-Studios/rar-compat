@@ -130,7 +130,7 @@ public class GoldenHookItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("hook");
 
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("boat_guard"))
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("boat_guard").isUnlocked())
                 continue;
 
             var value = Math.max(0D, ability.getStatData("experience_pull_radius").getValue());
@@ -252,7 +252,7 @@ public class GoldenHookItem extends RAWearableRelicItem {
                 if (!ability.canPlayerUse(player))
                     continue;
 
-                if (ability.isRankModifierUnlocked("crowd_pull")) {
+                if (ability.getRankModifierData("crowd_pull").isUnlocked()) {
                     var value = Math.max(0D, ability.getStatData("entities_pull_radius").getValue());
 
                     if (pullRelic == null || value > pullRadius) {
@@ -262,7 +262,7 @@ public class GoldenHookItem extends RAWearableRelicItem {
                     }
                 }
 
-                if (ability.isRankModifierUnlocked("disarm")) {
+                if (ability.getRankModifierData("disarm").isUnlocked()) {
                     var value = Math.max(0D, Math.min(1D, ability.getStatData("steal_chance").getValue()));
 
                     if (stealRelic == null || value > stealChance) {
@@ -318,3 +318,4 @@ public class GoldenHookItem extends RAWearableRelicItem {
         }
     }
 }
+

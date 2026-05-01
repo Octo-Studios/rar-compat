@@ -135,7 +135,7 @@ public class CloudInBottleItem extends RAWearableRelicItem {
                 setSlowFallTicks(stack, 0);
         }
 
-        if (ability.isRankModifierUnlocked("slow_fall")) {
+        if (ability.getRankModifierData("slow_fall").isUnlocked()) {
             if (getSlowFallTicks(stack) > 0) {
                 if (!player.level().isClientSide() && isSlowFallActive(player) && player.tickCount % 20 == 0)
                     ability.getStatisticData().getMetricData("slow_fall_duration").addValue(1D);
@@ -183,7 +183,7 @@ public class CloudInBottleItem extends RAWearableRelicItem {
         player.hasImpulse = true;
         player.fallDistance = 0F;
 
-        if (ability.isRankModifierUnlocked("updraft") && player.getLookAngle().y > 0.70D) {
+        if (ability.getRankModifierData("updraft").isUnlocked() && player.getLookAngle().y > 0.70D) {
             var bonus = Math.max(0D, ability.getStatData("updraft_bonus").getValue());
             var currentMotion = player.getDeltaMovement();
 
@@ -197,7 +197,7 @@ public class CloudInBottleItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.isRankModifierUnlocked("slow_fall"))
+        if (ability.getRankModifierData("slow_fall").isUnlocked())
             setSlowFallTicks(stack, secondsToTicks(ability.getStatData("slow_fall_duration").getValue()));
 
         var bunnyStack = EntityUtils.findEquippedCurio(player, ModItems.BUNNY_HOPPERS.value());
@@ -330,7 +330,7 @@ public class CloudInBottleItem extends RAWearableRelicItem {
                 var relicData = relic.getRelicData(player, stack);
                 var ability = relicData.getAbilitiesData().getAbilityData("jump");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("combat_recovery"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("combat_recovery").isUnlocked())
                     continue;
 
                 if (relic.getCount(stack) <= 0)
@@ -344,3 +344,4 @@ public class CloudInBottleItem extends RAWearableRelicItem {
         }
     }
 }
+

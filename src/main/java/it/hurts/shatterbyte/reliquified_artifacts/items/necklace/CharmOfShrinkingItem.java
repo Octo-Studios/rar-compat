@@ -163,7 +163,7 @@ public class CharmOfShrinkingItem extends RAWearableRelicItem {
             setMovingTicks(stack, movingTicks);
         }
 
-        if (!ability.isRankModifierUnlocked("target_escape") || newScale >= 1D || player.tickCount % 20 != 0)
+        if (!ability.getRankModifierData("target_escape").isUnlocked() || newScale >= 1D || player.tickCount % 20 != 0)
             return;
 
         var chancePerSize = Math.max(0D, ability.getStatData("target_loss_chance_per_size").getValue());
@@ -282,7 +282,7 @@ public class CharmOfShrinkingItem extends RAWearableRelicItem {
 
                 var shrinkDelta = 1D - scale;
 
-                if (isFallDamage && ability.isRankModifierUnlocked("fall_resistance")) {
+                if (isFallDamage && ability.getRankModifierData("fall_resistance").isUnlocked()) {
                     var perSize = Math.max(0D, ability.getStatData("fall_reduction_per_size").getValue());
                     var reduction = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
 
@@ -293,7 +293,7 @@ public class CharmOfShrinkingItem extends RAWearableRelicItem {
                     }
                 }
 
-                if (ability.isRankModifierUnlocked("evasion")) {
+                if (ability.getRankModifierData("evasion").isUnlocked()) {
                     var perSize = Math.max(0D, ability.getStatData("evasion_per_size").getValue());
                     var chance = Math.max(0D, Math.min(1D, shrinkDelta * perSize));
 

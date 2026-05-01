@@ -111,7 +111,7 @@ public class ObsidianSkullItem extends RAWearableRelicItem {
             ability.getStatisticData().getMetricData("lava_duration").addValue(1D);
         }
 
-        var lowReserveActive = ability.isRankModifierUnlocked("heat_surge")
+        var lowReserveActive = ability.getRankModifierData("heat_surge").isUnlocked()
                 && protectedInLava
                 && lavaTicks <= Math.max(1, maxLavaTicks / 4);
 
@@ -163,7 +163,7 @@ public class ObsidianSkullItem extends RAWearableRelicItem {
 
         var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("lava");
 
-        if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("heat_surge"))
+        if (!ability.canPlayerUse(player) || !ability.getRankModifierData("heat_surge").isUnlocked())
             return 0D;
 
         var maxLavaTicks = relic.getMaxLavaTicks(ability.getStatData("duration").getValue());
@@ -226,7 +226,7 @@ public class ObsidianSkullItem extends RAWearableRelicItem {
                 return;
             }
 
-            if (ability.isRankModifierUnlocked("obsidian_skin")) {
+            if (ability.getRankModifierData("obsidian_skin").isUnlocked()) {
                 var reduction = Math.max(0D, Math.min(1D, ability.getStatData("damage_reduction").getValue()));
 
                 if (reduction > 0D) {
@@ -255,7 +255,7 @@ public class ObsidianSkullItem extends RAWearableRelicItem {
             var relicData = relic.getRelicData(player, stack);
             var ability = relicData.getAbilitiesData().getAbilityData("lava");
 
-            if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("lava_launch") || relic.getLavaTicks(stack) <= 0)
+            if (!ability.canPlayerUse(player) || !ability.getRankModifierData("lava_launch").isUnlocked() || relic.getLavaTicks(stack) <= 0)
                 return;
 
             if (!isLandingInLava(player))
@@ -267,3 +267,4 @@ public class ObsidianSkullItem extends RAWearableRelicItem {
         }
     }
 }
+

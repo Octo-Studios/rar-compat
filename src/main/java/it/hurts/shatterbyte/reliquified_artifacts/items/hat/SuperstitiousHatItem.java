@@ -129,7 +129,7 @@ public class SuperstitiousHatItem extends RAWearableRelicItem {
         var lastKillTick = getLastKillTick(stack);
         var ticksSinceLastKill = lastKillTick >= 0L ? gameTime - lastKillTick : Long.MAX_VALUE;
 
-        if (ability.isRankModifierUnlocked("first_kill")) {
+        if (ability.getRankModifierData("first_kill").isUnlocked()) {
             var firstWindowTicks = secondsToTicks(ability.getStatData("first_kill_window").getValue());
             var firstKillBonus = Math.max(0D, ability.getStatData("first_kill_bonus").getValue());
 
@@ -137,12 +137,12 @@ public class SuperstitiousHatItem extends RAWearableRelicItem {
                 effectiveChance = Math.max(0D, Math.min(1D, effectiveChance + firstKillBonus));
         }
 
-        if (ability.isRankModifierUnlocked("beast_hunter") && mob instanceof Animal)
+        if (ability.getRankModifierData("beast_hunter").isUnlocked() && mob instanceof Animal)
             animalBonus = Math.max(0, (int) MathUtils.round(ability.getStatData("animal_bonus").getValue(), 0));
 
         int lootingBonus;
 
-        if (ability.isRankModifierUnlocked("streak")) {
+        if (ability.getRankModifierData("streak").isUnlocked()) {
             var streakWindowTicks = secondsToTicks(ability.getStatData("streak_window").getValue());
             var streakBonus = Math.max(0D, ability.getStatData("streak_bonus").getValue());
             var previousStreak = getKillStreak(stack);
@@ -247,3 +247,4 @@ public class SuperstitiousHatItem extends RAWearableRelicItem {
         }
     }
 }
+

@@ -182,7 +182,7 @@ public class PowerGloveItem extends RAWearableRelicItem {
                     damageBonus = localDamageBonus;
                 }
 
-                if (ability.isRankModifierUnlocked("armor_pierce")) {
+                if (ability.getRankModifierData("armor_pierce").isUnlocked()) {
                     var value = Math.max(0D, Math.min(1D, ability.getStatData("armor_ignore").getValue()));
 
                     armorIgnore = Math.max(armorIgnore, value);
@@ -238,7 +238,7 @@ public class PowerGloveItem extends RAWearableRelicItem {
 
                 var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("power");
 
-                if (!ability.canPlayerUse(player) || !ability.isRankModifierUnlocked("shield_break"))
+                if (!ability.canPlayerUse(player) || !ability.getRankModifierData("shield_break").isUnlocked())
                     continue;
 
                 target.disableShield();
@@ -269,7 +269,7 @@ public class PowerGloveItem extends RAWearableRelicItem {
                         killStatRecorded = true;
                     }
 
-                    if (ability.isRankModifierUnlocked("echo_strike")) {
+                    if (ability.getRankModifierData("echo_strike").isUnlocked()) {
                         relic.setForceNext(stack, true);
 
                         if (!killExpRecorded) {

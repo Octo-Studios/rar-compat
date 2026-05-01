@@ -124,7 +124,7 @@ public class RootedBootsItem extends RAWearableRelicItem {
             stack.set(RADataComponent.ROOTED_BOOTS_COOLDOWN_TICKS.get(), cooldownTicks);
         }
 
-        if (ability.isRankModifierUnlocked("fertilizer")) {
+        if (ability.getRankModifierData("fertilizer").isUnlocked()) {
             var bonemealTicks = Math.max(0, stack.getOrDefault(RADataComponent.ROOTED_BOOTS_BONEMEAL_TICKS.get(), 0));
 
             if (bonemealTicks > 0) {
@@ -172,7 +172,7 @@ public class RootedBootsItem extends RAWearableRelicItem {
         foodData.setFoodLevel(targetFood);
         foodData.setSaturation(targetSaturation);
 
-        if (ability.isRankModifierUnlocked("healing")) {
+        if (ability.getRankModifierData("healing").isUnlocked()) {
             var healAmount = Math.max(0D, ability.getStatData("healing").getValue());
 
             if (healAmount > 0D) {
@@ -187,7 +187,7 @@ public class RootedBootsItem extends RAWearableRelicItem {
             }
         }
 
-        if (ability.isRankModifierUnlocked("restoration")) {
+        if (ability.getRankModifierData("restoration").isUnlocked()) {
             var delayTicks = Math.max(0L, Math.round(Math.max(0D, ability.getStatData("restoration_delay").getValue()) * 20D));
 
             if (delayTicks > 0L) {
@@ -271,3 +271,4 @@ public class RootedBootsItem extends RAWearableRelicItem {
         }
     }
 }
+

@@ -196,7 +196,7 @@ public class NightVisionGogglesItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
 
-            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("evasion"))
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.getRankModifierData("evasion").isUnlocked())
                 return;
 
             var baseChance = Math.max(0D, Math.min(1D, ability.getStatData("miss_chance").getValue()));
@@ -226,7 +226,7 @@ public class NightVisionGogglesItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
 
-            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("ambush"))
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.getRankModifierData("ambush").isUnlocked())
                 return;
 
             var baseBonus = Math.max(0D, ability.getStatData("damage_bonus").getValue());
@@ -263,7 +263,7 @@ public class NightVisionGogglesItem extends RAWearableRelicItem {
 
             var ability = relic.getRelicData(player, stack).getAbilitiesData().getAbilityData("vision");
 
-            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.isRankModifierUnlocked("clarity"))
+            if (!ability.canPlayerUse(player) || !ability.getMode().equals("enabled") || !ability.getRankModifierData("clarity").isUnlocked())
                 return;
 
             event.setNearPlaneDistance(-8F);
@@ -272,3 +272,4 @@ public class NightVisionGogglesItem extends RAWearableRelicItem {
         }
     }
 }
+
