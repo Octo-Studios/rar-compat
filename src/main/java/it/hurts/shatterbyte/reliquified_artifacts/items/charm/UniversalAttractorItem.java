@@ -43,7 +43,7 @@ public class UniversalAttractorItem extends RAWearableRelicItem {
                                 .rankModifier(5, "teleport")
                                 .stat(AbilityStatTemplate.builder("radius")
                                         .initialValue(3D, 5D)
-                                        .upgradeModifier(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.0286D)
+                                        .targetValue(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 10.005D)
                                         .formatValue(value -> MathUtils.round(value, 1))
                                         .build())
                                 .experienceSources(ExperienceSourcesTemplate.builder()
