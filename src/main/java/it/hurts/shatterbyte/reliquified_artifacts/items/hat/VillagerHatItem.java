@@ -205,7 +205,7 @@ public class VillagerHatItem extends RAWearableRelicItem {
         public static void onTradeWithVillager(TradeWithVillagerEvent event) {
             var player = event.getEntity();
 
-            if (player.level().isClientSide())
+            if (player == null || player.level().isClientSide())
                 return;
 
             var stack = EntityUtils.findEquippedCurio(player, ModItems.VILLAGER_HAT.value());

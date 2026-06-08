@@ -17,7 +17,7 @@ public abstract class VillagerMixin {
     private void reliquified_artifacts$applyVillagerHatDiscount(Player player, CallbackInfo ci) {
         var villager = (Villager) (Object) this;
 
-        if (villager.level().isClientSide())
+        if (player == null || villager.level().isClientSide())
             return;
 
         var stack = EntityUtils.findEquippedCurio(player, ModItems.VILLAGER_HAT.value());
