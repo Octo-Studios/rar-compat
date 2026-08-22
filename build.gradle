@@ -111,7 +111,7 @@ dependencies {
 
     implementation "dev.architectury:architectury-neoforge:13.0.6"
 
-    implementation "curse.maven:artifacts-312353:7875426"
+    implementation "curse.maven:artifacts-312353:8683747"
     implementation "curse.maven:expandability-465066:5428824"
     implementation "curse.maven:cloth-config-348521:5729127"
 
